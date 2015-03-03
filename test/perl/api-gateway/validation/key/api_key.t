@@ -193,7 +193,7 @@ GET /test-api-key?api_key=ab123
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
         location /test-api-key {
-            set $service_id H-123;
+            set $service_id hH-123;
 
             set $api_key $arg_api_key;
             set_if_empty $api_key $http_x_api_key;
@@ -205,7 +205,7 @@ GET /test-api-key?api_key=ab123
         }
 --- pipelined_requests eval
 [
-"POST /cache/api_key?key=test-key-123_HHH&service_id=hH-123&app_name=hHHH",
+"POST /cache/api_key?key=test-key-1234_HHH&service_id=hH-123&app_name=hHHH",
 "GET /test-api-key?api_key=test-key-1234_HHH&debug=true"]
 --- response_body eval
 [

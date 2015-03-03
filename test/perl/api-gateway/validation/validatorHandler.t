@@ -22,6 +22,10 @@ our $HttpConfig = <<_EOC_;
         -- require "api-gateway.validation"
         require "resty.core"
     ';
+     init_worker_by_lua '
+        ngx.apiGateway = ngx.apiGateway or {}
+        ngx.apiGateway.validation = require "api-gateway.validation.factory"
+     ';
     # include "$pwd/conf.d/http.d/*.conf";
     upstream cache_rw_backend {
     	server 127.0.0.1:6379;
@@ -40,6 +44,8 @@ __DATA__
 === TEST 1: test validator handler can execute on multiple levels
 --- http_config eval: $::HttpConfig
 --- config
+        include ../../api-gateway/default_validators.conf;
+
         set $custom_prop1 "unset";
         set $temp_prop '';
 
@@ -69,7 +75,7 @@ __DATA__
             set $custom_prop1 "unset";
             set $validate_api_key   "on; path=/validator_1?k=123; order=1;";
             set $validate_ims_oauth "on; path=/validator_2?key=123; order=2;";
-            access_by_lua_file ../../scripts/request_validator_access_pass.lua;
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
             content_by_lua '
                 ngx.say("request is valid:" .. ngx.var.custom_prop1)
             ';
@@ -78,7 +84,7 @@ __DATA__
             set $custom_prop1 "unset";
             set $validate_api_key   "on; path=/validator_2?key=123; order=1;";
             set $validate_ims_oauth "on; path=/validator_1?k=123; order=2;";
-            access_by_lua_file ../../scripts/request_validator_access_pass.lua;
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
             content_by_lua '
                 ngx.say("request is valid.")
             ';
@@ -105,6 +111,8 @@ Content-Type: text/plain"
 === TEST 2: test OPTIONS request don't get validated
 --- http_config eval: $::HttpConfig
 --- config
+        include ../../api-gateway/default_validators.conf;
+
         set $custom_prop1 "unset";
 
         location /invalid_validator {
@@ -117,7 +125,7 @@ Content-Type: text/plain"
         location /validate-request-test {
             set $validate_api_key   "on; path=/invalid_validator; order=1;";
             set $validate_ims_oauth "on; path=/validator_2; order=2;";
-            access_by_lua_file ../../scripts/request_validator_access_pass.lua;
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
             content_by_lua '
                 ngx.say("request is valid.")
             ';
@@ -139,6 +147,8 @@ Content-Type: text/plain"
 === TEST 3: test validator can define paths with nginx variables
 --- http_config eval: $::HttpConfig
 --- config
+        include ../../api-gateway/default_validators.conf;
+
         set $custom_prop1 "unset";
         set $temp_prop '';
 
@@ -170,7 +180,7 @@ Content-Type: text/plain"
             set $can_use_variable "123";
             set $validate_api_key   "on; path=/validator_1?k=123; order=1;";
             set $validate_ims_oauth "on; path=/validator_2?key=$can_use_variable; order=2;";
-            access_by_lua_file ../../scripts/request_validator_access_pass.lua;
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
             content_by_lua '
                 ngx.say("request is valid:" .. ngx.var.custom_prop1)
             ';
@@ -179,7 +189,7 @@ Content-Type: text/plain"
             set $custom_prop1 "unset";
             set $validate_api_key   "on; path=/validator_2?key=123; order=1;";
             set $validate_ims_oauth "on; path=/validator_1?k=123; order=2;";
-            access_by_lua_file ../../scripts/request_validator_access_pass.lua;
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
             content_by_lua '
                 ngx.say("request is valid.")
             ';
@@ -206,6 +216,8 @@ Content-Type: text/plain"
 === TEST 4: test validators configuration with whitespaces
 --- http_config eval: $::HttpConfig
 --- config
+        include ../../api-gateway/default_validators.conf;
+
         set $custom_prop1 "unset";
         set $temp_prop '';
 
@@ -237,7 +249,7 @@ Content-Type: text/plain"
             set $can_use_variable "with_spaces";
             set $validate_api_key   "  on; path=/validator_1?k=with_spaces; order=1;                   ";
             set $validate_ims_oauth "  on; path=/validator_2?key=$can_use_variable; order=2;   ";
-            access_by_lua_file ../../scripts/request_validator_access_pass.lua;
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
             content_by_lua '
                 ngx.say("request is valid:" .. ngx.var.custom_prop1)
             ';
@@ -246,7 +258,7 @@ Content-Type: text/plain"
             set $custom_prop1 "unset";
             set $request_validator_2   "on; path=/validator_2?key=123; order=1;";
             set $request_validator_1   "on; path=/validator_1?k=123; order=2;";
-            access_by_lua_file ../../scripts/request_validator_access_pass.lua;
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
             content_by_lua '
                 ngx.say("request is valid.")
             ';
@@ -274,7 +286,7 @@ Content-Type: text/plain"
 === TEST 5: test that if validation fails, the requests terminates at the access phase
 --- http_config eval: $::HttpConfig
 --- config
-        include ../../api-gateway/auth_request_validations.conf;
+        include ../../api-gateway/default_validators.conf;
 
         location /validator_1 {
             return 200;
@@ -286,7 +298,7 @@ Content-Type: text/plain"
         location /test-invalid-request {
              set $request_validator_1   "on; path=/validator_1; order=1;";
              set $request_validator_2   "on; path=/validator_2; order=2;";
-             access_by_lua_file ../../scripts/request_validator_access_pass.lua;
+             access_by_lua "ngx.apiGateway.validation.validateRequest()";
              content_by_lua '
                 ngx.say("If you see this, validators are failing :(. why ? Pick your answer: http://www.thatwasfunny.com/top-20-programmers-excuses/239")
              ';
@@ -310,7 +322,7 @@ Content-Type: text/plain"
 === TEST 6: test that validation responses can be customized
 --- http_config eval: $::HttpConfig
 --- config
-        include ../../api-gateway/auth_request_validations.conf;
+        include ../../api-gateway/default_validators.conf;
 
         set $validator_custom_error_responses '{
             "VALIDATOR_401_ERROR" : {
@@ -341,7 +353,7 @@ Content-Type: text/plain"
              set $request_validator_2 "on; path=/validator_2; order=2;";
              set $custom_header_2 "this is a lua variable";
 
-             access_by_lua_file ../../scripts/request_validator_access_pass.lua;
+             access_by_lua "ngx.apiGateway.validation.validateRequest()";
              content_by_lua '
                 ngx.say("If you see this, validators are failing :(. why ? Pick your answer: http://www.thatwasfunny.com/top-20-programmers-excuses/239")
              ';
@@ -349,7 +361,7 @@ Content-Type: text/plain"
 
         location /test-with-failed-oauth {
             set $validate_ims_oauth on;
-            access_by_lua_file ../../scripts/request_validator_access_pass.lua;
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
             content_by_lua '
                 ngx.say("You should not see me")
             ';
@@ -357,7 +369,7 @@ Content-Type: text/plain"
 
         location /test-with-failed-api-key {
             set $validate_api_key on;
-            access_by_lua_file ../../scripts/request_validator_access_pass.lua;
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
             content_by_lua '
                 ngx.say("You should not see me here")
             ';
@@ -392,7 +404,7 @@ custom-header-2: this is a lua variable",
 === TEST 7: test that validation responses when user inputs invalid custom response messages
 --- http_config eval: $::HttpConfig
 --- config
-        include ../../api-gateway/auth_request_validations.conf;
+        include ../../api-gateway/default_validators.conf;
 
         location /validator_1 {
             return 200;
@@ -405,7 +417,7 @@ custom-header-2: this is a lua variable",
              set $validator_custom_error_responses '';
              set $request_validator_1   "on; path=/validator_1; order=1;";
              set $request_validator_2 "on; path=/validator_2; order=2;";
-             access_by_lua_file ../../scripts/request_validator_access_pass.lua;
+             access_by_lua "ngx.apiGateway.validation.validateRequest()";
              content_by_lua '
                 ngx.say("If you see this, validators are failing :(. why ? Pick your answer: http://www.thatwasfunny.com/top-20-programmers-excuses/239")
              ';
@@ -416,7 +428,7 @@ custom-header-2: this is a lua variable",
                 "401300" : "I am an invalid formatted custom response object"
             }';
             set $validate_ims_oauth on;
-            access_by_lua_file ../../scripts/request_validator_access_pass.lua;
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
             content_by_lua '
                 ngx.say("You should not see me")
             ';
@@ -445,7 +457,7 @@ custom-header-2: this is a lua variable",
 === TEST 7: test that validation responses when user inputs invalid custom response messages
 --- http_config eval: $::HttpConfig
 --- config
-        include ../../api-gateway/auth_request_validations.conf;
+        include ../../api-gateway/default_validators.conf;
 
         location /validator_1 {
             return 200;
@@ -458,7 +470,7 @@ custom-header-2: this is a lua variable",
              set $validator_custom_error_responses '';
              set $request_validator_1   "on; path=/validator_1; order=1;";
              set $request_validator_2 "on; path=/validator_2; order=2;";
-             access_by_lua_file ../../scripts/request_validator_access_pass.lua;
+             access_by_lua "ngx.apiGateway.validation.validateRequest()";
              content_by_lua '
                 ngx.say("If you see this, validators are failing :(. why ? Pick your answer: http://www.thatwasfunny.com/top-20-programmers-excuses/239")
              ';
@@ -468,8 +480,8 @@ custom-header-2: this is a lua variable",
             set $validator_custom_error_responses '{
                 "401300" : "I am an invalid formatted custom response object"
             }';
-            set $validate_ims_oauth on;
-            access_by_lua_file ../../scripts/request_validator_access_pass.lua;
+            set $validate_api_key on;
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
             content_by_lua '
                 ngx.say("You should not see me")
             ';
