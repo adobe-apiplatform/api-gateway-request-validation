@@ -175,9 +175,9 @@ Built in validators
 
 | Validator          |  Sample code   | Description   |
 | -------------      | -------------  | ------------- |
-| API KEY Validator  | set $api_key_validator "on;   path=/validate-api-key;  order=1; ";  | Validates the API-KEY by looking in the Redis Cache |
-| HMAC Signature Validator  | set $validate_hmac_signature "on;   path=/validate_hmac_signature;  order=1; ";  | Validates the HMAC Signature according to a rule you can define in the configuration. This Validator works with HMAC-SHA-1, HMAC-SHA-224, HMAC-SHA-256, HMAC-SHA-384, HMAC-SHA-512  |
-| OAuth Token Validator  | set $validate_oauth_token "on;   path=/validate-oauth;  order=1; ";  |  Validates an OAuth Token through a local defined location `/validate-token` that simply proxies the request to the actual OAuth Provider |
+| API KEY Validator  | ``` set $api_key_validator "on;   path=/validate-api-key;  order=1; "; ```  | Validates the API-KEY by looking in the Redis Cache |
+| HMAC Signature Validator  | ```set $validate_hmac_signature "on;   path=/validate_hmac_signature;  order=1; ";```  | Validates the HMAC Signature according to a rule you can define in the configuration. This Validator works with HMAC-SHA-1, HMAC-SHA-224, HMAC-SHA-256, HMAC-SHA-384, HMAC-SHA-512  |
+| OAuth Token Validator  | ```set $validate_oauth_token "on;   path=/validate-oauth;  order=1; ";```  |  Validates an OAuth Token through a local defined location `/validate-token` that simply proxies the request to the actual OAuth Provider |
 
 
 Developer guide
