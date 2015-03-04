@@ -16,6 +16,7 @@
 --  1. oauth_token_scope
 --  2. oauth_token_client_id
 --  3. oauth_token_user_id
+
 local BaseValidator = require "api-gateway.validation.validator"
 local cjson = require "cjson"
 local redis = require "resty.redis"

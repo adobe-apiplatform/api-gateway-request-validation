@@ -15,6 +15,7 @@
 
 local ValidatorsHandler = require "api-gateway.validation.validatorsHandler"
 local ApiKeyValidatorCls = require "api-gateway.validation.key.redisApiKeyValidator"
+local HmacSignatureValidator = require "api-gateway.validation.signing.hmacGenericSignatureValidator"
 local OAuthTokenValidator = require "api-gateway.validation.oauth2.oauthTokenValidator"
 
 
@@ -58,23 +59,30 @@ end
 -- Default request validation implementation
 local function _defaultValidateRequestImpl()
     local handlers = ValidatorsHandler:new()
-    handlers:validateRequest()
+    return handlers:validateRequest()
 end
 
 ---
 -- Basic impl extending redisApiKey validator.
 local function _validateApiKey()
     local keyValidator = ApiKeyValidatorCls:new()
-    keyValidator:validateRequest()
+    return keyValidator:validateRequest()
+end
+
+local function _validateHmacSignature()
+    local hmacSignatureValidator = HmacSignatureValidator:new()
+    return hmacSignatureValidator:validateSignature()
 end
 
 local function _validateOAuthToken()
     local oauthTokenValidator = OAuthTokenValidator:new()
-    oauthTokenValidator:validateRequest()
+    return oauthTokenValidator:validateRequest()
 end
+
 
 return {
     validateApiKey = _validateApiKey,
+    validateHmacSignature = _validateHmacSignature,
     validateOAuthToken = _validateOAuthToken,
     validateRequest = _validateRequest,
     defaultValidateRequestImpl = _defaultValidateRequestImpl,

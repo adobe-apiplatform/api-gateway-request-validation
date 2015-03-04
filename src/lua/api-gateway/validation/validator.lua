@@ -1,3 +1,15 @@
+--
+-- Base class for Gateway validators
+--
+-- User: ddascal
+-- Date: 12/03/13
+-- Time: 18:01
+--
+-- Dependencies:
+--   1. ngx.var.redis_backend needs to be set
+--   2. ngx.var.redis_backend_rw needs to be set
+--   2. ngx.var.disable_redis_replica_healthchecks OPTIONAL - it disables redis healthchecks
+--
 local base              = require "api-gateway.validation.base"
 local redis             = require "resty.redis"
 local RedisHealthCheck  = require "api-gateway.redis.redisHealthCheck"
