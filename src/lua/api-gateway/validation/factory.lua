@@ -1,13 +1,21 @@
--- This factory creates the object that needs to be instatiated when the API Gateway starts
+-- This factory creates the object to be instatiated when the API Gateway starts
+--
+--  Usage:
+--      init_worker_by_lua '
+--          ngx.apiGateway = ngx.apiGateway or {}
+--          ngx.apiGateway.validation = require "api-gateway.validation.factory"
+--      ';
+--
+--
 
 -- User: ddascal
 -- Date: 02/03/15
 -- Time: 23:36
--- To change this template use File | Settings | File Templates.
 --
 
 local ValidatorsHandler = require "api-gateway.validation.validatorsHandler"
 local ApiKeyValidatorCls = require "api-gateway.validation.key.redisApiKeyValidator"
+local OAuthTokenValidator = require "api-gateway.validation.oauth2.oauthTokenValidator"
 
 
 local debug_mode = ngx.config.debug
@@ -18,10 +26,10 @@ local function debug(...)
 end
 
 ---
---  Function designed to be called from access_by_lua
---   It calls an internal /validate-request path which can provide any custom implementation for request validation
+-- Function designed to be called from access_by_lua
+-- It calls an internal /validate-request path which can provide any custom implementation for request validation
 local function _validateRequest()
-    if ( ngx.var.request_method == 'OPTIONS' ) then
+    if (ngx.var.request_method == 'OPTIONS') then
         return ngx.exit(ngx.OK);
     end
 
@@ -47,21 +55,29 @@ local function _validateRequest()
 end
 
 ---
---  Default request validation implementation
+-- Default request validation implementation
 local function _defaultValidateRequestImpl()
     local handlers = ValidatorsHandler:new()
     handlers:validateRequest()
 end
 
 ---
---  Basic impl extending redisApiKey validator.
+-- Basic impl extending redisApiKey validator.
 local function _validateApiKey()
     local keyValidator = ApiKeyValidatorCls:new()
     keyValidator:validateRequest()
 end
 
+local function _validateOAuthToken()
+    local oauthTokenValidator = OAuthTokenValidator:new()
+    oauthTokenValidator:validateRequest()
+end
+
 return {
-    validateApiKey  = _validateApiKey,
+    validateApiKey = _validateApiKey,
+    validateOAuthToken = _validateOAuthToken,
     validateRequest = _validateRequest,
-    defaultValidateRequestImpl = _defaultValidateRequestImpl
+    defaultValidateRequestImpl = _defaultValidateRequestImpl,
 }
+
+--return _M

@@ -68,7 +68,7 @@ end
 local ValidatorHandlerErrorDecorator = {}
 
 function ValidatorHandlerErrorDecorator:new(o)
-    o = o or {}
+    local o = o or {}
     setmetatable(o, self)
     self.__index = self
     default_responses_array = convertResponsesToArray(DEFAULT_RESPONSES)

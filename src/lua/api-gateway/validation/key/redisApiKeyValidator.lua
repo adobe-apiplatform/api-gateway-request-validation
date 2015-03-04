@@ -68,8 +68,8 @@ end
 
 
 function ApiKeyValidator:validate_api_key()
-    local api_key = ngx.ctx.key or ngx.var.key
-    local service_id = ngx.ctx.service_id or ngx.var.service_id
+    local api_key = ngx.var.api_key
+    local service_id = ngx.var.service_id
 
     -- Block the requests if there is no apikey --
     if api_key == nil or api_key == "" or api_key == true then

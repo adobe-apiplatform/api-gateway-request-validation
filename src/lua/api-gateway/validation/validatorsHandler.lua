@@ -34,7 +34,7 @@ local cjson = require "cjson"
 local ValidatorsHandler = {}
 
 function ValidatorsHandler:new(o)
-    o = o or {}
+    local o = o or {}
     setmetatable(o, self)
     self.__index = self
     return o
@@ -44,34 +44,22 @@ function ValidatorsHandler:getValidatorsList()
     return
      { validate_api_key = {
          defaultProperties = {
-            path = '/validate_api_key', order=1,
-            args = "key=" .. (ngx.var.api_key or "") .. "&service_id=" .. (ngx.var.service_id or ""),
+            path = '/validate_api_key', order=1
          }
        },
-       validate_ims_oauth = {
+         validate_oauth_token = {
           defaultProperties = {
-             path = '/validate_ims_oauth', order=1
+             path = '/validate_oauth_token', order=1
           }
        },
-       validate_ims_profile = {
+       validate_user_profile = {
            defaultProperties = {
-              path = '/validate_ims_profile', order=2
-           }
-       },
-       validate_hmac_sha1_signature = {
-           defaultProperties = {
-              path = '/validate_hmac_sha1_signature', order=2
+              path = '/validate_user_profile', order=2
            }
        },
        validate_hmac_signature = {
            defaultProperties = {
               path = '/validate_hmac_signature', order=2
-           }
-       },
-
-       validate_rate_limit = {
-           defaultProperties = {
-              path = '/validate_rate_limit', order=1
            }
        },
 
@@ -97,10 +85,7 @@ function ValidatorsHandler:getValidatorsList()
        request_validator_1 = { defaultProperties = { path = '/request_validator-1', order=1 } },
        request_validator_2 = { defaultProperties = { path = '/request_validator-2', order=1 } },
        request_validator_3 = { defaultProperties = { path = '/request_validator-3', order=1 } },
-       request_validator_4 = { defaultProperties = { path = '/request_validator-4', order=1 } },
-       request_validator_5 = { defaultProperties = { path = '/request_validator-5', order=1 } },
-       request_validator_6 = { defaultProperties = { path = '/request_validator-6', order=1 } },
-       request_validator_7 = { defaultProperties = { path = '/request_validator-7', order=1 } }
+       request_validator_4 = { defaultProperties = { path = '/request_validator-4', order=1 } }
      }
 end
 
