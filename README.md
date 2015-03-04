@@ -25,7 +25,7 @@ Sample usage
 
     http {
         # lua_package_path should point to the location on the disk where the "scripts" folder is located
-        lua_package_path "scripts/?.lua;/opt/ADBE/api-gateway/api-gateway-core/scripts/?.lua;;";
+        lua_package_path "scripts/?.lua;/src/lua/api-gateway?.lua;;";
 
         variables_hash_max_size 1024;
         proxy_headers_hash_max_size 1024;
@@ -42,6 +42,14 @@ Sample usage
         # dict used to store metrics about api calls
         lua_shared_dict stats_counters 50m;
         lua_shared_dict stats_timers 50m;
+
+        #
+        # initialize the api-gateway-request-validation object
+        #
+        init_worker_by_lua '
+            ngx.apiGateway = ngx.apiGateway or {}
+            ngx.apiGateway.validation = require "api-gateway.validation.factory"
+         ';
     }
 
     server {
@@ -63,32 +71,33 @@ Sample usage
             set $validate_api_key on;
 
             # default script used to validate the request
-            access_by_lua_file ../../scripts/request_validator_access_pass.lua;
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
+
             content_by_lua "ngx.say('api-key is valid.')";
         }
 
         # location showing how to protect the endpoint with an OAuth Token
         location /with-oauth-token {
             set $service_id my-service-123;
+
              # get OAuth token either from header or from the user_token query string
             set $authtoken $http_authorization;
             set_if_empty $authtoken $arg_user_token;
-            set_by_lua $authtoken 'return string.gsub(string.gsub(ngx.var.authtoken, "Bearer ", ""), "bearer ", "")';
-            set_md5 $authtoken_hash $authtoken;
+            set_by_lua $authtoken 'return ngx.re.gsub(ngx.arg[1], "bearer ", "","ijo") ' $authtoken;
 
-            set $validate_ims_oauth on;
+            set $validate_oauth_token on;
 
             # default script used to validate the request
-            access_by_lua_file ../../scripts/request_validator_access_pass.lua;
-            content_by_lua "ngx.say('ims token is valid.')";
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
+            content_by_lua "ngx.say('OAuth Token is valid.')";
         }
 
-        # proxy to Adobe OAuth provider
-        location /imsauth {
+        # proxy to an OAuth provider
+        location /validate-token {
             internal;
-            set_if_empty $ims_client_id '--change-me--';
-            set_if_empty $ims_host 'ims-na1-stg1.adobelogin.com';
-            proxy_pass https://$ims_host/ims/validate_token/v1?client_id=$ims_client_id&token=$authtoken;
+            set_if_empty $oauth_client_id '--change-me--';
+            set_if_empty $oauth_host 'ims-na1.adobelogin.com';
+            proxy_pass https://$oauth_host/ims/validate_token/v1?client_id=$oauth_client_id&token=$authtoken;
             proxy_method GET;
             proxy_pass_request_body off;
             proxy_pass_request_headers off;
@@ -96,17 +105,16 @@ Sample usage
 
         # validators can be combined and even executed in a different order
         location /with-api-key-and-ims-token {
-            # capture $api_key and $authtoken with $authtoken_hash
+            # capture $api_key and $authtoken
             ...
-            set $validate_api_key    "on; order=2; ";
-            set $validate_ims_oauth  "on; order=1; ";
+            set $validate_api_key      "on; order=2; ";
+            set $validate_oauth_token  "on; order=1; ";
 
             # default script used to validate the request
-            access_by_lua_file ../../scripts/request_validator_access_pass.lua;
-            access_by_lua 'ngx.api-gateway.validateRequest()';
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
 
             # then proxy request to a backend service
-            proxy_pass $my_proxy_backend_endpoint$request_uri
+            proxy_pass $my_proxy_backend_endpoint$request_uri;
             ...
         }
     }
@@ -160,6 +168,18 @@ The design principles for request validation are:
 
 [Back to TOC](#table-of-contents)
 
+Built in validators
+===================
+
+
+
+| Validator          |  Sample code   | Description   |
+| -------------      | -------------  | ------------- |
+| API KEY Validator  | set $api_key_validator "on;   path=/validate-api-key;  order=1; ";  | Validates the API-KEY by looking in the Redis Cache |
+| HMAC Signature Validator  | set $validate_hmac_signature "on;   path=/validate_hmac_signature;  order=1; ";  | Validates the HMAC Signature according to a rule you can define in the configuration. This Validator works with HMAC-SHA-1, HMAC-SHA-224, HMAC-SHA-256, HMAC-SHA-384, HMAC-SHA-512  |
+| OAuth Token Validator  | set $validate_oauth_token "on;   path=/validate-oauth;  order=1; ";  |  Validates an OAuth Token through a local defined location `/validate-token` that simply proxies the request to the actual OAuth Provider |
+
+
 Developer guide
 ===============
 
@@ -172,11 +192,13 @@ Developer guide
 git submodule update --init --recursive
 ```
 
-## Developing api-gateway-core library
- This is as straight forward as being able to run the tests.
- In the future, this library will be packed into a tar.gz, versioned, and installed on the operating system alongside the api-gateway.
 
 ## Running the tests
+
+```
+make test
+```
+
 The tests are based on the `test-nginx` library.
 This library is added a git submodule under `test/resources/test-nginx/` folder, from `https://github.com/agentzh/test-nginx`.
 
@@ -187,9 +209,9 @@ Other files used when running the test are also located in `test/resources`.
 When tests execute with `make tests`, a few things are happening:
 * `Redis` server is compiled and installed in `target/redis-${redis_version}`. The compilation happens only once, not for every tests run, unless `make clear` is executed.
 * `Redis` server is started
-* `scripts/auth_request_validations.conf` is modified to update the paths and copied in `target/api-gateway` folder.
-* `api-gateway` process is started for each test and then closed. The root folder for `api-gateway` is `target/servroot`.
-* when tests complete, `Redis` server is closed
+* `api-gateway` process is started for each test and then closed. The root folder for `api-gateway` is `target/servroot`
+* some test files may output the logs to separate files under `target/test-logs`
+* when tests complete successfully, `Redis` server is closed
 
 ### Prerequisites
 #### MacOS
@@ -227,30 +249,15 @@ For the moment, follow the MacOS instructions.
  ```
  This command only executes the test `core_validator.t`.
 
-#### AWS dependency
- Some tests may require AWS IAM Credentials to run correctly. To run these tests you need to execute `make test-aws` like the following command shows:
-
-```
-TEST_NGINX_AWS_CLIENT_ID="--change--me" TEST_NGINX_AWS_SECRET="--change-me--" TEST_NGINX_AWS_TOKEN="--change-me--" make test-aws
-```
-
-Because these credentials belong to an AWS IAM User ( in this example `apiplatform-web`, you need to SSH into an AWS machine and obtain a set of credentials by running:
-
-```
-curl http://169.254.169.254/latest/meta-data/iam/security-credentials/apiplatform-web
-```
-
-You can also do the same for a single test:
-
-```
- TEST_NGINX_AWS_CLIENT_ID="--change--me" TEST_NGINX_AWS_SECRET="--change-me--" TEST_NGINX_AWS_TOKEN="--change-me--" \
- PATH=/usr/local/sbin:$PATH TEST_NGINX_SERVROOT=`pwd`/target/servroot TEST_NGINX_PORT=1989 \ prove -I ./test/resources/test-nginx/lib -r ./test/aws-integration/aws/awsKmsSecretReader.t
-```
 
 #### Troubleshooting tests
 
 When executing the tests the `test-nginx`library stores the nginx configuration under `target/servroot/`.
 It's often useful to consult the logs when a test fails.
+If you run a test but can't seem to find the logs you can edit the configuration for that test specifying an `error_log` location:
+```
+error_log ../test-logs/validatorHandler_test6_error.log debug;
+```
 
 For Redis logs, you can consult `target/redis-test.log` file.
 
