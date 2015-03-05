@@ -67,7 +67,7 @@ __DATA__
         location /validate-token {
             internal;
             set_by_lua $generated_expires_at 'return ((os.time() + 4) * 1000 )';
-            return 200 '{"valid":true,"expires_at":$generated_expires_at,"token":{"id":"1234","scope":"openid,AdobeID","user_id":"21961FF44F97F8A10A490D36","expires_in":"86400000","client_id":"APIPlatform1","type":"access_token"}}';
+            return 200 '{"valid":true,"expires_at":$generated_expires_at,"token":{"id":"1234","scope":"openid email profile","user_id":"21961FF44F97F8A10A490D36","expires_in":"86400000","client_id":"test_Client_ID","type":"access_token"}}';
         }
 --- more_headers
 Authorization: Bearer SOME_OAUTH_TOKEN_1
@@ -133,11 +133,7 @@ GET /test-oauth-validation
         location /validate-token {
             #internal;
             set_by_lua $generated_expires_at 'return ((os.time() + 4) * 1000 )';
-            # content_by_lua '
-            #    ngx.say("{\\"valid\\":true,\\"expires_at\\":" .. ((os.time() + 4) * 1000 ) .. ",\\"token\\":{\\"id\\":\\"1234\\",\\"scope\\":\\"openid,AdobeID\\",\\"user_id\\":\\"21961FF44F97F8A10A490D36\\",\\"expires_in\\":\\"86400000\\",\\"client_id\\":\\"client_id_test_2\\",\\"type\\":\\"access_token\\"}}")
-            # ';
-
-            return 200 '{"valid":true,"expires_at":$generated_expires_at,"token":{"id":"1234","scope":"openid,AdobeID","user_id":"21961FF44F97F8A10A490D36","expires_in":"86400000","client_id":"client_id_test_2","type":"access_token"}}';
+            return 200 '{"valid":true,"expires_at":$generated_expires_at,"token":{"id":"1234","scope":"openid email profile","user_id":"21961FF44F97F8A10A490D36","expires_in":"86400000","client_id":"client_id_test_2","type":"access_token"}}';
         }
 --- more_headers
 Authorization: Bearer SOME_OAUTH_TOKEN_TEST_2_X_0
@@ -149,7 +145,7 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_2_X_0
 ]
 --- response_body_like eval
 [ "ims token is valid.\n" ,
-'.*{"oauth_token_client_id":"client_id_test_2","oauth_token_scope":"openid,AdobeID","oauth_token_user_id":"21961FF44F97F8A10A490D36"}.*',
+'.*{"oauth_token_client_id":"client_id_test_2","oauth_token_scope":"openid email profile","oauth_token_user_id":"21961FF44F97F8A10A490D36"}.*',
 '.*"expires_at":\d+,.*',
 '^:[1-4]\r\n$' # the cached token expiry time is in seconds, and it can only be between 1s to 4s, but not less. -1 response indicated the key is not cached or it has expired
 ]
@@ -200,7 +196,7 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_2_X_0
         location /validate-token {
             internal;
             set_by_lua $generated_expires_at 'return ((os.time() + 4) * 1000 )';
-            return 200 '{"valid":true,"expires_at":$generated_expires_at,"token":{"id":"1234","scope":"openid,AdobeID","user_id":"21961FF44F97F8A10A490D36","expires_in":"86400000","client_id":"APIPlatform1","type":"access_token"}}';
+            return 200 '{"valid":true,"expires_at":$generated_expires_at,"token":{"id":"1234","scope":"openid email profile","user_id":"21961FF44F97F8A10A490D36","expires_in":"86400000","client_id":"test_Client_ID","type":"access_token"}}';
         }
 --- more_headers
 Authorization: Bearer SOME_OAUTH_TOKEN_TEST3
@@ -209,8 +205,8 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST3
 "GET /test-oauth-validation-again"
 ]
 --- response_body_like eval
-["oauth_token_scope=openid,AdobeID,oauth_token_client_id=APIPlatform1,oauth_token_user_id=21961FF44F97F8A10A490D36\n",
-"AGAIN:oauth_token_scope=openid,AdobeID,oauth_token_client_id=APIPlatform1,oauth_token_user_id=21961FF44F97F8A10A490D36\n",
+["oauth_token_scope=openid email profile,oauth_token_client_id=test_Client_ID,oauth_token_user_id=21961FF44F97F8A10A490D36\n",
+"AGAIN:oauth_token_scope=openid email profile,oauth_token_client_id=test_Client_ID,oauth_token_user_id=21961FF44F97F8A10A490D36\n",
 ]
 --- no_error_log
 [error]
@@ -259,7 +255,7 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST3
         location /validate-token {
             internal;
             set_by_lua $generated_expires_at 'return ((os.time() + 4) * 1000 )';
-            return 200 '{"valid":true,"expires_at":$generated_expires_at,"token":{"id":"1234","scope":"openid,AdobeID","user_id":"21961FF44F97F8A10A490D36","expires_in":"86400000","client_id":"APIPlatform1","type":"access_token"}}';
+            return 200 '{"valid":true,"expires_at":$generated_expires_at,"token":{"id":"1234","scope":"openid,AdobeID","user_id":"21961FF44F97F8A10A490D36","expires_in":"86400000","client_id":"test_Client_ID","type":"access_token"}}';
         }
         location /l2_cache/api_key {
             set $local_key $arg_key;
@@ -282,9 +278,9 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST4
 ]
 --- response_body_like eval
 ["ims token is valid.\n",
-'.*{"oauth_token_client_id":"APIPlatform1","oauth_token_scope":"openid,AdobeID","oauth_token_user_id":"21961FF44F97F8A10A490D36"}.*',
+'.*{"oauth_token_client_id":"test_Client_ID","oauth_token_scope":"openid,AdobeID","oauth_token_user_id":"21961FF44F97F8A10A490D36"}.*',
 "ims token is also valid.\n",
-'Local cache:{"oauth_token_client_id":"APIPlatform1","oauth_token_scope":"openid,AdobeID","oauth_token_user_id":"21961FF44F97F8A10A490D36"}\n'
+'Local cache:{"oauth_token_client_id":"test_Client_ID","oauth_token_scope":"openid,AdobeID","oauth_token_user_id":"21961FF44F97F8A10A490D36"}\n'
 ]
 --- no_error_log
 [error]
@@ -313,7 +309,7 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST4
         location /validate-token {
             internal;
             set_by_lua $generated_expires_at 'return ((os.time() + 4) * 1000 )';
-            return 200 '{"valid":false,"expires_at":$generated_expires_at,"token":{"id":"1234","scope":"openid,AdobeID","user_id":"21961FF44F97F8A10A490D36","expires_in":"86400000","client_id":"APIPlatform1","type":"access_token"}}';
+            return 200 '{"valid":false,"expires_at":$generated_expires_at,"token":{"id":"1234","scope":"openid email profile","user_id":"21961FF44F97F8A10A490D36","expires_in":"86400000","client_id":"test_Client_ID","type":"access_token"}}';
         }
 
 --- more_headers
