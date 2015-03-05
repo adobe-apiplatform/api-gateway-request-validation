@@ -12,6 +12,7 @@ Table of Contents
 =================
 
 * [Status](#status)
+* [Dependencies](#dependencies)
 * [Sample Usage](#sample-usage)
 * [Features](#features)
 * [Validating requests](#validating-requests)
@@ -22,6 +23,13 @@ Status
 ======
 
 This module is under active development and is NOT YET production ready.
+
+Dependencies
+============
+
+This library requires an nginx build with OpenSSL,
+the [ngx_lua module](http://wiki.nginx.org/HttpLuaModule), [LuaJIT 2.0](http://luajit.org/luajit.html) and
+[api-gateway-hmac](https://git.corp.adobe.com/adobe-apis/api-gateway-hmac) module.
 
 Sample usage
 ============
