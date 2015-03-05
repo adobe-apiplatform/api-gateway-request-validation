@@ -1,7 +1,12 @@
 api-gateway-request-validation
 ==============================
 
-This module is used to validate a request in the API Gateway
+Lua Module providing a request validation framework in the API Gateway.
+
+### NOTE
+This module is written in Lua but you might see Perl as the main language if you look at statistics.
+That's because the tests are written in Perl and it's by design that there are more tests than code.
+This should be a good indicator of the code and test coverage.
 
 Table of Contents
 =================
