@@ -88,13 +88,13 @@ function _M:getTokenFromCache(cacheLookupKey)
 
     local localCacheValue = self:getKeyFromLocalCache(cacheLookupKey, "cachedOauthTokens")
     if (localCacheValue ~= nil) then
-        -- ngx.log(ngx.WARN, "Found IMS token in local cache")
+        ngx.log(ngx.DEBUG, "Found IMS token in local cache")
         return localCacheValue
     end
 
     local redisCacheValue = self:getKeyFromRedis(cacheLookupKey, "token_json")
     if (redisCacheValue ~= nil) then
-        -- ngx.log(ngx.WARN, "Found IMS token in redis cache")
+        ngx.log(ngx.DEBUG, "Found IMS token in redis cache")
         self:setKeyInLocalCache(cacheLookupKey, redisCacheValue, 60, "cachedOauthTokens")
         return redisCacheValue
     end
