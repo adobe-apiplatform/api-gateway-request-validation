@@ -276,11 +276,13 @@ Validates an OAuth Token through a local defined location `/validate-token` that
 Usage:
 
 ```nginx
+
 location /protected-with-oauth-token {
     # get OAuth token either from header or from the user_token query string
     set $authtoken $http_authorization;
     set $validate_oauth_token "on;   path=/validate-oauth;  order=1; ";
 }
+
 #
 # default OAuth Token validator impl along with the nginx variables it sets
 #
@@ -290,6 +292,17 @@ set $oauth_token_user_id 'unset';
 location /validate_oauth_token {
     internal;
     content_by_lua 'ngx.apiGateway.validation.validateOAuthToken()';
+}
+
+# proxy to an OAuth provider
+location /validate-token {
+    internal;
+    set_if_empty $oauth_client_id '--change-me--';
+    set_if_empty $oauth_host 'ims-na1.adobelogin.com';
+    proxy_pass https://$oauth_host/ims/validate_token/v1?client_id=$oauth_client_id&token=$authtoken;
+    proxy_method GET;
+    proxy_pass_request_body off;
+    proxy_pass_request_headers off;
 }
 ```
 
