@@ -17,6 +17,7 @@ local ValidatorsHandler = require "api-gateway.validation.validatorsHandler"
 local ApiKeyValidatorCls = require "api-gateway.validation.key.redisApiKeyValidator"
 local HmacSignatureValidator = require "api-gateway.validation.signing.hmacGenericSignatureValidator"
 local OAuthTokenValidator = require "api-gateway.validation.oauth2.oauthTokenValidator"
+local UserProfileValidator = require "api-gateway.validation.oauth2.userProfileValidator"
 
 
 local debug_mode = ngx.config.debug
@@ -79,11 +80,17 @@ local function _validateOAuthToken()
     return oauthTokenValidator:validateRequest()
 end
 
+local function _validateUserProfile()
+    local userProfileValidator = UserProfileValidator:new()
+    return userProfileValidator:validateRequest()
+end
+
 
 return {
     validateApiKey = _validateApiKey,
     validateHmacSignature = _validateHmacSignature,
     validateOAuthToken = _validateOAuthToken,
+    validateUserProfile = _validateUserProfile,
     validateRequest = _validateRequest,
     defaultValidateRequestImpl = _defaultValidateRequestImpl,
 }

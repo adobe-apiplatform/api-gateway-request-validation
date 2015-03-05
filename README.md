@@ -281,6 +281,20 @@ location /protected-with-oauth-token {
     # get OAuth token either from header or from the user_token query string
     set $authtoken $http_authorization;
     set $validate_oauth_token "on;   path=/validate-oauth;  order=1; ";
+    ...
+    # validate the request
+    access_by_lua "ngx.apiGateway.validation.validateRequest()";
+
+    # --------------------------------------------------------------
+    #  pass custom headers from oauth token to the backend service
+    # --------------------------------------------------------------
+    proxy_set_header x-user-id      $oauth_token_user_id;
+    proxy_set_header x-client-id    $oauth_token_client_id;
+    proxy_set_header x-oauth-scope  $oauth_token_scope;
+    # ----------------------------------
+    #  proxy to the service provider
+    # ----------------------------------
+    proxy_pass $backend_proxy_pass$request_uri;
 }
 
 #
@@ -307,6 +321,55 @@ location /validate-token {
 ```
 
 To view more examples on setting up OAuth Token validator check `test/perl/api-gateway/validation/oauth2/oauthTokenValidator.t`.
+
+### User profile validator
+Validates an existing user profile. Use it to extract user information and pass it on through some headers to the backend service.
+
+Usage:
+```nginx
+location /protect-with-user-profile-validator {
+    # get OAuth token either from header or from the user_token query string
+    set $authtoken $http_authorization;
+    set $validate_user_profile "on;   path=/validate-user-profile;  order=1; ";
+
+    # --------------------------------------------------------------
+    #  pass custom headers form user profile to the backend service
+    # --------------------------------------------------------------
+    proxy_set_header x-user-display-name    $user_name;
+    proxy_set_header x-user-email           $user_email;
+    proxy_set_header x-user-country-code    $user_country_code;
+    proxy_set_header x-user-region          $user_region;
+    # ----------------------------------
+    #  proxy to the service provider
+    # ----------------------------------
+    proxy_pass $backend_proxy_pass$request_uri;
+}
+#
+# default user Profile validator impl along with the nginx variables it sets
+#
+set $user_email '';
+set $user_country_code '';
+set $user_region '';
+set $user_name '';
+location /validate_user_profile {
+    internal;
+    content_by_lua 'ngx.apiGateway.validation.validateUserProfile()';
+}
+
+#proxy to an OAuth identity provider
+location /validate-user {
+     internal;
+     #resolver 8.8.8.8;
+     set_if_empty $oauth_client_id '--change-me--';
+     set_if_empty $oauth_host 'ims-na1-stg1.adobelogin.com';
+     proxy_pass https://$oauth_host/ims/profile/v1?client_id=$oauth_client_id&bearer_token=$authtoken;
+     proxy_method GET;
+     proxy_pass_request_body off;
+     proxy_pass_request_headers off;
+}
+```
+
+To view more examples on setting up OAuth Token validator check `test/perl/api-gateway/validation/oauth2/userProfileValidator.t`.
 
 Developer guide
 ===============
