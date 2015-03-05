@@ -171,19 +171,129 @@ The design principles for request validation are:
 * For CORS, when the request method is `OPTIONS`, validation should be skipped
 * Validators execute in the `nginx access phase` of the request, but after other nginx directives such as `deny`, `allow`.
 
+In order to enable request validation for a location you can use the following sample config to get started:
+
+```nginx
+#
+# default request validation implementation
+#
+location /validate-request {
+    internal;
+    content_by_lua 'ngx.apiGateway.validation.defaultValidateRequestImpl()';
+}
+
+location /protected-location {
+
+    set $api_key $http_x_api_key;
+    set $validate_api_key     "on;   path=/validate-api-key;   order=1; ";
+
+    set $authtoken $http_authorization;
+    set $validate_oauth_token "on;   path=/validate-oauth;     order=2; ";
+
+    # validate the request
+    access_by_lua "ngx.apiGateway.validation.validateRequest()";
+
+    # ----------------------------------
+    #  proxy to the service provider
+    # ----------------------------------
+    proxy_pass $backend_proxy_pass$request_uri;
+}
+
+```
+
 [Back to TOC](#table-of-contents)
 
 Built in validators
 ===================
 
+### API KEY Validator
+Validates the API-KEY by looking in the Redis Cache.
+To add a key into the Redis cache you can use the following Redis Command:
+
+```
+HMSET cachedkey:$key:$service_id key_secret $key_secret service-id $service_id service-name $service_name realm $realm consumer-org-name $consumer_org_name app-name $app_name
+```
+* `$key` is the api-key
+* `$key_secret` is the secret asociated with the API-KEY. It is recommended to store the encrypted version of the secret in this field and decrypt it when needed.
+* `$service_id` is an ID for the service that the API-KEY subscribed to
+* `$service_name` is a friendly name for the service_id
+* `$realm` could be used to distinguish between a DEV key vs a STAGE key vs a PROD key
+* `$consumer_org_name` is the name of the organisation that create the API-KEY. For analytics purposes it's better to group applications created by the same organisation in the same bucket in order to provide a unified view for that organisation.
+* `$app_name` is an application identifier which should be unique for an application, even if the API-KEY changes over time
 
 
-| Validator          |  Sample code   | Description   |
-| -------------      | -------------  | ------------- |
-| API KEY Validator  | ``` set $api_key_validator "on;   path=/validate-api-key;  order=1; "; ```  | Validates the API-KEY by looking in the Redis Cache |
-| HMAC Signature Validator  | ```set $validate_hmac_signature "on;   path=/validate_hmac_signature;  order=1; ";```  | Validates the HMAC Signature according to a rule you can define in the configuration. This Validator works with HMAC-SHA-1, HMAC-SHA-224, HMAC-SHA-256, HMAC-SHA-384, HMAC-SHA-512  |
-| OAuth Token Validator  | ```set $validate_oauth_token "on;   path=/validate-oauth;  order=1; ";```  |  Validates an OAuth Token through a local defined location `/validate-token` that simply proxies the request to the actual OAuth Provider |
+To activate the API-KEY validator simply set `api_key_validator` to on, optionally specifying which internal location to use in order to validate the key.
+Think of the internal location as a mean to swap the default implementation with your own.
 
+```nginx
+location /protected-with-api-key {
+  set $api_key_validator "on;   path=/validate-api-key;  order=1; ";
+}
+#
+# default api-key validator impl
+#
+location /validate-api-key {
+    internal;
+    content_by_lua 'ngx.apiGateway.validation.validateApiKey()';
+ }
+```
+To view more examples check `test/perl/api-gateway/validation/key/api_key.t` test file
+
+### HMAC Signature Validator
+Validates the HMAC Signature according to a rule you can define in the configuration. This Validator works with HMAC-SHA-1, HMAC-SHA-224, HMAC-SHA-256, HMAC-SHA-384, HMAC-SHA-512.
+
+To enable HMAC validation set `validate_hmac_signature` to on.
+
+```nginx
+location /protected-with-hmac {
+  set $api_key $http_x_api_key;
+  #
+  # the HMAC should match to the $hmac_target variable
+  #
+  set $hmac_target_string $http_x_api_signature;
+  #
+  # set $hmac_source_string $request_method$uri$api_key
+  # this string is used to apply HMAC-SHA* algorithms and if the request is correct, it should match with $hmac_target_string
+  set_by_lua $hmac_source_string 'return string.lower(ngx.var.request_method .. ngx.var.uri .. ngx.var.api_key)';
+  #
+  # $key_secret is populated by api-key-validator
+  #
+  set $hmac_secret $key_secret;
+  set $hmac_method sha1;
+  set $validate_hmac_signature "on;   path=/validate_hmac_signature;  order=1; ";
+}
+location /validate_hmac_signature {
+    internal;
+    content_by_lua 'ngx.apiGateway.validation.validateHmacSignature()';
+}
+```
+
+To view more examples on setting up HMAC validator check `test/perl/api-gateway/validation/signing/hmacGenericSignatureValidator.t`.
+
+### OAuth Token Validator
+Validates an OAuth Token through a local defined location `/validate-token` that simply proxies the request to the actual OAuth Provider.
+
+Usage:
+
+```nginx
+location /protected-with-oauth-token {
+    # get OAuth token either from header or from the user_token query string
+    set $authtoken $http_authorization;
+    set $validate_oauth_token "on;   path=/validate-oauth;  order=1; ";
+}
+#
+# default OAuth Token validator impl along with the nginx variables it sets
+#
+set $oauth_token_scope 'unset';
+set $oauth_token_client_id 'unset';
+set $oauth_token_user_id 'unset';
+location /validate_oauth_token {
+    internal;
+    content_by_lua 'ngx.apiGateway.validation.validateOAuthToken()';
+}
+```
+
+To view more examples on setting up OAuth Token validator check `test/perl/api-gateway/validation/oauth2/oauthTokenValidator.t`.
 
 Developer guide
 ===============
@@ -196,7 +306,6 @@ Developer guide
 ```
 git submodule update --init --recursive
 ```
-
 
 ## Running the tests
 
