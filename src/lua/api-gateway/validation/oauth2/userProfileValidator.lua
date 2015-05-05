@@ -81,7 +81,8 @@ end
 
 --- Returns true if the profile is valid for the request context
 --     This method is to be overritten when this class is extended
-function _M:isProfileValid()
+-- @param cachedProfile The information about the user profile that gets cached
+function _M:isProfileValid(cachedProfile)
     return true
 end
 
@@ -132,7 +133,7 @@ function _M:validateRequest()
 
     if ( cachedUserProfile ~= nil ) then
         self:setContextProperties(cachedUserProfile)
-        if ( self:isProfileValid() == true ) then
+        if ( self:isProfileValid(cachedUserProfile) == true ) then
             return self:exitFn(ngx.HTTP_OK)
         else
             return self:exitFn(RESPONSES.INVALID_PROFILE.error_code, cjson.encode(RESPONSES.INVALID_PROFILE))
@@ -150,7 +151,7 @@ function _M:validateRequest()
             self:setContextProperties(cachingObj)
             self:storeProfileInCache(cacheLookupKey, cachingObj)
 
-            if ( self:isProfileValid() == true ) then
+            if ( self:isProfileValid(cachingObj) == true ) then
                 return self:exitFn(ngx.HTTP_OK)
             else
                 return self:exitFn(RESPONSES.INVALID_PROFILE.error_code, cjson.encode(RESPONSES.INVALID_PROFILE))

@@ -206,17 +206,13 @@ function ValidatorsHandler:validateSubrequests(order, subrequests, localContext,
 
 end
 
--- save variables set by subrequests into the current request vars
+---
+-- save variables set by validators in subrequests into the current request vars
 function ValidatorsHandler:saveContextInRequestVars(localContext)
-    -- local varsToSet = {
-    --    "service_name", "consumer_org_name", "app_name", "plan_name", "realm",
-    --    "oauth_token_scope","oauth_token_client_id","oauth_token_user_id",
-    --    "user_email","user_country_code","user_region","user_name"
-    --}
      for k,v in pairs(localContext) do
     -- for i,k in pairs(varsToSet) do
-        if ngx.var[k] ~= nil then
-            -- ngx.log(ngx.WARN, "Setting " .. k .. ",from: " .. ngx.var[k] .. ",to:" .. v)
+        if ngx.var[k] ~= nil and type(localContext[k]) == "string" then
+            -- ngx.log(ngx.DEBUG, "Setting " .. k .. ",from: " .. ngx.var[k] .. ",to:" .. v)
             ngx.var[k] = localContext[k]
         end
     end
