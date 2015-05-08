@@ -132,6 +132,9 @@ function _M:validateRequest()
     local cachedUserProfile = self:getProfileFromCache(cacheLookupKey)
 
     if ( cachedUserProfile ~= nil ) then
+        if (type(cachedUserProfile) == 'string') then
+            cachedUserProfile = cjson.decode(cachedUserProfile)
+        end
         self:setContextProperties(cachedUserProfile)
         if ( self:isProfileValid(cachedUserProfile) == true ) then
             return self:exitFn(ngx.HTTP_OK)
