@@ -7,6 +7,7 @@
 --   2. ngx.var.authtoken                       - required to be set
 --   3. ngx.var.redis_backend                   - required
 --   4. lua_shared_dict cachedOauthTokens 50m;  - required. The local shared dict to cache user profiles
+--   5. ngx.ctx.oauth_token_expires_at          - optional. This is usually set by the oauthTokenValidator
 --
 -- Properties that can be set by this validator:
 --  1. user_email
@@ -44,6 +45,10 @@ local DEFAULT_COUNTRY_MAP = {
     AP = { "AU", "AF", "AQ", "BH", "BD", "BT", "BN", "MM", "KH", "CN", "CX", "CC", "CK", "TL", "FJ", "PF", "HK", "IN", "ID", "IQ", "IL", "JP", "JO", "KZ", "KI", "KR", "KW", "KG", "LA", "LB", "MO", "MY", "MV", "MH", "FM", "MN", "NR", "NP", "NC", "NZ", "NU", "NF", "OM", "PK", "PG", "PH", "PN", "QA", "RU", "WS", "SA", "SG", "SB", "LK", "TW", "TJ", "TH", "TK", "TO", "TR", "TM", "TV", "AE", "UZ", "VU", "VN", "WF", "YE" }
 }
 
+---
+-- Maximum time in seconds specifying how long to cache a valid token in GW's memory
+local LOCAL_CACHE_TTL = 60
+
 -- returns the key that should be used when looking up in the cache --
 function _M:getCacheToken(token)
     local t = token;
@@ -55,6 +60,24 @@ function _M:getCacheToken(token)
     end
 end
 
+--- Converts the expire_at into expire_in in seconds
+-- @param expire_at UTC expiration time in seconds
+--
+function _M:getExpiresIn(expire_at)
+    if ( expire_at == nil ) then
+        return LOCAL_CACHE_TTL
+    end
+
+    local expire_at_s = expire_at
+    if expire_at_s > 9999999999 then
+        expire_at_s = expire_at / 1000
+    end
+
+    local local_t = os.time()
+    local expires_in_s = expire_at_s - local_t
+    return expires_in_s
+end
+
 function _M:getProfileFromCache(cacheLookupKey)
     local localCacheValue = self:getKeyFromLocalCache(cacheLookupKey, "cachedUserProfiles")
     if ( localCacheValue ~= nil ) then
@@ -64,8 +87,12 @@ function _M:getProfileFromCache(cacheLookupKey)
 
     local redisCacheValue = self:getKeyFromRedis(cacheLookupKey, "user_json")
     if ( redisCacheValue ~= nil ) then
-        -- ngx.log(ngx.WARN, "Found profile in redis cache")
-        self:setKeyInLocalCache(cacheLookupKey, redisCacheValue, 60, "cachedUserProfiles")
+        ngx.log(ngx.DEBUG, "Found User Profile in Redis cache")
+        local oauthTokenExpiration = ngx.ctx.oauth_token_expires_at
+        local expiresIn = self:getExpiresIn(oauthTokenExpiration)
+        local localExpiresIn = math.min( expiresIn, LOCAL_CACHE_TTL )
+        ngx.log(ngx.DEBUG, "Storing cached User Profile in the local cache for " .. tostring(localExpiresIn) .. " s out of a total validity of " .. tostring(expiresIn) .. " s.")
+        self:setKeyInLocalCache(cacheLookupKey, redisCacheValue, localExpiresIn, "cachedUserProfiles")
         return redisCacheValue
     end
     return nil;
@@ -73,10 +100,15 @@ end
 
 function _M:storeProfileInCache(cacheLookupKey, cachingObj)
     local cachingObjString = cjson.encode(cachingObj)
-    -- TODO: find a better way to compute the expiry time
-    self:setKeyInLocalCache(cacheLookupKey, cachingObjString, 60, "cachedUserProfiles")
+
+    local oauthTokenExpiration = ngx.ctx.oauth_token_expires_at
+    local expiresIn = self:getExpiresIn(oauthTokenExpiration)
+    local localExpiresIn = math.min( expiresIn, LOCAL_CACHE_TTL )
+    ngx.log(ngx.DEBUG, "Storing new cached User Profile in the local cache for " .. tostring(localExpiresIn) .. " s out of a total validity of " .. tostring(expiresIn) .. " s.")
+
+    self:setKeyInLocalCache(cacheLookupKey, cachingObjString, localExpiresIn , "cachedUserProfiles")
     -- cache the use profile for 5 minutes
-    self:setKeyInRedis(cacheLookupKey, "user_json", ((os.time() + 300) * 1000 ), cachingObjString)
+    self:setKeyInRedis(cacheLookupKey, "user_json", oauthTokenExpiration or ((os.time() + LOCAL_CACHE_TTL) * 1000 ), cachingObjString)
 end
 
 --- Returns true if the profile is valid for the request context
@@ -106,6 +138,8 @@ end
 
 ---
 -- Returns an object with a set of variables to be saved in the request's context and later in the request's vars
+--  IMPORTANT: This method is only called when fetching a new profile, otherwise the information from the cache
+--             is read and automatically added to the context based on the object returned by this method
 -- @param profile User Profile
 --
 function _M:extractContextVars(profile)

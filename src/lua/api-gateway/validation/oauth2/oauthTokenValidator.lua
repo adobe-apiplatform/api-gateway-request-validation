@@ -16,6 +16,7 @@
 --  1. oauth_token_scope
 --  2. oauth_token_client_id
 --  3. oauth_token_user_id
+--  4. oauth_token_expires_at
 
 local BaseValidator = require "api-gateway.validation.validator"
 local cjson = require "cjson"
@@ -47,8 +48,8 @@ end
 -- @param json Token info object
 --
 function _M:isCachedTokenValid(json)
-    local expires_in_ms = self:getExpiresIn(json.oauth_token_expires_at)
-    return expires_in_ms
+    local expires_in_s = self:getExpiresIn(json.oauth_token_expires_at)
+    return expires_in_s
 end
 
 -- returns the key that should be used when looking up in the cache --
@@ -61,23 +62,32 @@ function _M:getOauthTokenForCaching(token, oauth_host)
     end
 end
 
---- Converts the expire_at into expire_in
--- @param expire_at UTC expiration time in ms
+--- Converts the expire_at into expire_in in seconds
+-- @param expire_at UTC expiration time in seconds
 --
 function _M:getExpiresIn(expire_at)
-    local local_t = os.time() * 1000
-    local expires_in_ms = expire_at - local_t
-    return expires_in_ms
+    if ( expire_at == nil ) then
+        return LOCAL_CACHE_TTL
+    end
+
+    local expire_at_s = expire_at
+    if expire_at_s > 9999999999 then
+        expire_at_s = expire_at / 1000
+    end
+
+    local local_t = os.time()
+    local expires_in_s = expire_at_s - local_t
+    return expires_in_s
 end
 
 function _M:storeTokenInCache(cacheLookupKey, cachingObj, expire_at_ms_utc)
-    local expires_in_ms = self:getExpiresIn(expire_at_ms_utc)
-    if ( expires_in_ms <= 0 ) then
+    local expires_in_s = self:getExpiresIn(expire_at_ms_utc)
+    if ( expires_in_s <= 0 ) then
         ngx.log(ngx.DEBUG, "OAuth Token was not persisted in the cache as it has expired at:" .. tostring(expire_at_ms_utc) .. ", while now is:" .. tostring(os.time() * 1000) .. " ms.")
         return nil
     end
-    local local_expire_in =  math.min( expires_in_ms / 1000, LOCAL_CACHE_TTL )
-    ngx.log(ngx.DEBUG, "Storing a new token expiring in  " .. tostring(local_expire_in) .. " s locally, out of a total validity of " .. tostring(expires_in_ms / 1000) .. " s.")
+    local local_expire_in =  math.min( expires_in_s, LOCAL_CACHE_TTL )
+    ngx.log(ngx.DEBUG, "Storing a new token expiring in  " .. tostring(local_expire_in) .. " s locally, out of a total validity of " .. tostring(expires_in_s) .. " s.")
     local cachingObjString = cjson.encode(cachingObj)
     self:setKeyInLocalCache(cacheLookupKey, cachingObjString, local_expire_in, "cachedOauthTokens")
     self:setKeyInRedis(cacheLookupKey, "token_json", expire_at_ms_utc, cachingObjString)
@@ -157,8 +167,8 @@ function _M:validate_ims_token()
         local obj = cjson.decode(cachedToken)
         local tokenValidity, error = self:isCachedTokenValid(obj)
         if tokenValidity > 0 then
-            local local_expire_in =  math.min( tokenValidity / 1000, LOCAL_CACHE_TTL )
-            ngx.log(ngx.DEBUG, "Caching locally a new token for " .. tostring(local_expire_in) .. " s, out of a total validity of " .. tostring(tokenValidity / 1000) .. " s.")
+            local local_expire_in =  math.min( tokenValidity, LOCAL_CACHE_TTL )
+            ngx.log(ngx.DEBUG, "Caching locally a new token for " .. tostring(local_expire_in) .. " s, out of a total validity of " .. tostring(tokenValidity ) .. " s.")
             self:setKeyInLocalCache(cacheLookupKey, cachedToken, local_expire_in  , "cachedOauthTokens")
             self:setContextProperties(obj)
             return self:exitFn(ngx.HTTP_OK)
