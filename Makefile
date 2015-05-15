@@ -34,6 +34,7 @@ test: redis
 	mkdir  -p $(BUILD_DIR)
 	mkdir  -p $(BUILD_DIR)/test-logs
 	cp -r test/resources/api-gateway $(BUILD_DIR)
+	rm -f $(BUILD_DIR)/test-logs/*
 
 	TEST_NGINX_AWS_CLIENT_ID="${TEST_NGINX_AWS_CLIENT_ID}" TEST_NGINX_AWS_SECRET="${TEST_NGINX_AWS_SECRET}" PATH=/usr/local/sbin:$$PATH TEST_NGINX_SERVROOT=`pwd`/$(BUILD_DIR)/servroot TEST_NGINX_PORT=1989 prove -I ./test/resources/test-nginx/lib -I ./test/resources/test-nginx/inc  -r ./test/perl
 	cat $(BUILD_DIR)/redis-test.pid | xargs kill
