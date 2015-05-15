@@ -32,14 +32,25 @@ local RESPONSES = {
     UNKNOWN_ERROR = { error_code = "503010", message = "Could not validate the oauth token" }
 }
 
+local TIMEZONE_OFFSET_SECONDS = os.time() - os.time(os.date("!*t"))
+
+---
+-- Maximum time in seconds specifying how long to cache a valid token in GW's memory
+local LOCAL_CACHE_TTL = 60
+
 -- Hook to override the logic verifying if a token is valid
 function _M:istokenValid(json)
     return json.valid or false, RESPONSES.INVALID_TOKEN
 end
 
 -- override this if other checks need to be in place
+
+--- Returns a number specifying how long the token is valid. If the value is 0 or less the token is expired
+-- @param json Token info object
+--
 function _M:isCachedTokenValid(json)
-    return true
+    local expires_in_ms = self:getExpiresIn(json.oauth_token_expires_at)
+    return expires_in_ms
 end
 
 -- returns the key that should be used when looking up in the cache --
@@ -52,11 +63,41 @@ function _M:getOauthTokenForCaching(token, oauth_host)
     end
 end
 
-function _M:storeTokenInCache(cacheLookupKey, cachingObj, expire_at)
-    local cachingObjString = cjson.encode(cachingObj)
+--- Converts the expire_at into expire_in
+-- @param expire_at UTC expiration time in ms
+--
+function _M:getExpiresIn(expire_at)
+    local utc_t = os.time(os.date("!*t"))
+    local local_t = (utc_t + TIMEZONE_OFFSET_SECONDS) * 1000
+    local expires_in_ms = expire_at - local_t
+    return expires_in_ms
+end
 
-    self:setKeyInLocalCache(cacheLookupKey, cachingObjString, 60, "cachedOauthTokens")
-    self:setKeyInRedis(cacheLookupKey, "token_json", expire_at, cachingObjString)
+function _M:storeTokenInCache(cacheLookupKey, cachingObj, expire_at_ms_utc)
+    local expires_in_ms = self:getExpiresIn(expire_at_ms_utc)
+    if ( expires_in_ms <= 0 ) then
+        ngx.log(ngx.DEBUG, "OAuth Token was not persisted in the cache as it has expired at:" .. tostring(expire_at_ms_utc) .. ", while now is:" .. tostring(local_t))
+        return nil
+    end
+    ngx.log(ngx.DEBUG, "Storing a new token expiring in " .. tostring(expires_in_ms) .. "ms.")
+    local cachingObjString = cjson.encode(cachingObj)
+    self:setKeyInLocalCache(cacheLookupKey, cachingObjString, math.min(expires_in_ms / 1000, LOCAL_CACHE_TTL ), "cachedOauthTokens")
+    self:setKeyInRedis(cacheLookupKey, "token_json", expire_at_ms_utc, cachingObjString)
+end
+
+---
+-- Returns an object with a set of variables to be saved in the request's context and later in the request's vars
+--  IMPORTANT: This method is only called when validating a new token, otherwise the information from the cache
+--             is read and automatically added to the context based on the object returned by this method
+-- @param tokenInfo An object with the decoded response from the OAuth 2.0 service
+--
+function _M:extractContextVars(tokenInfo)
+    local cachingObj = {}
+    cachingObj.oauth_token_scope = tokenInfo.token.scope
+    cachingObj.oauth_token_client_id = tokenInfo.token.client_id
+    cachingObj.oauth_token_user_id = tokenInfo.token.user_id
+    cachingObj.oauth_token_expires_at = tokenInfo.expires_at -- NOTE: Assumption: value in ms
+    return cachingObj
 end
 
 -- TODO: cache invalid tokens too for a short while
@@ -70,10 +111,7 @@ function _M:checkResponseFromAuth(res, cacheLookupKey)
             return tokenValidity, error
         end
         if tokenValidity and json.token ~= nil then
-            local cachingObj = {}
-            cachingObj.oauth_token_scope = json.token.scope
-            cachingObj.oauth_token_client_id = json.token.client_id
-            cachingObj.oauth_token_user_id = json.token.user_id
+            local cachingObj = self:extractContextVars(json)
 
             self:setContextProperties(cachingObj)
             self:storeTokenInCache(cacheLookupKey, cachingObj, json.expires_at)
@@ -95,7 +133,7 @@ function _M:getTokenFromCache(cacheLookupKey)
     local redisCacheValue = self:getKeyFromRedis(cacheLookupKey, "token_json")
     if (redisCacheValue ~= nil) then
         ngx.log(ngx.DEBUG, "Found IMS token in redis cache")
-        self:setKeyInLocalCache(cacheLookupKey, redisCacheValue, 60, "cachedOauthTokens")
+--        self:setKeyInLocalCache(cacheLookupKey, redisCacheValue, 60, "cachedOauthTokens")
         return redisCacheValue
     end
     return nil;
@@ -120,7 +158,9 @@ function _M:validate_ims_token()
         -- ngx.log(ngx.WARN, "Cached token=" .. cachedToken)
         local obj = cjson.decode(cachedToken)
         local tokenValidity, error = self:isCachedTokenValid(obj)
-        if tokenValidity then
+        if tokenValidity > 0 then
+            ngx.log(ngx.DEBUG, "Caching locally a new token for " .. tostring(tokenValidity) .. " ms")
+            self:setKeyInLocalCache(cacheLookupKey, cachedToken, math.min( tokenValidity / 1000, LOCAL_CACHE_TTL ) , "cachedOauthTokens")
             self:setContextProperties(obj)
             return self:exitFn(ngx.HTTP_OK)
         end

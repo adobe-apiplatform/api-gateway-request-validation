@@ -9,7 +9,7 @@ use Cwd qw(cwd);
 
 repeat_each(2);
 
-plan tests => repeat_each() * (blocks() * 7) + 2;
+plan tests => repeat_each() * (blocks() * 9);
 
 my $pwd = cwd();
 
@@ -116,7 +116,7 @@ GET /test-oauth-validation
                 if ( res ~= nil) then
                     validator:exitFn(200, res)
                 else
-                    validator:exitFn(200, "Could not read " .. ngx.var.key .. ".")
+                    validator:exitFn(200, "OAuth " .. ngx.var.key .. " not found in local cache")
                 end
             ';
         }
@@ -135,20 +135,33 @@ GET /test-oauth-validation
             set_by_lua $generated_expires_at 'return ((os.time() + 4) * 1000 )';
             return 200 '{"valid":true,"expires_at":$generated_expires_at,"token":{"id":"1234","scope":"openid email profile","user_id":"21961FF44F97F8A10A490D36","expires_in":"86400000","client_id":"client_id_test_2","type":"access_token"}}';
         }
+        location /pause {
+            content_by_lua '
+                ngx.sleep(5)
+                ngx.say("OK")
+            ';
+        }
 --- more_headers
 Authorization: Bearer SOME_OAUTH_TOKEN_TEST_2_X_0
 --- pipelined_requests eval
 ["GET /test-oauth-validation",
 "GET /get-from-cache",
 "GET /validate-token",
-"GET /test-oauth-token-expiry"
+"GET /test-oauth-token-expiry",
+"GET /pause",
+"GET /get-from-cache",
+"GET /test-oauth-token-expiry",
 ]
 --- response_body_like eval
 [ "ims token is valid.\n" ,
-'.*{"oauth_token_client_id":"client_id_test_2","oauth_token_scope":"openid email profile","oauth_token_user_id":"21961FF44F97F8A10A490D36"}.*',
+'.*{"oauth_token_client_id":"client_id_test_2","oauth_token_expires_at":\\d{13},"oauth_token_scope":"openid email profile","oauth_token_user_id":"21961FF44F97F8A10A490D36"}.*',
 '.*"expires_at":\d+,.*',
-'^:[1-4]\r\n$' # the cached token expiry time is in seconds, and it can only be between 1s to 4s, but not less. -1 response indicated the key is not cached or it has expired
+'^:[1-4]\r\n$', # the cached token expiry time is in seconds, and it can only be between 1s to 4s, but not less. -1 response indicated the key is not cached or it has expired
+'OK\n',
+'OAuth cachedoauth\:bd9fdbb91a974d1c94e65dc6a0ce31a4 not found in local cache',
+'-2\r\n' # redis should have expired the oauth token by now
 ]
+--- timeout: 10s
 --- no_error_log
 [error]
 
@@ -278,9 +291,9 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST4
 ]
 --- response_body_like eval
 ["ims token is valid.\n",
-'.*{"oauth_token_client_id":"test_Client_ID","oauth_token_scope":"openid,AdobeID","oauth_token_user_id":"21961FF44F97F8A10A490D36"}.*',
+'.*{"oauth_token_client_id":"test_Client_ID","oauth_token_expires_at":\\d{13},"oauth_token_scope":"openid,AdobeID","oauth_token_user_id":"21961FF44F97F8A10A490D36"}.*',
 "ims token is also valid.\n",
-'Local cache:{"oauth_token_client_id":"test_Client_ID","oauth_token_scope":"openid,AdobeID","oauth_token_user_id":"21961FF44F97F8A10A490D36"}\n'
+'Local cache:{"oauth_token_client_id":"test_Client_ID","oauth_token_expires_at":\\d{13},"oauth_token_scope":"openid,AdobeID","oauth_token_user_id":"21961FF44F97F8A10A490D36"}\n'
 ]
 --- no_error_log
 [error]
