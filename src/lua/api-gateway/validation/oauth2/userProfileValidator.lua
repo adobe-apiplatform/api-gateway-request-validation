@@ -73,7 +73,7 @@ function _M:getExpiresIn(expire_at)
         expire_at_s = expire_at / 1000
     end
 
-    local local_t = os.time()
+    local local_t = ngx.time() -- os.time()
     local expires_in_s = expire_at_s - local_t
     return expires_in_s
 end
@@ -108,7 +108,7 @@ function _M:storeProfileInCache(cacheLookupKey, cachingObj)
 
     self:setKeyInLocalCache(cacheLookupKey, cachingObjString, localExpiresIn , "cachedUserProfiles")
     -- cache the use profile for 5 minutes
-    self:setKeyInRedis(cacheLookupKey, "user_json", oauthTokenExpiration or ((os.time() + LOCAL_CACHE_TTL) * 1000 ), cachingObjString)
+    self:setKeyInRedis(cacheLookupKey, "user_json", oauthTokenExpiration or ((ngx.time() + LOCAL_CACHE_TTL) * 1000 ), cachingObjString)
 end
 
 --- Returns true if the profile is valid for the request context
