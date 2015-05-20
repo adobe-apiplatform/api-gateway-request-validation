@@ -45,7 +45,7 @@ redis: all
 	cd $(BUILD_DIR)/redis-$(REDIS_VERSION) && make
 
 package:
-	git archive --format=tar --prefix=api-gateway-request-validation-1.0/ -o api-gateway-request-validation-1.0.tar.gz -v HEAD
+	git archive --format=tar --prefix=api-gateway-request-validation-1.1/ -o api-gateway-request-validation-1.1.tar.gz -v HEAD
 
 clean: all
 	rm -rf $(BUILD_DIR)
