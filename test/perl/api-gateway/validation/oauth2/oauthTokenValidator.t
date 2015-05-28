@@ -109,7 +109,7 @@ GET /test-oauth-validation
 
             set $key 'cachedoauth:$authtoken_hash';
             content_by_lua '
-                local BaseValidator = require "api-gateway.core.validator"
+                local BaseValidator = require "api-gateway.validation.validator"
                 local TestValidator = BaseValidator:new()
                 local validator = TestValidator:new()
                 local res = validator:getKeyFromRedis(ngx.var.key, "token_json")

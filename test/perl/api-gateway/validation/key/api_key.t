@@ -132,6 +132,7 @@ GET /test-api-key?api_key=ab123
 --- config
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
+        error_log ../test-logs/api_key_test5_error.log debug;
         location /test-api-key-5 {
             set $service_id s-123;
 

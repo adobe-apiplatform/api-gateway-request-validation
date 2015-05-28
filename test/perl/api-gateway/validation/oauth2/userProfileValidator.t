@@ -73,7 +73,7 @@ __DATA__
             set_md5 $authtoken_hash $authtoken;
             set $key 'cachedoauth:$authtoken_hash';
             content_by_lua '
-                local BaseValidator = require "api-gateway.core.validator"
+                local BaseValidator = require "api-gateway.validation.validator"
                 local v = BaseValidator:new()
                 local k = v:getKeyFromLocalCache(ngx.var.key,"cachedUserProfiles")
                 v:exitFn(200,"Local: " .. tostring(k))
@@ -87,7 +87,7 @@ __DATA__
             set_md5 $authtoken_hash $authtoken;
             set $key 'cachedoauth:$authtoken_hash';
             content_by_lua '
-                local BaseValidator = require "api-gateway.core.validator"
+                local BaseValidator = require "api-gateway.validation.validator"
                 local v = BaseValidator:new()
                 local k = v:getKeyFromRedis(ngx.var.key,"user_json")
                 v:exitFn(200,"Redis: " .. tostring(k))
@@ -136,7 +136,7 @@ Authorization: Bearer SOME_OAUTH_PROFILE_TEST_1
 
         location /local-cache {
             content_by_lua '
-                local BaseValidator = require "api-gateway.core.validator"
+                local BaseValidator = require "api-gateway.validation.validator"
                 local v = BaseValidator:new()
                 local k = v:getKeyFromLocalCache("cachedoauth:8cd12eadb5032aa2153c8f830d01e0be","cachedUserProfiles")
                 v:exitFn(200,k)
@@ -145,7 +145,7 @@ Authorization: Bearer SOME_OAUTH_PROFILE_TEST_1
 
         location /redis-cache {
             content_by_lua '
-                local BaseValidator = require "api-gateway.core.validator"
+                local BaseValidator = require "api-gateway.validation.validator"
                 local v = BaseValidator:new()
                 local k = v:getKeyFromRedis("cachedoauth:8cd12eadb5032aa2153c8f830d01e0be","user_json")
                 v:exitFn(200,k)

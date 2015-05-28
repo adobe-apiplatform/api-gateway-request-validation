@@ -330,7 +330,7 @@ Content-Type: text/plain"
             "VALIDATOR_401_ERROR" : {
                 "http_status" : 503,
                 "error_code"  : 401,
-                "message"     : "{\\"error_code\\": \\"-1\\",\\"message\\":\\"custom error message\\"}",
+                "message"     : "{\\"error_code\\": \\"-1\\",\\"message\\":\\"custom error message\\", \\"requestID\\":\\"ngx.var.requestID\\", \\"another_ID\\":\\"ngx.var.another_ID\\", \\"var3\\":\\"ngx.var.var3\\", \\"var4\\":\\"ngx.var.var4\\"}",
                 "headers"     : {
                     "custom-header-1": "header-1-value",
                     "custom-header-2": "ngx.var.custom_header_2"
@@ -354,6 +354,10 @@ Content-Type: text/plain"
              set $request_validator_1   "on; path=/validator_1; order=1;";
              set $request_validator_2 "on; path=/validator_2; order=2;";
              set $custom_header_2 "this is a lua variable";
+             set $requestID "message customization finished";
+             set $another_ID "another field";
+             set $var3 "var3 value";
+             set $var4 "var4 value";
 
              access_by_lua "ngx.apiGateway.validation.validateRequest()";
              content_by_lua '
@@ -385,7 +389,7 @@ Content-Type: text/plain"
 ]
 --- response_body_like eval
 [
-'^{"error_code": "-1","message":"custom error message"}+',
+'^{"error_code": "-1","message":"custom error message", "requestID":"message customization finished", "another_ID":"another field", "var3":"var3 value", "var4":"ngx.var.var4"}+',
 '^{"error_code":"403010","message":"Oauth token is missing."}+',
 "You did not send any key"
 ]

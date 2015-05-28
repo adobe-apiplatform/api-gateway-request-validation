@@ -100,7 +100,10 @@ function ValidatorHandlerErrorDecorator:decorateResponse( response_status, respo
                 ngx.header[k] = val
             end
         end
-        ngx.say(o.message)
+        -- ngx.say(o.message)
+        -- add custom message
+        local msg = self:parseResponseMessage(o.message)
+        ngx.say(msg)
         return
     end
 
@@ -112,6 +115,29 @@ function ValidatorHandlerErrorDecorator:decorateResponse( response_status, respo
     end
     -- if there is no custom response form the validator just exit with the status
     ngx.exit( response_status )
+end
+
+--- Parse the response message and replace any variables, if found (at most 3 variables)
+-- @param message Response message
+--
+function ValidatorHandlerErrorDecorator:parseResponseMessage(message)
+    local m = message
+    local from, to, var, varName, value
+    local cnt = 0
+    while cnt < 3 do
+        from, to = ngx.re.find(m, "ngx.var.[a-zA-Z_0-9]+", "jo")
+        if(from) then
+            var = string.sub(m, from, to)
+            varName = string.sub(m, from + 8, to) -- "+ 8" jump over "ngx.var."
+            value = ngx.var[varName]
+            m = string.gsub(m, var, value)
+        else
+            break
+        end
+        cnt = cnt + 1
+    end
+    -- all variables have been replaced
+    return m
 end
 
 -- hook to overwrite the DEFAULT_RESPONSES by specifying a jsonString
