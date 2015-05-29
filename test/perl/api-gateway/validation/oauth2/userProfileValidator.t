@@ -96,7 +96,7 @@ __DATA__
 
         location /validate-user {
             internal;
-            return 200 '{"countryCode":"AT","emailVerified":"true","email":"johndoe@domain.com","userId":"1234","name":"full name","displayName":"display_name"}';
+            return 200 '{"countryCode":"AT","emailVerified":"true","email":"johndoe_ĂÂă@domain.com","userId":"1234","name":"full name","displayName":"display_name—大－女"}';
         }
 --- more_headers
 Authorization: Bearer SOME_OAUTH_PROFILE_TEST_1
@@ -107,9 +107,9 @@ Authorization: Bearer SOME_OAUTH_PROFILE_TEST_1
 "GET /redis-cache"
 ]
 --- response_body_like eval
-['^user_email=johndoe\@domain.com,user_country_code=AT,user_region=EU,user_name=display_name.*',
-'^Local: {"user_region":"EU","user_country_code":"AT","user_email":"johndoe@domain.com","user_name":"display_name"}.*',
-'^Redis: {"user_region":"EU","user_country_code":"AT","user_email":"johndoe@domain.com","user_name":"display_name"}.*']
+['^user_email=johndoe_ĂÂă\@domain.com,user_country_code=AT,user_region=EU,user_name=display_name—大－女.*',
+'^Local: {"user_region":"EU","user_country_code":"AT","user_email":"johndoe_ĂÂă@domain.com","user_name":"display_name—大－女"}.*',
+'^Redis: {"user_region":"EU","user_country_code":"AT","user_email":"johndoe_ĂÂă@domain.com","user_name":"display_name—大－女"}.*']
 --- no_error_log
 [error]
 
@@ -199,19 +199,19 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_TWO
 
         location /validate-user {
             internal;
-            return 200 '{"countryCode":"CA","emailVerified":"true","email":"noreply@domain.com","userId":"1234","name":"full name","displayName":"display_name"}';
+            return 200 '{"countryCode":"CA","emailVerified":"true","email":"noreply-ăâ@domain.com","userId":"1234","name":"full name","displayName":"display_name-工－女－长"}';
         }
 --- more_headers
-Authorization: Bearer SOME_OAUTH_TOKEN_TEST_TWO
+Authorization: Bearer SOME_OAUTH_TOKEN_TEST_THREE
 --- request
 GET /test-validate-user
 --- response_body_like eval
-"^user_email=noreply\@domain.com,user_country_code=CA,user_region=US,user_name=display_name.*"
+"^user_email=noreply-ăâ\@domain.com,user_country_code=CA,user_region=US,user_name=display_name-工－女－长.*"
 --- response_headers_like
-X-User-Id: noreply@domain.com
+X-User-Id: noreply-ăâ@domain.com
 X-User-Country-Code: CA
 X-User-Region: US
-X-User-Name: display_name
+X-User-Name: display_name-工－女－长
 --- error_code: 200
 --- no_error_log
 [error]
