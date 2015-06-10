@@ -107,7 +107,7 @@ Authorization: Bearer SOME_OAUTH_PROFILE_TEST_1
 "GET /redis-cache"
 ]
 --- response_body_like eval
-['^user_email=johndoe_ĂÂă\@domain.com,user_country_code=AT,user_region=EU,user_name=display_name—大－女.*',
+['^user_email=johndoe_ĂÂă\@domain.com,user_country_code=AT,user_region=EU,user_name=display_name%E2%80%94%E5%A4%A7%EF%BC%8D%E5%A5%B3.*',
 '^Local: {"user_region":"EU","user_country_code":"AT","user_email":"johndoe_ĂÂă@domain.com","user_name":"display_name—大－女"}.*',
 '^Redis: {"user_region":"EU","user_country_code":"AT","user_email":"johndoe_ĂÂă@domain.com","user_name":"display_name—大－女"}.*']
 --- no_error_log
@@ -206,12 +206,12 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_THREE
 --- request
 GET /test-validate-user
 --- response_body_like eval
-"^user_email=noreply-ăâ\@domain.com,user_country_code=CA,user_region=US,user_name=display_name-工－女－长.*"
+"^user_email=noreply-ăâ\@domain.com,user_country_code=CA,user_region=US,user_name=display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF.*"
 --- response_headers_like
 X-User-Id: noreply-ăâ@domain.com
 X-User-Country-Code: CA
 X-User-Region: US
-X-User-Name: display_name-工－女－长
+X-User-Name: display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF
 --- error_code: 200
 --- no_error_log
 [error]

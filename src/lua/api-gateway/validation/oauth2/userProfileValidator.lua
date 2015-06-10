@@ -78,6 +78,17 @@ function _M:getExpiresIn(expire_at)
     return expires_in_s
 end
 
+function _M:getContextPropertiesObject(obj)
+    local props = {}
+    for k, v in pairs(obj) do
+        props[k] = v
+        if k == "user_name" or k == "user_first_name" or k == "user_last_name" then
+            props[k] = ngx.escape_uri(v)
+        end
+    end
+    return props
+end
+
 function _M:getProfileFromCache(cacheLookupKey)
     local localCacheValue = self:getKeyFromLocalCache(cacheLookupKey, "cachedUserProfiles")
     if ( localCacheValue ~= nil ) then
@@ -148,7 +159,8 @@ function _M:extractContextVars(profile)
     cachingObj.user_country_code    = profile.countryCode
     cachingObj.user_name            = profile.displayName
     cachingObj.user_region          = self:getUserRegion(profile.countryCode)
-
+    cachingObj.user_first_name      = profile.first_name
+    cachingObj.user_last_name       = profile.last_name
     return cachingObj
 end
 
@@ -169,7 +181,7 @@ function _M:validateRequest()
         if (type(cachedUserProfile) == 'string') then
             cachedUserProfile = cjson.decode(cachedUserProfile)
         end
-        self:setContextProperties(cachedUserProfile)
+        self:setContextProperties(self:getContextPropertiesObject(cachedUserProfile))
         if ( self:isProfileValid(cachedUserProfile) == true ) then
             return self:exitFn(ngx.HTTP_OK)
         else
@@ -185,7 +197,7 @@ function _M:validateRequest()
 
             local cachingObj = self:extractContextVars(json)
 
-            self:setContextProperties(cachingObj)
+            self:setContextProperties(self:getContextPropertiesObject(cachingObj))
             self:storeProfileInCache(cacheLookupKey, cachingObj)
 
             if ( self:isProfileValid(cachingObj) == true ) then
