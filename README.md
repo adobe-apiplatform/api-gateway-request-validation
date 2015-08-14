@@ -29,7 +29,7 @@ Dependencies
 
 This library requires an nginx build with OpenSSL,
 the [ngx_lua module](http://wiki.nginx.org/HttpLuaModule), [LuaJIT 2.0](http://luajit.org/luajit.html) and
-[api-gateway-hmac](https://git.corp.adobe.com/adobe-apis/api-gateway-hmac) module.
+[api-gateway-hmac](https://github.com/apiplatform/api-gateway-hmac) module.
 
 Sample usage
 ============
