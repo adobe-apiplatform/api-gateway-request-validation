@@ -48,16 +48,16 @@ our $HttpConfig = <<_EOC_;
         ngx.apiGateway = ngx.apiGateway or {}
         ngx.apiGateway.validation = require "api-gateway.validation.factory"
     ';
-
+    lua_shared_dict cachedkeys 50m; # caches api-keys
     # dict used by OAuth validator to cache valid tokens
     lua_shared_dict cachedOauthTokens 50m;
     # dict used by User Profile validator to cache valid profiles
     lua_shared_dict cachedUserProfiles 50m;
 
-    upstream cache_rw_backend {
-    	server 127.0.0.1:6379;
+    upstream api-gateway-redis {
+        server 127.0.0.1:6379;
     }
-    upstream cache_read_only_backend { # Default config for redis health check test
+    upstream api-gateway-redis-replica { # Default config for redis health check test
         server 127.0.0.1:6379;
     }
 _EOC_

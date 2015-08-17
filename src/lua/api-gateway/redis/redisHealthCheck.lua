@@ -101,20 +101,25 @@ local function getHealthCheckForUpstream(upstreamName)
     return bits
 end
 
-local function getHealthyRedisNodeFromCache(dict_name)
+local function getHealthyRedisNodeFromCache(dict_name, upstream_name)
     local dict = ngx.shared[dict_name];
     local upstreamRedis
     if ( nil ~= dict ) then
-        upstreamRedis = dict:get("healthy_redis_upstream")
+        upstreamRedis = dict:get("healthy_redis_upstream:" .. tostring(upstream_name) )
     end
     return upstreamRedis
 end
 
-local function updateHealthyRedisNodeInCache(dict_name, upstreamRedis)
+local function updateHealthyRedisNodeInCache(dict_name, upstream_name, healthy_redis_host)
     local dict = ngx.shared[dict_name];
     if ( nil ~= dict ) then
-        dict:set("healthy_redis_upstream", upstreamRedis, 5)
+        ngx.log(ngx.DEBUG, "Saving a healthy redis host:", healthy_redis_host, " in cache:", dict_name, " for upstream:", upstream_name)
+        local exp_time_in_seconds = 5
+        dict:set("healthy_redis_upstream:" .. tostring(upstream_name), healthy_redis_host, exp_time_in_seconds)
+        return
     end
+
+    ngx.log(ngx.WARN, "Dictionary ", dict_name,  " doesn't seem to be set. Did you define one ? ")
 end
 
 local function getHostAndPortInUpstream(upstreamRedis)
@@ -132,17 +137,18 @@ end
 -- Get the redis node to use for read.
 -- Returns 3 values: <upstreamName , host, port >
 -- The difference between upstream and <host,port> is that the upstream may be just a string containing host:port
-function HealthCheck:getHealthyRedisNodeForRead()
+function HealthCheck:getHealthyRedisNode(upstream_name)
 
     -- get the Redis host and port from the local cache first
-    local redisToUse = getHealthyRedisNodeFromCache(self.shared_dict)
-    if ( nil ~= redisToUse) then
-        local host, port = getHostAndPortInUpstream(redisToUse)
-        return redisToUse, host, port
+    local healthy_redis_host = getHealthyRedisNodeFromCache(self.shared_dict, upstream_name)
+    if ( nil ~= healthy_redis_host) then
+        local host, port = getHostAndPortInUpstream(healthy_redis_host)
+        return healthy_redis_host, host, port
     end
 
+    ngx.log(ngx.DEBUG, "Looking up for a healthy redis node in upstream:", upstream_name)
     -- if the Redis host is not in the local cache get it from the upstream configuration
-    local redisUpstreamHealthResult = self:getRedisUpstreamHealthStatus()
+    local redisUpstreamHealthResult = getHealthCheckForUpstream(upstream_name)
 
     if(redisUpstreamHealthResult == nil) then
         ngx.log(ngx.ERR, "\n No upstream results found for redis!!! ")
@@ -150,11 +156,13 @@ function HealthCheck:getHealthyRedisNodeForRead()
     end
 
     for key,value in ipairs(redisUpstreamHealthResult) do
+        -- return the first node found to be up.
+        -- TODO: save all the nodes that are up and return them using round-robin alg
         if(value == " up\n") then
-            redisToUse = redisUpstreamHealthResult[key-1]
-            updateHealthyRedisNodeInCache(self.shared_dict, redisToUse)
-            local host, port = getHostAndPortInUpstream(redisToUse)
-            return redisToUse, host, port
+            healthy_redis_host = redisUpstreamHealthResult[key-1]
+            updateHealthyRedisNodeInCache(self.shared_dict, upstream_name, healthy_redis_host)
+            local host, port = getHostAndPortInUpstream(healthy_redis_host)
+            return healthy_redis_host, host, port
         end
         if(value == " DOWN\n" and redisUpstreamHealthResult[key-1] ~= nil ) then
             ngx.log(ngx.WARN, "\n Redis node " .. tostring(redisUpstreamHealthResult[key-1]) .. " is down! Checking for backup nodes. ")
@@ -164,16 +172,5 @@ function HealthCheck:getHealthyRedisNodeForRead()
     ngx.log(ngx.ERR, "\n All Redis nodes are down!!! ")
     return nil -- No redis nodes are up
 end
-
--- To get the health check results on all the nodes defined in the redis upstream.
--- The health check is performed by a worker using "resty.upstream.healthcheck" module.
--- The name of the redis read only upstream is used here.
-function HealthCheck:getRedisUpstreamHealthStatus()
-    -- TODO: make the name of the upstream configurable for reuse
-    local redisUpstreamStatus = getHealthCheckForUpstream("cache_read_only_backend")
-    return redisUpstreamStatus;
-end
-
-
 
 return HealthCheck

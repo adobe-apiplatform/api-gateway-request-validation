@@ -26,9 +26,8 @@
 -- Dependencies:
 --   1. ngx.var.oauth_host                      - optional var
 --   2. ngx.var.authtoken                       - required to be set
---   3. ngx.var.redis_backend                   - required
---   4. lua_shared_dict cachedOauthTokens 50m;  - required. The local shared dict to cache user profiles
---   5. ngx.ctx.oauth_token_expires_at          - optional. This is usually set by the oauthTokenValidator
+--   3. lua_shared_dict cachedOauthTokens 50m;  - required. The local shared dict to cache user profiles
+--   4. ngx.ctx.oauth_token_expires_at          - optional. This is usually set by the oauthTokenValidator
 --
 -- Properties that can be set by this validator:
 --  1. user_email

@@ -29,9 +29,8 @@
 -- Dependencies:
 --   1. ngx.var.oauth_host needs to be set
 --   2. ngx.var.authtoken needs to be set
---   3. ngx.var.redis_backend needs to be set
---   4. location /validate-token defined
---   5. lua_shared_dict cachedOauthTokens 50m;
+--   3. location /validate-token defined
+--   4. lua_shared_dict cachedOauthTokens 50m;
 --
 -- Properties that can be set:
 --  1. oauth_token_scope
@@ -41,7 +40,6 @@
 
 local BaseValidator = require "api-gateway.validation.validator"
 local cjson = require "cjson"
-local redis = require "resty.redis"
 
 local _M = BaseValidator:new()
 

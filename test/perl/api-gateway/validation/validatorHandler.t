@@ -49,10 +49,10 @@ our $HttpConfig = <<_EOC_;
         ngx.apiGateway.validation = require "api-gateway.validation.factory"
      ';
     # include "$pwd/conf.d/http.d/*.conf";
-    upstream cache_rw_backend {
+    upstream api-gateway-redis {
     	server 127.0.0.1:6379;
     }
-    upstream cache_read_only_backend { # Default config for redis health check test
+    upstream api-gateway-redis-replica { # Default config for redis health check test
         server 127.0.0.1:6379;
     }
 _EOC_

@@ -26,7 +26,6 @@
 -- Dependencies:
 --   1. ngx.var.key needs to be set
 --   2. ngx.var.service_id needs to be set
---   3. ngx.var.redis_backend needs to be set
 --
 -- User: ddascal
 -- Date: 11/22/13

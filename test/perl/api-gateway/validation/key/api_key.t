@@ -31,7 +31,7 @@ use Cwd qw(cwd);
 
 repeat_each(2);
 
-plan tests => repeat_each() * (blocks() * 4) + 10;
+plan tests => repeat_each() * (blocks() * 4) + 14;
 
 my $pwd = cwd();
 
@@ -47,11 +47,11 @@ our $HttpConfig = <<_EOC_;
         ngx.apiGateway = ngx.apiGateway or {}
         ngx.apiGateway.validation = require "api-gateway.validation.factory"
      ';
-    include "$pwd/conf.d/http.d/*.conf";
-    upstream cache_rw_backend {
+    lua_shared_dict cachedkeys 50m; # caches api-keys
+    upstream api-gateway-redis {
     	server 127.0.0.1:6379;
     }
-    upstream cache_read_only_backend { # Default config for redis health check test
+    upstream api-gateway-redis-replica { # Default config for redis health check test
         server 127.0.0.1:6379;
     }
 _EOC_
@@ -66,6 +66,8 @@ __DATA__
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api_key_service.conf;
+        error_log ../test-logs/api_key_test1_error.log debug;
+
 --- more_headers
 X-Test: test
 --- request
@@ -81,6 +83,7 @@ POST /cache/api_key?key=k-123&service_id=s-123
 --- config
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
+        error_log ../test-logs/api_key_test2_error.log debug;
 
         location /test-api-key {
             set $service_id s-123;
@@ -105,6 +108,8 @@ GET /test-api-key
 --- config
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
+        error_log ../test-logs/api_key_test3_error.log debug;
+
         location /test-api-key {
             set $service_id s-123;
 
@@ -128,6 +133,7 @@ GET /test-api-key?api_key=ab123
 --- config
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
+        error_log ../test-logs/api_key_test4_error.log debug;
 
         location /test-api-key {
             set $service_id s-123;
@@ -142,10 +148,13 @@ GET /test-api-key?api_key=ab123
         }
 --- pipelined_requests eval
 ["POST /cache/api_key?key=test-key-1234&service_id=s-123",
+"GET /test-api-key?api_key=test-key-1234",
 "GET /test-api-key?api_key=test-key-1234"]
 --- response_body eval
 ["+OK\r\n",
-"api-key is valid.\n"]
+"api-key is valid.\n",
+"api-key is valid.\n"
+]
 --- no_error_log
 
 
@@ -155,6 +164,7 @@ GET /test-api-key?api_key=ab123
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
         error_log ../test-logs/api_key_test5_error.log debug;
+
         location /test-api-key-5 {
             set $service_id s-123;
 
@@ -184,6 +194,8 @@ GET /test-api-key?api_key=ab123
 --- config
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
+        error_log ../test-logs/api_key_test6_error.log debug;
+
         location /test-api-key {
             set $service_id s-123;
 
@@ -210,11 +222,13 @@ GET /test-api-key?api_key=ab123
 [error]
 
 
-=== TEST 6: test api-key related field starting with capital H
+=== TEST 7: test api-key related field starting with capital H
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
+        error_log ../test-logs/api_key_test7_error.log debug;
+
         location /test-api-key {
             set $service_id hH-123;
 
