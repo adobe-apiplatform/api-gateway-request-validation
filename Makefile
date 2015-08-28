@@ -44,6 +44,21 @@ redis: all
 	tar -xf test/resources/redis/redis-$(REDIS_VERSION).tar.gz -C $(BUILD_DIR)/
 	cd $(BUILD_DIR)/redis-$(REDIS_VERSION) && make
 
+test-docker:
+	echo "running tests with docker ..."
+	mkdir  -p $(BUILD_DIR)
+	mkdir  -p $(BUILD_DIR)/test-logs
+	cp -r test/resources/api-gateway $(BUILD_DIR)
+	sed -i '' 's/127\.0\.0\.1/redis\.docker/g' $(BUILD_DIR)/api-gateway/redis-upstream.conf
+	rm -f $(BUILD_DIR)/test-logs/*
+	mkdir -p ~/tmp/apiplatform/api-gateway-request-validation
+	cp -r ./src ~/tmp/apiplatform/api-gateway-request-validation/
+	cp -r ./test ~/tmp/apiplatform/api-gateway-request-validation/
+	cp -r ./target ~/tmp/apiplatform/api-gateway-request-validation/
+	cd ./test && docker-compose up
+	cp -r ~/tmp/apiplatform/api-gateway-request-validation/target/ ./target
+	rm -rf  ~/tmp/apiplatform/api-gateway-request-validation
+
 package:
 	git archive --format=tar --prefix=api-gateway-request-validation-1.1/ -o api-gateway-request-validation-1.1.tar.gz -v HEAD
 

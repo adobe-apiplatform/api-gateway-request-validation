@@ -91,6 +91,8 @@ function ApiKeyValidator:validate_api_key()
     local api_key = ngx.var.api_key
     local service_id = ngx.var.service_id
 
+    ngx.log(ngx.DEBUG, "Validating API-KEY:", api_key, ", service_id:", service_id)
+
     -- Block the requests if there is no apikey --
     if api_key == nil or api_key == "" or api_key == true then
         ngx.log(ngx.WARN, "Api Key not found as a part of the request")

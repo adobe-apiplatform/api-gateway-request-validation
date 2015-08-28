@@ -393,6 +393,14 @@ git submodule update --init --recursive
 
 ## Running the tests
 
+### With docker
+
+```
+make test-docker
+```
+This command spins up 2 containers ( Redis and API Gateway ) and executes the tests in `test/perl`
+
+### With native binary
 ```
 make test
 ```

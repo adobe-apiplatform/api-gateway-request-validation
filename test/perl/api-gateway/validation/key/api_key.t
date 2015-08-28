@@ -48,12 +48,7 @@ our $HttpConfig = <<_EOC_;
         ngx.apiGateway.validation = require "api-gateway.validation.factory"
      ';
     lua_shared_dict cachedkeys 50m; # caches api-keys
-    upstream api-gateway-redis {
-    	server 127.0.0.1:6379;
-    }
-    upstream api-gateway-redis-replica { # Default config for redis health check test
-        server 127.0.0.1:6379;
-    }
+    include ../../api-gateway/redis-upstream.conf;
 _EOC_
 
 #no_diff();
