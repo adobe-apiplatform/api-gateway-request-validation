@@ -8,6 +8,7 @@ LUA_LIB_DIR ?=     $(PREFIX)/lib/lua/$(LUA_VERSION)
 INSTALL ?= install
 TEST_NGINX_AWS_CLIENT_ID ?= ''
 TEST_NGINX_AWS_SECRET ?= ''
+REDIS_SERVER ?= $(BUILD_DIR)/redis-$(REDIS_VERSION)/src/redis-server
 
 .PHONY: all clean test install
 
@@ -27,7 +28,8 @@ install: all
 
 test: redis
 	echo "Starting redis server on default port"
-	$(BUILD_DIR)/redis-$(REDIS_VERSION)/src/redis-server test/resources/redis/redis-test.conf
+	# $(BUILD_DIR)/redis-$(REDIS_VERSION)/src/redis-server test/resources/redis/redis-test.conf
+	$(REDIS_SERVER) test/resources/redis/redis-test.conf
 	echo "updating git submodules ..."
 	if [ ! -d "test/resources/test-nginx/lib" ]; then	git submodule update --init --recursive; fi
 	echo "running tests ..."
@@ -41,8 +43,11 @@ test: redis
 
 redis: all
 	mkdir -p $(BUILD_DIR)
-	tar -xf test/resources/redis/redis-$(REDIS_VERSION).tar.gz -C $(BUILD_DIR)/
-	cd $(BUILD_DIR)/redis-$(REDIS_VERSION) && make
+	if [ "$(REDIS_SERVER)" = "$(BUILD_DIR)/redis-$(REDIS_VERSION)/src/redis-server" ]; then \
+		tar -xf test/resources/redis/redis-$(REDIS_VERSION).tar.gz -C $(BUILD_DIR)/;\
+		cd $(BUILD_DIR)/redis-$(REDIS_VERSION) && make; \
+	fi
+	echo " ... using REDIS_SERVER=$(REDIS_SERVER)"
 
 test-docker:
 	echo "running tests with docker ..."
@@ -60,7 +65,7 @@ test-docker:
 	rm -rf  ~/tmp/apiplatform/api-gateway-request-validation
 
 package:
-	git archive --format=tar --prefix=api-gateway-request-validation-1.1/ -o api-gateway-request-validation-1.1.tar.gz -v HEAD
+	git archive --format=tar --prefix=api-gateway-request-validation-1.3.0/ -o api-gateway-request-validation-1.3.0.tar.gz -v HEAD
 
 clean: all
 	rm -rf $(BUILD_DIR)
