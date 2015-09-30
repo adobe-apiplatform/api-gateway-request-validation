@@ -84,6 +84,12 @@ function ValidatorsHandler:getValidatorsList()
            }
        },
 
+       generate_hmac_signature = {
+           defaultProperties = {
+              path = '/generate_hmac_signature', order=2
+           }
+       },
+
        -- service_plan validator usually contains throttling limits
        validate_service_plan = {
             defaultProperties = {

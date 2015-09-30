@@ -96,6 +96,11 @@ local function _validateHmacSignature()
     return hmacSignatureValidator:validateSignature()
 end
 
+local function _generateHmacSignature()
+    local hmacSignatureValidator = HmacSignatureValidator:new()
+    return hmacSignatureValidator:generateSignature()
+end
+
 local function _validateOAuthToken()
     local oauthTokenValidator = OAuthTokenValidator:new()
     return oauthTokenValidator:validateRequest()
@@ -110,6 +115,7 @@ end
 return {
     validateApiKey = _validateApiKey,
     validateHmacSignature = _validateHmacSignature,
+    generateHmacSignature = _generateHmacSignature,
     validateOAuthToken = _validateOAuthToken,
     validateUserProfile = _validateUserProfile,
     validateRequest = _validateRequest,

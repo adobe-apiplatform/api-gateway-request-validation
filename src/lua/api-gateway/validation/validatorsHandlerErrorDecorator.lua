@@ -65,7 +65,10 @@ local DEFAULT_RESPONSES = {
         DELAY_CLIENT_ON_REQUEST = { http_status = 503, error_code = 503071, messsage = '', headers = { ["Retry_After"] = "300s" } , headers = { ["X-Request-Id"] = "ngx.var.requestId" }},
     -- CC Link validation
         INVALID_LINK        = { http_status = 403,  error_code = 403040, message = '{"error_code":"403040","message":"Invalid link"}' , headers = { ["X-Request-Id"] = "ngx.var.requestId" }},
-        LINK_NOT_FOUND      = { http_status = 404,  error_code = 404040, message = '{"error_code":"404040","message":"Link not found"}' , headers = { ["X-Request-Id"] = "ngx.var.requestId" }}
+        LINK_NOT_FOUND      = { http_status = 404,  error_code = 404040, message = '{"error_code":"404040","message":"Link not found"}' , headers = { ["X-Request-Id"] = "ngx.var.requestId" }},
+    -- Generate Hmac validators
+        MISSING_SOURCE      = { http_status = 400,  error_code = 400001, message = '{"error_code":"400001","message"="Missing digest source"}', headers = { ["X-Request-Id"] = "ngx.var.requestId" }},
+        MISSING_SECRET      = { http_status = 400,  error_code = 400002, message = '{"error_code":"400002","message"="Missing digest secret"}', headers = { ["X-Request-Id"] = "ngx.var.requestId" }}
     }
 
 local default_responses_array
