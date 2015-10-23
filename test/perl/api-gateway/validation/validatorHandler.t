@@ -428,6 +428,7 @@ custom-header-2: this is a lua variable",
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/default_validators.conf;
+        error_log ../test-logs/validatorHandler_test7_error.log debug;
 
         location /validator_1 {
             return 200;

@@ -114,6 +114,7 @@ end
 -- the method uses HSET redis command --
 -- it retuns true if the information is saved in the cache, false otherwise --
 function BaseValidator:setKeyInRedis(key, hash_name, keyexpires, value)
+    ngx.log(ngx.DEBUG, "Storing in Redis the key [", tostring(key), "], expireat=", tostring(keyexpires), ", value=", tostring(value) )
     local rediss = redis:new()
     local redis_host, redis_port = self:getRedisUpstream(redis_RW_upstream)
     local ok, err = rediss:connect(redis_host, redis_port)

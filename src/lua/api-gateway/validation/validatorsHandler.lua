@@ -61,9 +61,8 @@ function ValidatorsHandler:new(o)
     return o
 end
 
-function ValidatorsHandler:getValidatorsList()
-    return
-     { validate_api_key = {
+local DEFAULT_VALIDATORS = {
+    validate_api_key = {
          defaultProperties = {
             path = '/validate_api_key', order=1
          }
@@ -107,7 +106,10 @@ function ValidatorsHandler:getValidatorsList()
        request_validator_2 = { defaultProperties = { path = '/request_validator-2', order=1 } },
        request_validator_3 = { defaultProperties = { path = '/request_validator-3', order=1 } },
        request_validator_4 = { defaultProperties = { path = '/request_validator-4', order=1 } }
-     }
+}
+
+function ValidatorsHandler:getValidatorsList()
+    return DEFAULT_VALIDATORS
 end
 
 function ValidatorsHandler:trim(s)
@@ -120,7 +122,8 @@ function ValidatorsHandler:getValidatorsFromConfiguration( localContext )
     local defined_props = {}
     local request_props = {}
 
-    for validator_prop_name, validator_default_props in pairs(self:getValidatorsList()) do
+    local validatorsList = self:getValidatorsList()
+    for validator_prop_name, validator_default_props in pairs(validatorsList) do
         request_validator = {}
         defined_props = ngx.var[validator_prop_name]
         if ( defined_props ~= nil and self:trim(defined_props):sub(1,2) == "on") then
