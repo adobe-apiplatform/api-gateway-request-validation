@@ -43,6 +43,8 @@ local _M = BaseValidator:new()
 local RESPONSES = {
         MISSING_SIGNATURE   = { error_code = "403030", message = "Signature is missing"        },
         INVALID_SIGNATURE   = { error_code = "403033", message = "Signature is invalid"        },
+        MISSING_SOURCE      = { error_code = "400001", message = "Missing digest source"       },
+        MISSING_SECRET      = { error_code = "400002", message = "Missing digest secret"       },
         -- unknown error is not used at the moment
         UNKNOWN_ERROR       = { error_code = "503030", message = "Could not validate Signature"}
 }
@@ -67,6 +69,30 @@ function  _M:validateSignature()
 
     ngx.log(ngx.WARN, "HMAC signature missmatch. Expected:" .. tostring(target) .. ", but got:" .. tostring(digest), ", HMAC Algorithm=", algorithm )
     return self:exitFn(RESPONSES.INVALID_SIGNATURE.error_code, cjson.encode(RESPONSES.INVALID_SIGNATURE))
+end
+
+function  _M:generateSignature()
+    local source = ngx.var.hmac_sign_source_string
+    local secret = ngx.var.hmac_sign_secret or ngx.ctx.key_secret -- ngx.ctx.key_secret is set by api key validator
+    local algorithm = ngx.var.hmac_sign_method
+
+    if source == nil or source == '' then
+        ngx.log(ngx.WARN, "Invalid sign request. Missing source.")
+        return self:exitFn(RESPONSES.MISSING_SOURCE.error_code, cjson.encode(RESPONSES.MISSING_SOURCE))
+    end
+
+    if secret == nil or secret == '' then
+        ngx.log(ngx.WARN, "Invalid sign request. Missing secret.")
+        return self:exitFn(RESPONSES.MISSING_SECRET.error_code, cjson.encode(RESPONSES.MISSING_SECRET))
+    end
+
+    local hmac = RestyHMAC:new()
+    local digest = ngx.encode_base64(hmac:digest(algorithm, secret, self:getHmacSource(source), true))
+
+    self:debug(ngx.DEBUG, "Generate HMAC DIGEST WITH secret=" .. secret .. " Got digest " .. digest .. " for source " .. source)
+    ngx.var.generated_digest = digest
+
+    return self:exitFn(ngx.HTTP_OK)
 end
 
 -- method to be overriden in the super classes to return another source
