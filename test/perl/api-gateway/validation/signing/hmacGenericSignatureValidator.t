@@ -121,7 +121,17 @@ __DATA__
 ]
 --- response_body eval
 [
-"+OK\r\n",
+'{
+            "key":"test-key-1234",
+            "key_secret":"-",
+            "realm":"sandbox",
+            "service_id":"s-123",
+            "service_name":"_undefined_",
+            "consumer_org_name":"_undefined_",
+            "app_name":"_undefined_",
+            "plan_name":"_undefined_"
+            }
+',
 "signature is valid\n"
 ]
 --- error_code_like eval
@@ -162,7 +172,17 @@ __DATA__
 ]
 --- response_body eval
 [
-"+OK\r\n",
+'{
+            "key":"sZ28nvYnStSUS2dSzedgnwkJtUdLkNdR",
+            "key_secret":"mO2AIfdUQeQFiGQq",
+            "realm":"sandbox",
+            "service_id":"s-123",
+            "service_name":"_undefined_",
+            "consumer_org_name":"_undefined_",
+            "app_name":"_undefined_",
+            "plan_name":"_undefined_"
+            }
+',
 "signature is valid\n"
 ]
 --- error_code_like eval
@@ -170,10 +190,10 @@ __DATA__
 --- no_error_log
 [error]
 
-=== TEST 4: test HMAC SHA1 validator with API KEY validation
+=== TEST 4: test HMAC SHA1 validator with API KEY validation with deprecated API-KEY API
 --- http_config eval: $::HttpConfig
 --- config
-        include ../../api-gateway/api_key_service.conf;
+        include ../../api-gateway/api_key_service_deprecated.conf;
         include ../../api-gateway/default_validators.conf;
 
         location /v1.0/accounts/ {
@@ -260,7 +280,17 @@ __DATA__
 ]
 --- response_body eval
 [
-"+OK\r\n",
+'{
+            "key":"sZ28nvYnStSUS2dSzedgnwkJtUdLkNdR",
+            "key_secret":"mO2AIfdUQeQFiGQq",
+            "realm":"sandbox",
+            "service_id":"s-123",
+            "service_name":"_undefined_",
+            "consumer_org_name":"_undefined_",
+            "app_name":"_undefined_",
+            "plan_name":"_undefined_"
+            }
+',
 "signature is valid\n",
 'while (1) {}{"code":1033,"description":"Developer key missing or invalid"}' . "\n",
 'while (1) {}{"code":1033,"description":"Developer key missing or invalid"}' . "\n",
@@ -325,7 +355,17 @@ __DATA__
 ]
 --- response_body eval
 [
-"+OK\r\n",
+'{
+            "key":"sZ28nvYnStSUS2dSzedgnwkJtUdLkNdR",
+            "key_secret":"mO2AIfdUQeQFiGQq",
+            "realm":"sandbox",
+            "service_id":"123456",
+            "service_name":"_undefined_",
+            "consumer_org_name":"_undefined_",
+            "app_name":"_undefined_",
+            "plan_name":"_undefined_"
+            }
+',
 "5XPFapKr91/nLn3F+tzfkvSuE4A=\n",
 'while (1) {}{"code":1033,"description":"Developer key missing or invalid"}' . "\n",
 'while (1) {}{"code":1033,"description":"Developer key missing or invalid"}' . "\n",

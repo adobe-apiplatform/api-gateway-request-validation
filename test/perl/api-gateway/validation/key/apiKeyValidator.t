@@ -1,5 +1,5 @@
 #/*
-# * Copyright (c) 2012 Adobe Systems Incorporated. All rights reserved.
+# * Copyright (c) 2015 Adobe Systems Incorporated. All rights reserved.
 # *
 # * Permission is hereby granted, free of charge, to any person obtaining a
 # * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@ use Cwd qw(cwd);
 
 repeat_each(2);
 
-plan tests => repeat_each() * (blocks() * 4) + 14;
+plan tests => repeat_each() * (blocks() * 4) + 18;
 
 my $pwd = cwd();
 
@@ -61,14 +61,24 @@ __DATA__
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api_key_service.conf;
-        error_log ../test-logs/api_key_test1_error.log debug;
+        error_log ../test-logs/apiKeyValidator_test1_error.log debug;
 
 --- more_headers
 X-Test: test
 --- request
-POST /cache/api_key?key=k-123&service_id=s-123
+POST /cache/api_key?key=key-123&service_id=s-123
 --- response_body eval
-["+OK\r\n"]
+['{
+            "key":"key-123",
+            "key_secret":"-",
+            "realm":"sandbox",
+            "service_id":"s-123",
+            "service_name":"_undefined_",
+            "consumer_org_name":"_undefined_",
+            "app_name":"_undefined_",
+            "plan_name":"_undefined_"
+            }
+']
 --- error_code: 200
 --- no_error_log
 [error]
@@ -78,7 +88,7 @@ POST /cache/api_key?key=k-123&service_id=s-123
 --- config
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
-        error_log ../test-logs/api_key_test2_error.log debug;
+        error_log ../test-logs/apiKeyValidator_test2_error.log debug;
 
         location /test-api-key {
             set $service_id s-123;
@@ -103,7 +113,7 @@ GET /test-api-key
 --- config
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
-        error_log ../test-logs/api_key_test3_error.log debug;
+        error_log ../test-logs/apiKeyValidator_test3_error.log debug;
 
         location /test-api-key {
             set $service_id s-123;
@@ -128,7 +138,7 @@ GET /test-api-key?api_key=ab123
 --- config
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
-        error_log ../test-logs/api_key_test4_error.log debug;
+        error_log ../test-logs/apiKeyValidator_test4_error.log debug;
 
         location /test-api-key {
             set $service_id s-123;
@@ -142,11 +152,21 @@ GET /test-api-key?api_key=ab123
             content_by_lua "ngx.say('api-key is valid.')";
         }
 --- pipelined_requests eval
-["POST /cache/api_key?key=test-key-1234&service_id=s-123",
-"GET /test-api-key?api_key=test-key-1234",
-"GET /test-api-key?api_key=test-key-1234"]
+["POST /cache/api_key?key=test-apikey-1234&service_id=s-123",
+"GET /test-api-key?api_key=test-apikey-1234",
+"GET /test-api-key?api_key=test-apikey-1234"]
 --- response_body eval
-["+OK\r\n",
+['{
+            "key":"test-apikey-1234",
+            "key_secret":"-",
+            "realm":"sandbox",
+            "service_id":"s-123",
+            "service_name":"_undefined_",
+            "consumer_org_name":"_undefined_",
+            "app_name":"_undefined_",
+            "plan_name":"_undefined_"
+            }
+',
 "api-key is valid.\n",
 "api-key is valid.\n"
 ]
@@ -158,7 +178,7 @@ GET /test-api-key?api_key=ab123
 --- config
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
-        error_log ../test-logs/api_key_test5_error.log debug;
+        error_log ../test-logs/apiKeyValidator_test5_error.log debug;
 
         location /test-api-key-5 {
             set $service_id s-123;
@@ -174,11 +194,21 @@ GET /test-api-key?api_key=ab123
             ";
         }
 --- pipelined_requests eval
-["POST /cache/api_key?key=test-key-12345&service_id=s-123&service_name=test-service-name&consumer_org_name=test-consumer-name&app_name=test-app-name&secret=my-secret",
-"GET /cache/api_key/get?key=test-key-12345&service_id=s-123",
-"GET /test-api-key-5?api_key=test-key-12345"]
+["POST /cache/api_key?key=test-apikey-12345&service_id=s-123&service_name=test-service-name&consumer_org_name=test-consumer-name&app_name=test-app-name&secret=my-secret",
+"GET /cache/api_key/get?key=test-apikey-12345&service_id=s-123",
+"GET /test-api-key-5?api_key=test-apikey-12345"]
 --- response_body eval
-["+OK\r\n",
+['{
+            "key":"test-apikey-12345",
+            "key_secret":"my-secret",
+            "realm":"sandbox",
+            "service_id":"s-123",
+            "service_name":"test-service-name",
+            "consumer_org_name":"test-consumer-name",
+            "app_name":"test-app-name",
+            "plan_name":"_undefined_"
+            }
+',
 '{"valid":true}' . "\n",
 "service_name=test-service-name,consumer_org_name=test-consumer-name,app_name=test-app-name,secret=my-secret\n"]
 --- no_error_log
@@ -189,7 +219,7 @@ GET /test-api-key?api_key=ab123
 --- config
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
-        error_log ../test-logs/api_key_test6_error.log debug;
+        error_log ../test-logs/apiKeyValidator_test6_error.log debug;
 
         location /test-api-key {
             set $service_id s-123;
@@ -206,7 +236,17 @@ GET /test-api-key?api_key=ab123
 ["POST /cache/api_key?key=test-key-123&service_id=s-123",
 "GET /test-api-key?api_key=test-key-123&debug=true"]
 --- response_body eval
-["+OK\r\n",
+['{
+            "key":"test-key-123",
+            "key_secret":"-",
+            "realm":"sandbox",
+            "service_id":"s-123",
+            "service_name":"_undefined_",
+            "consumer_org_name":"_undefined_",
+            "app_name":"_undefined_",
+            "plan_name":"_undefined_"
+            }
+',
 "api-key is valid.\n"]
 --- response_headers_like eval
 [
@@ -222,10 +262,10 @@ GET /test-api-key?api_key=ab123
 --- config
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
-        error_log ../test-logs/api_key_test7_error.log debug;
+        error_log ../test-logs/apiKeyValidator_test7_error.log debug;
 
         location /test-api-key {
-            set $service_id hH-123;
+            set $service_id HH-123;
 
             set $api_key $arg_api_key;
             set_if_empty $api_key $http_x_api_key;
@@ -237,11 +277,21 @@ GET /test-api-key?api_key=ab123
         }
 --- pipelined_requests eval
 [
-"POST /cache/api_key?key=test-key-1234_HHH&service_id=hH-123&app_name=hHHH",
-"GET /test-api-key?api_key=test-key-1234_HHH&debug=true"]
+"POST /cache/api_key?key=H-test-apikey-1234&service_id=HH-123&app_name=HHHH",
+"GET /test-api-key?api_key=H-test-apikey-1234&debug=true"]
 --- response_body eval
 [
-"+OK\r\n",
+'{
+            "key":"H-test-apikey-1234",
+            "key_secret":"-",
+            "realm":"sandbox",
+            "service_id":"HH-123",
+            "service_name":"_undefined_",
+            "consumer_org_name":"_undefined_",
+            "app_name":"HHHH",
+            "plan_name":"_undefined_"
+            }
+',
 "api-key is valid.\n"]
 --- response_headers_like eval
 [
@@ -250,4 +300,68 @@ GET /test-api-key?api_key=ab123
 ]
 --- no_error_log
 [error]
+
+
+
+=== TEST 8: test with more api-key fields
+--- http_config eval: $::HttpConfig
+--- config
+        include ../../api-gateway/api_key_service.conf;
+        include ../../api-gateway/default_validators.conf;
+        error_log ../test-logs/apiKeyValidator_test5_error.log debug;
+
+        location /custom_api_key {
+            content_by_lua '
+                local cjson = require "cjson"
+                local BaseValidator = require "api-gateway.validation.validator"
+
+                ngx.req.read_body()
+                local data = ngx.req.get_body_data()
+                local metadata = cjson.decode(data)
+                local validator = BaseValidator:new()
+                validator:setKeyInRedis("cachedkey:" .. metadata.key .. ":" .. metadata.service_id, "metadata", nil, data)
+                ngx.say("OK")
+            ';
+        }
+
+        location /test-api-key-5 {
+            set $service_id s-123;
+
+            set $extra_field 'N/A';
+
+            set $api_key $arg_api_key;
+            set_if_empty $api_key $http_x_api_key;
+
+            set $validate_api_key on;
+
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
+            content_by_lua "
+                ngx.say('service_name=' .. ngx.var.service_name .. ',consumer_org_name=' .. ngx.var.consumer_org_name .. ',app_name=' .. ngx.var.app_name .. ',secret=' .. tostring(ngx.var.key_secret) .. ',extra_field=' .. tostring(ngx.var.extra_field) )
+            ";
+        }
+--- pipelined_requests eval
+[
+'POST /custom_api_key
+{
+    "key": "test-apikey-8",
+    "key_secret": "my-secret",
+    "realm": "sandbox",
+    "service_id": "s-123",
+    "service_name": "test-service-name",
+    "consumer_org_name": "test-consumer-name",
+    "app_name": "test-app-name",
+    "plan_name": "_undefined_",
+    "extra_field": "extra_value",
+    "extra_field_2": "extra_value_2"
+}
+',
+"GET /cache/api_key/get?key=test-apikey-8&service_id=s-123",
+"GET /test-api-key-5?api_key=test-apikey-8"]
+--- response_body eval
+['OK
+',
+'{"valid":true}' . "\n",
+"service_name=test-service-name,consumer_org_name=test-consumer-name,app_name=test-app-name,secret=my-secret,extra_field=extra_value\n"]
+--- no_error_log
+
 
