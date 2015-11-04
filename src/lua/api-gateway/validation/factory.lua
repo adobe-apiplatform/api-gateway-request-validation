@@ -64,7 +64,7 @@ local function _validateRequest()
     end
 
     if res.status == ngx.HTTP_OK then
-        return ngx.exit(ngx.OK);
+        return ngx.OK;
     end
 
     if res.status == ngx.HTTP_FORBIDDEN or res.status == ngx.HTTP_UNAUTHORIZED or res.status == ngx.HTTP_BAD_REQUEST or tonumber(res.status) > 599 then
