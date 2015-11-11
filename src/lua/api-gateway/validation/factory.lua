@@ -53,7 +53,7 @@ end
 -- It calls an internal /validate-request path which can provide any custom implementation for request validation
 local function _validateRequest()
     if (ngx.var.request_method == 'OPTIONS') then
-        return ngx.exit(ngx.OK);
+        return ngx.OK;
     end
 
     local res = ngx.location.capture("/validate-request", { share_all_vars = true });
@@ -64,7 +64,7 @@ local function _validateRequest()
     end
 
     if res.status == ngx.HTTP_OK then
-        return ngx.exit(ngx.OK);
+        return ngx.OK;
     end
 
     if res.status == ngx.HTTP_FORBIDDEN or res.status == ngx.HTTP_UNAUTHORIZED or res.status == ngx.HTTP_BAD_REQUEST or tonumber(res.status) > 599 then
