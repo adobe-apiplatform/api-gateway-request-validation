@@ -41,14 +41,24 @@ local RedisHealthCheck = require "api-gateway.redis.redisHealthCheck"
 
 local ApiKeyValidator = BaseValidator:new()
 
+local super = {
+    instance = BaseValidator,
+    getKeyFromRedis = BaseValidator.getKeyFromRedis,
+    setKeyInRedis = BaseValidator.setKeyInRedis
+}
+
 local RESPONSES = {
         MISSING_KEY   = { error_code = "403000", message = "Api KEY is missing"        },
         INVALID_KEY   = { error_code = "403003", message = "Api KEY is invalid"        },
         UNKNOWN_ERROR = { error_code = "503000", message = "Could not validate API KEY"}
 }
 
-function ApiKeyValidator:getKeyFromRedis(hashed_key)
-    local redis_key = "cachedkey:" .. hashed_key;
+--- @Deprecated
+-- Returns a set of fields associated to the api-key from Redis, if the key exists
+-- @param hashed_key
+--
+function ApiKeyValidator:getLegacyKeyFromRedis(redis_key)
+    ngx.log(ngx.DEBUG, "Looking for a legacy api-key in Redis")
     local red = redis:new();
 
     local redis_host, redis_port = self:getRedisUpstream()
@@ -84,6 +94,21 @@ function ApiKeyValidator:getKeyFromRedis(hashed_key)
         ngx.log(ngx.WARN, "Could not connect to redis at[" .. redis_host .. ":" .. redis_port .. "]:", err);
         return ngx.HTTP_SERVICE_UNAVAILABLE;
     end
+end
+
+function ApiKeyValidator:getKeyFromRedis(hashed_key)
+    local redis_key = "cachedkey:" .. hashed_key;
+    --1. try to read the key in the new format
+    local redis_metadata = super.getKeyFromRedis(ApiKeyValidator, redis_key, "metadata")
+    if redis_metadata ~= nil then
+        ngx.log(ngx.DEBUG, "Found API KEY Metadata in Redis:", tostring(redis_metadata))
+        local metadata = assert( cjson.decode(redis_metadata), "Invalid metadata found in Redis:" .. tostring(redis_metadata) )
+        if metadata ~= nil  then
+            return metadata
+        end
+    end
+    --2. the key in the new format doesn't exist, try the old format
+    return self:getLegacyKeyFromRedis(redis_key)
 end
 
 

@@ -100,7 +100,6 @@ function BaseValidator:getKeyFromRedis(key, hash_name)
     if ok then
         local redis_key, selecterror = redisread:hget(key, hash_name)
         redisread:set_keepalive(30000, 100)
-        --ngx.log(ngx.WARN, "GOT REDIS RESPONSE:" .. type(redis_key));
         if (type(redis_key) == 'string') then
             return redis_key
         end
@@ -122,7 +121,9 @@ function BaseValidator:setKeyInRedis(key, hash_name, keyexpires, value)
         --ngx.log(ngx.DEBUG, "WRITING IN REDIS JSON OBJ key=" .. key .. "=" .. value .. ",expiring in:" .. (keyexpires - (os.time() * 1000)) )
         rediss:init_pipeline()
         rediss:hset(key, hash_name, value)
-        rediss:pexpireat(key, keyexpires)
+        if keyexpires ~= nil then
+            rediss:pexpireat(key, keyexpires)
+        end
         local commit_res, commit_err = rediss:commit_pipeline()
         rediss:set_keepalive(30000, 100)
         --ngx.log(ngx.WARN, "SAVE RESULT:" .. cjson.encode(commit_res) )
