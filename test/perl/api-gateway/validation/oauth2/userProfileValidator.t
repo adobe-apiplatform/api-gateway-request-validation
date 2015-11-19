@@ -31,7 +31,7 @@ use Cwd qw(cwd);
 
 repeat_each(2);
 
-plan tests => repeat_each() * (blocks() * 8 ) - 2;
+plan tests => repeat_each() * (blocks() * 8 ) - 6;
 
 my $pwd = cwd();
 
@@ -264,6 +264,50 @@ X-User-Name: display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF
         }
 --- more_headers
 Authorization: Bearer SOME_OAUTH_TOKEN_TEST_FOUR
+--- request
+GET /test-validate-user
+--- response_body_like eval
+"^user_email=noreply-ăâ\@domain.com,user_country_code=,user_region=US,user_name=display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF.*"
+--- response_headers_like
+X-User-Id: noreply-ăâ@domain.com
+X-User-Region: US
+X-User-Name: display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF
+--- error_code: 200
+--- no_error_log
+[error]
+
+=== TEST 5: test ims_profile with a null name field
+--- http_config eval: $::HttpConfig
+--- config
+        include ../../api-gateway/api-gateway-cache.conf;
+        include ../../api-gateway/default_validators.conf;
+
+        error_log ../test-logs/userProfileValidator_test5_error.log debug;
+
+        location /test-validate-user {
+            set $service_id s-123;
+            # get OAuth token either from header or from the user_token query string
+            set $authtoken $http_authorization;
+            set_if_empty $authtoken $arg_user_token;
+            set_by_lua $authtoken 'return ngx.re.gsub(ngx.arg[1], "bearer ", "","ijo") ' $authtoken;
+
+            set $validate_user_profile on;
+
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
+            content_by_lua 'ngx.say("user_email=" .. ngx.var.user_email .. ",user_country_code=" .. ngx.var.user_country_code .. ",user_region=" .. ngx.var.user_region .. ",user_name=" .. ngx.var.user_name)';
+
+            add_header X-User-Id $user_email;
+            add_header X-User-Country-Code $user_country_code;
+            add_header X-User-Region $user_region;
+            add_header X-User-Name $user_name;
+        }
+
+        location /validate-user {
+            internal;
+            return 200 '{"countryCode":null,"emailVerified":"true","email":"noreply-ăâ@domain.com","userId":"1234","name":"full name","displayName":"display_name-工－女－长","last_name": null,"first_name": null}';
+        }
+--- more_headers
+Authorization: Bearer SOME_OAUTH_TOKEN_TEST_FIVE
 --- request
 GET /test-validate-user
 --- response_body_like eval
