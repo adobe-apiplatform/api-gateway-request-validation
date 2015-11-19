@@ -101,9 +101,11 @@ end
 function _M:getContextPropertiesObject(obj)
     local props = {}
     for k, v in pairs(obj) do
-        props[k] = v
-        if k == "user_name" or k == "user_first_name" or k == "user_last_name" then
-            props[k] = ngx.escape_uri(v)
+        if v ~= nil then
+            props[k] = v
+            if k == "user_name" or k == "user_first_name" or k == "user_last_name" then
+                props[k] = ngx.escape_uri(tostring(v))
+            end
         end
     end
     return props
