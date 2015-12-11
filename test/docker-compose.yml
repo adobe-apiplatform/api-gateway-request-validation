@@ -6,7 +6,7 @@ gateway:
     - ~/tmp/apiplatform/api-gateway-request-validation/src/lua/api-gateway/validation:/usr/local/api-gateway/lualib/api-gateway/validation
     - ~/tmp/apiplatform/api-gateway-request-validation/test/perl:/tmp/perl
     - ~/tmp/apiplatform/api-gateway-request-validation/target/:/t
-  entrypoint: ["prove", "-I", "/usr/local/test-nginx-0.24/lib", "-I", "/usr/local/test-nginx-0.24/inc", "-r", "/tmp/perl/"]
+  entrypoint: ["prove", "-I/usr/local/test-nginx-0.24/lib", "-I/usr/local/test-nginx-0.24/inc", "-r", "/tmp/perl/"]
 redis:
   image: redis:2.8
   ports:
