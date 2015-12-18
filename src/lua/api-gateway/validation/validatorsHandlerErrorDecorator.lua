@@ -106,7 +106,7 @@ function ValidatorHandlerErrorDecorator:decorateResponse( response_status, respo
 
     local o = getResponsesTemplate()[response_status]
     if ( o ~= nil ) then
-        ngx.status = o.http_status
+        ngx.status = self:convertToValidHttpStatusCode(o.http_status)
         -- NOTE: assumption: for the moment if it's custom, then it's application/json
         ngx.header["Content-Type"] = "application/json"
         -- add custom headers too
@@ -134,12 +134,30 @@ function ValidatorHandlerErrorDecorator:decorateResponse( response_status, respo
 
     -- if no custom status code was used, assume the default one is right by trusting the validators
     if ( response_body ~= nil and #response_body > 0 and response_body ~= "nil\n" ) then
-        ngx.status = response_status
+        ngx.status = self:convertToValidHttpStatusCode(response_status)
         ngx.say( response_body )
         return
     end
     -- if there is no custom response form the validator just exit with the status
-    ngx.exit( response_status )
+    ngx.exit( self:convertToValidHttpStatusCode(response_status) )
+end
+
+--- Convert the codes sent by validators to real HTTP response codes
+-- @param response_status
+--
+function ValidatorHandlerErrorDecorator:convertToValidHttpStatusCode(response_status)
+    if (response_status >= 100 and response_status <= 599) then
+        return response_status
+    end
+
+    local http_code_str = string.sub(tostring(response_status), 0, 3)
+    local http_code_number = assert(tonumber(http_code_str), "Invalid HTTP Status Code when decorating response: " .. http_code_str)
+    if (http_code_number >= 100 and http_code_number <= 599) then
+        return http_code_number
+    end
+
+    ngx.log(ngx.DEBUG, "Status code: " , tostring(response_status) , " has not a valid HTTP Status Code format")
+    return 500
 end
 
 --- Parse the response message and replace any variables, if found (at most 3 variables)

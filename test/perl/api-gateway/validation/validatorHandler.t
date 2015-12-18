@@ -31,7 +31,7 @@ use Cwd qw(cwd);
 
 repeat_each(2);
 
-plan tests => repeat_each() * (blocks() * 9) - 4;
+plan tests => repeat_each() * (blocks() * 9) + 2;
 
 my $pwd = cwd();
 
@@ -530,6 +530,91 @@ custom-header-2: this is a lua variable",
 ]
 --- error_code_like eval
 [401,403]
+--- no_error_log
+[error]
+
+
+=== TEST 9: test that validation responses codes are corrected to standard HTTP Status Codes
+--- http_config eval: $::HttpConfig
+--- config
+        include ../../api-gateway/default_validators.conf;
+
+        error_log ../test-logs/validatorHandler_test9_error.log debug;
+
+        location /validator_1 {
+            return 200;
+        }
+        location /validator_2 {
+            content_by_lua '
+                ngx.status = 401000
+                ngx.say("{ error_code = \\"401000\\", message = \\"I am invalid\\"  }")
+             ';
+        }
+        location /validator_3 {
+            content_by_lua '
+                ngx.status = 700000
+                ngx.say("{ error_code = \\"700000\\", message = \\"Invalid status code\\"  }")
+            ';
+        }
+        location /validator_4 {
+            content_by_lua '
+                ngx.status = 4091
+                ngx.say("{ error_code = \\"4091\\", message = \\"Invalid status code\\"  }")
+            ';
+        }
+
+
+        location /test-with-valid-status-code {
+             set $validator_custom_error_responses '';
+             set $request_validator_1   "on; path=/validator_1; order=1;";
+             set $request_validator_2 "on; path=/validator_2; order=2;";
+             access_by_lua "ngx.apiGateway.validation.validateRequest()";
+             content_by_lua '
+                ngx.say("If you see this, validators are failing :(. why ? Pick your answer: http://www.thatwasfunny.com/top-20-programmers-excuses/239")
+             ';
+        }
+
+        location /test-with-invalid-status-code {
+            set $validator_custom_error_responses '';
+            set $request_validator_1   "on; path=/validator_1; order=1;";
+            set $request_validator_2 "on; path=/validator_3; order=2;";
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
+            content_by_lua '
+                ngx.say("You should not see me")
+            ';
+        }
+
+        location /test-with-string-status-code {
+            set $validator_custom_error_responses '';
+            set $request_validator_1   "on; path=/validator_1; order=1;";
+            set $request_validator_2 "on; path=/validator_4; order=2;";
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
+            content_by_lua '
+                ngx.say("You should not see me")
+            ';
+        }
+
+
+--- pipelined_requests eval
+[
+"GET /test-with-valid-status-code",
+"GET /test-with-invalid-status-code",
+"GET /test-with-string-status-code"
+]
+--- response_body_like eval
+[
+'^{ error_code = "401000", message = "I am invalid"  }.+',
+'^{ error_code = "700000", message = "Invalid status code"  }+',
+'^{ error_code = "4091", message = "Invalid status code"  }+'
+]
+--- response_headers_like eval
+[
+"Content-Type: text/plain",
+"Content-Type: text/plain",
+"Content-Type: text/plain"
+]
+--- error_code_like eval
+[401,500,409]
 --- no_error_log
 [error]
 
