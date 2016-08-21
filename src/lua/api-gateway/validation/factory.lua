@@ -34,6 +34,7 @@
 -- Time: 23:36
 --
 
+local BaseValidator = require "api-gateway.validation.validator"
 local ValidatorsHandler = require "api-gateway.validation.validatorsHandler"
 local ApiKeyValidatorCls = require "api-gateway.validation.key.redisApiKeyValidator"
 local HmacSignatureValidator = require "api-gateway.validation.signing.hmacGenericSignatureValidator"
@@ -101,9 +102,9 @@ local function _generateHmacSignature()
     return hmacSignatureValidator:generateSignature()
 end
 
-local function _validateOAuthToken()
+local function _validateOAuthToken(obj)
     local oauthTokenValidator = OAuthTokenValidator:new()
-    return oauthTokenValidator:validateRequest()
+    BaseValidator:exitFn(oauthTokenValidator:validateRequest(obj))
 end
 
 local function _validateUserProfile()

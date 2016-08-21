@@ -57,8 +57,8 @@ local RESPONSES = {
 local LOCAL_CACHE_TTL = 60
 
 -- Hook to override the logic verifying if a token is valid
-function _M:istokenValid(json)
-    return json.valid or false, RESPONSES.INVALID_TOKEN
+function _M:isTokenValid(json, validation_config)
+    return json.valid or false, validation_config.RESPONSES.INVALID_TOKEN
 end
 
 -- override this if other checks need to be in place
@@ -129,11 +129,11 @@ end
 
 -- TODO: cache invalid tokens too for a short while
 -- Check in the response if the token is valid --
-function _M:checkResponseFromAuth(res, cacheLookupKey)
+function _M:checkResponseFromAuth(res, cacheLookupKey, validation_config)
     local json = cjson.decode(res.body)
     if json ~= nil then
 
-        local tokenValidity, error = self:istokenValid(json)
+        local tokenValidity, error = self:isTokenValid(json, validation_config)
         if not tokenValidity and error ~= nil then
             return tokenValidity, error
         end
@@ -166,15 +166,8 @@ function _M:getTokenFromCache(cacheLookupKey)
     return nil;
 end
 
--- imsAuth will validate the service token passed in "Authorization" header --
-function _M:validate_ims_token()
+function _M:validateOAuthToken(oauth_token, validation_config)
     local oauth_host = ngx.var.oauth_host
-    local oauth_token = ngx.var.authtoken
-
-    -- ngx.var.authtoken needs to be set before calling this method
-    if oauth_token == nil or oauth_token == "" then
-        return self:exitFn(RESPONSES.MISSING_TOKEN.error_code, cjson.encode(RESPONSES.MISSING_TOKEN))
-    end
 
     --1. try to get token info from the cache first ( local or redis cache )
     local oauth_token_hash = ngx.md5(oauth_token)
@@ -190,37 +183,49 @@ function _M:validate_ims_token()
             ngx.log(ngx.DEBUG, "Caching locally a new token for " .. tostring(local_expire_in) .. " s, out of a total validity of " .. tostring(tokenValidity ) .. " s.")
             self:setKeyInLocalCache(cacheLookupKey, cachedToken, local_expire_in  , "cachedOauthTokens")
             self:setContextProperties(obj)
-            return self:exitFn(ngx.HTTP_OK)
+            return ngx.HTTP_OK
         end
         -- at this point the cached token is not valid
         ngx.log(ngx.WARN, "Invalid OAuth Token found in cache. OAuth host=" .. tostring(oauth_host))
         if (error == nil) then
-            error = RESPONSES.INVALID_TOKEN
+            error = validation_config.RESPONSES.INVALID_TOKEN
         end
-        error.error_code = error.error_code or RESPONSES.INVALID_TOKEN.error_code
-        return self:exitFn(error.error_code, cjson.encode(error))
+        error.error_code = error.error_code or validation_config.RESPONSES.INVALID_TOKEN.error_code
+        return error.error_code, cjson.encode(error)
     end
 
     -- 2. validate the token with the OAuth endpoint
-    local res = ngx.location.capture("/validate-token", { share_all_vars = true })
+    local res = ngx.location.capture("/validate-token", {
+        share_all_vars = true,
+        args = { authtoken = oauth_token}
+    })
     if res.status == ngx.HTTP_OK then
-        local tokenValidity, error = self:checkResponseFromAuth(res, cacheLookupKey)
+        local tokenValidity, error = self:checkResponseFromAuth(res, cacheLookupKey, validation_config)
         if (tokenValidity == true) then
-            return self:exitFn(ngx.HTTP_OK)
+            return ngx.HTTP_OK
         end
         -- at this point the token is not valid
         ngx.log(ngx.WARN, "Invalid OAuth Token returned. OAuth host=" .. tostring(oauth_host))
         if (error == nil) then
-            error = RESPONSES.INVALID_TOKEN
+            error = validation_config.RESPONSES.INVALID_TOKEN
         end
-        error.error_code = error.error_code or RESPONSES.INVALID_TOKEN.error_code
-        return self:exitFn(error.error_code, cjson.encode(error))
+        error.error_code = error.error_code or validation_config.RESPONSES.INVALID_TOKEN.error_code
+        return error.error_code, cjson.encode(error)
     end
-    return self:exitFn(res.status, cjson.encode(RESPONSES.UNKNOWN_ERROR));
+    return res.status, cjson.encode(validation_config.RESPONSES.UNKNOWN_ERROR);
 end
 
-function _M:validateRequest(obj)
-    return self:validate_ims_token()
+function _M:validateRequest(validation_config)
+    validation_config = validation_config or {}
+    validation_config.RESPONSES = validation_config.RESPONSES or RESPONSES;
+
+    local oauth_token = validation_config.authtoken or ngx.var.authtoken
+
+    if oauth_token == nil or oauth_token == "" then
+        return validation_config.RESPONSES.MISSING_TOKEN.error_code, cjson.encode(validation_config.RESPONSES.MISSING_TOKEN)
+    end
+
+    return self:validateOAuthToken(oauth_token, validation_config)
 end
 
 
