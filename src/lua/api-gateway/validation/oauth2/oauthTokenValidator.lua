@@ -171,8 +171,8 @@ function _M:validateOAuthToken(validation_config)
     validation_config = validation_config or {}
     validation_config.RESPONSES = validation_config.RESPONSES or RESPONSES;
 
-    local oauth_token = validation_config.authtoken or ngx.var.authtoken
     local oauth_host = ngx.var.oauth_host
+    local oauth_token = validation_config.authtoken or ngx.var.authtoken
 
     if oauth_token == nil or oauth_token == "" then
         return validation_config.RESPONSES.MISSING_TOKEN.error_code, cjson.encode(validation_config.RESPONSES.MISSING_TOKEN)
