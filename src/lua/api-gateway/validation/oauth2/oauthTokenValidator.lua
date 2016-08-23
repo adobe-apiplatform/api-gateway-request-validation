@@ -166,8 +166,17 @@ function _M:getTokenFromCache(cacheLookupKey)
     return nil;
 end
 
-function _M:validateOAuthToken(oauth_token, validation_config)
+function _M:validateOAuthToken(validation_config)
+
+    validation_config = validation_config or {}
+    validation_config.RESPONSES = validation_config.RESPONSES or RESPONSES;
+
+    local oauth_token = validation_config.authtoken or ngx.var.authtoken
     local oauth_host = ngx.var.oauth_host
+
+    if oauth_token == nil or oauth_token == "" then
+        return validation_config.RESPONSES.MISSING_TOKEN.error_code, cjson.encode(validation_config.RESPONSES.MISSING_TOKEN)
+    end
 
     --1. try to get token info from the cache first ( local or redis cache )
     local oauth_token_hash = ngx.md5(oauth_token)
@@ -216,16 +225,7 @@ function _M:validateOAuthToken(oauth_token, validation_config)
 end
 
 function _M:validateRequest(validation_config)
-    validation_config = validation_config or {}
-    validation_config.RESPONSES = validation_config.RESPONSES or RESPONSES;
-
-    local oauth_token = validation_config.authtoken or ngx.var.authtoken
-
-    if oauth_token == nil or oauth_token == "" then
-        return validation_config.RESPONSES.MISSING_TOKEN.error_code, cjson.encode(validation_config.RESPONSES.MISSING_TOKEN)
-    end
-
-    return self:validateOAuthToken(oauth_token, validation_config)
+    return self:exitFn(self:validateOAuthToken(validation_config))
 end
 
 
