@@ -41,24 +41,24 @@
 local BaseValidator = require "api-gateway.validation.validator"
 local cjson = require "cjson"
 
-local _M = BaseValidator:new()
-
-local RESPONSES = {
-    MISSING_TOKEN = { error_code = "403010", message = "Oauth token is missing" },
-    INVALID_TOKEN = { error_code = "401013", message = "Oauth token is not valid" },
-    -- TOKEN_MISSMATCH is reserved for classes overwriting the isTokenValid method
-    TOKEN_MISSMATCH = { error_code = "401014", message = "Token not allowed in the current context" },
-    SCOPE_MISMATCH = { error_code = "401015", message = "Scope mismatch" },
-    UNKNOWN_ERROR = { error_code = "503010", message = "Could not validate the oauth token" }
-}
+local _M = BaseValidator:new({
+    RESPONSES = {
+        MISSING_TOKEN = { error_code = "403010", message = "Oauth token is missing" },
+        INVALID_TOKEN = { error_code = "401013", message = "Oauth token is not valid" },
+        -- TOKEN_MISSMATCH is reserved for classes overwriting the isTokenValid method
+        TOKEN_MISSMATCH = { error_code = "401014", message = "Token not allowed in the current context" },
+        SCOPE_MISMATCH = { error_code = "401015", message = "Scope mismatch" },
+        UNKNOWN_ERROR = { error_code = "503010", message = "Could not validate the oauth token" }
+    }
+})
 
 ---
 -- Maximum time in seconds specifying how long to cache a valid token in GW's memory
 local LOCAL_CACHE_TTL = 60
 
 -- Hook to override the logic verifying if a token is valid
-function _M:isTokenValid(json, validation_config)
-    return json.valid or false, validation_config.RESPONSES.INVALID_TOKEN
+function _M:isTokenValid(json)
+    return json.valid or false, self.RESPONSES.INVALID_TOKEN
 end
 
 -- override this if other checks need to be in place
@@ -129,11 +129,11 @@ end
 
 -- TODO: cache invalid tokens too for a short while
 -- Check in the response if the token is valid --
-function _M:checkResponseFromAuth(res, cacheLookupKey, validation_config)
+function _M:checkResponseFromAuth(res, cacheLookupKey)
     local json = cjson.decode(res.body)
     if json ~= nil then
 
-        local tokenValidity, error = self:isTokenValid(json, validation_config)
+        local tokenValidity, error = self:isTokenValid(json)
         if not tokenValidity and error ~= nil then
             return tokenValidity, error
         end
@@ -166,16 +166,13 @@ function _M:getTokenFromCache(cacheLookupKey)
     return nil;
 end
 
-function _M:validateOAuthToken(validation_config)
-
-    validation_config = validation_config or {}
-    validation_config.RESPONSES = validation_config.RESPONSES or RESPONSES;
+function _M:validateOAuthToken()
 
     local oauth_host = ngx.var.oauth_host
-    local oauth_token = validation_config.authtoken or ngx.var.authtoken
+    local oauth_token = self.authtoken or ngx.var.authtoken
 
     if oauth_token == nil or oauth_token == "" then
-        return validation_config.RESPONSES.MISSING_TOKEN.error_code, cjson.encode(validation_config.RESPONSES.MISSING_TOKEN)
+        return self.RESPONSES.MISSING_TOKEN.error_code, cjson.encode(self.RESPONSES.MISSING_TOKEN)
     end
 
     --1. try to get token info from the cache first ( local or redis cache )
@@ -197,9 +194,9 @@ function _M:validateOAuthToken(validation_config)
         -- at this point the cached token is not valid
         ngx.log(ngx.WARN, "Invalid OAuth Token found in cache. OAuth host=" .. tostring(oauth_host))
         if (error == nil) then
-            error = validation_config.RESPONSES.INVALID_TOKEN
+            error = self.RESPONSES.INVALID_TOKEN
         end
-        error.error_code = error.error_code or validation_config.RESPONSES.INVALID_TOKEN.error_code
+        error.error_code = error.error_code or self.RESPONSES.INVALID_TOKEN.error_code
         return error.error_code, cjson.encode(error)
     end
 
@@ -209,23 +206,23 @@ function _M:validateOAuthToken(validation_config)
         args = { authtoken = oauth_token}
     })
     if res.status == ngx.HTTP_OK then
-        local tokenValidity, error = self:checkResponseFromAuth(res, cacheLookupKey, validation_config)
+        local tokenValidity, error = self:checkResponseFromAuth(res, cacheLookupKey)
         if (tokenValidity == true) then
             return ngx.HTTP_OK
         end
         -- at this point the token is not valid
         ngx.log(ngx.WARN, "Invalid OAuth Token returned. OAuth host=" .. tostring(oauth_host))
         if (error == nil) then
-            error = validation_config.RESPONSES.INVALID_TOKEN
+            error = self.RESPONSES.INVALID_TOKEN
         end
-        error.error_code = error.error_code or validation_config.RESPONSES.INVALID_TOKEN.error_code
+        error.error_code = error.error_code or self.RESPONSES.INVALID_TOKEN.error_code
         return error.error_code, cjson.encode(error)
     end
-    return res.status, cjson.encode(validation_config.RESPONSES.UNKNOWN_ERROR);
+    return res.status, cjson.encode(self.RESPONSES.UNKNOWN_ERROR);
 end
 
-function _M:validateRequest(validation_config)
-    return self:exitFn(self:validateOAuthToken(validation_config))
+function _M:validateRequest()
+    return self:exitFn(self:validateOAuthToken())
 end
 
 
