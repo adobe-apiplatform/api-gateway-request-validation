@@ -91,14 +91,44 @@ function BaseValidator:getRedisUpstream(upstream_name)
 end
 
 -- retrieves a saved information from the Redis cache --
--- the method uses HGET redis command --
+-- the method uses GET redis command --
 -- it returns the value of the key, when found in the cache, nil otherwise --
+-- for backward compatibility this method accepts a second argument, in which case it will perform a HGET instead.
 function BaseValidator:getKeyFromRedis(key, hash_name)
+
+    if hash_name ~= nil then
+        return self:getHashValueFromRedis(key, hash_name)
+    end
+
     local redisread = redis:new()
     local redis_host, redis_port = self:getRedisUpstream(redis_RO_upstream)
     local ok, err = redisread:connect(redis_host, redis_port)
     if ok then
-        local redis_key, selecterror = redisread:hget(key, hash_name)
+        local result, err = redisread:get(key)
+        redisread:set_keepalive(30000, 100)
+        if ( not result and err ~= nil ) then
+            ngx.log(ngx.WARN, "Failed to read key " .. tostring(key) .. " from Redis cache:[", redis_host, ":", redis_port, "]. Error:", err)
+            return nil
+        else
+            if (type(result) == 'string') then
+                return result
+            end
+        end
+    else
+        ngx.log(ngx.WARN, "Failed to read key " .. tostring(key) .. " from Redis cache:[", redis_host, ":", redis_port, "]. Error:", err)
+    end
+    return nil;
+end
+
+-- retrieves a saved information from the Redis cache --
+-- the method uses HGET redis command --
+-- it returns the value of the key, when found in the cache, nil otherwise --
+function BaseValidator:getHashValueFromRedis(key, hash_field)
+    local redisread = redis:new()
+    local redis_host, redis_port = self:getRedisUpstream(redis_RO_upstream)
+    local ok, err = redisread:connect(redis_host, redis_port)
+    if ok then
+        local redis_key, selecterror = redisread:hget(key, hash_field)
         redisread:set_keepalive(30000, 100)
         if (type(redis_key) == 'string') then
             return redis_key

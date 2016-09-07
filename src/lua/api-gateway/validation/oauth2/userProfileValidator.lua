@@ -186,12 +186,11 @@ function _M:extractContextVars(profile)
     return cachingObj
 end
 
-function _M:validateRequest()
+function _M:validateUserProfile()
     -- ngx.var.authtoken needs to be set before calling this method
     local oauth_token = ngx.var.authtoken
     if oauth_token == nil or oauth_token == "" then
-        --return self:exitFn(ngx.HTTP_BAD_REQUEST)
-        return self:exitFn(RESPONSES.P_MISSING_TOKEN.error_code, cjson.encode(RESPONSES.P_MISSING_TOKEN))
+        return RESPONSES.P_MISSING_TOKEN.error_code, cjson.encode(RESPONSES.P_MISSING_TOKEN)
     end
 
     --1. try to get user's profile from the cache first ( local or redis cache )
@@ -205,9 +204,9 @@ function _M:validateRequest()
         end
         self:setContextProperties(self:getContextPropertiesObject(cachedUserProfile))
         if ( self:isProfileValid(cachedUserProfile) == true ) then
-            return self:exitFn(ngx.HTTP_OK)
+            return ngx.HTTP_OK
         else
-            return self:exitFn(RESPONSES.INVALID_PROFILE.error_code, cjson.encode(RESPONSES.INVALID_PROFILE))
+            return RESPONSES.INVALID_PROFILE.error_code, cjson.encode(RESPONSES.INVALID_PROFILE)
         end
     end
 
@@ -223,9 +222,9 @@ function _M:validateRequest()
             self:storeProfileInCache(cacheLookupKey, cachingObj)
 
             if ( self:isProfileValid(cachingObj) == true ) then
-                return self:exitFn(ngx.HTTP_OK)
+                return ngx.HTTP_OK
             else
-                return self:exitFn(RESPONSES.INVALID_PROFILE.error_code, cjson.encode(RESPONSES.INVALID_PROFILE))
+                return RESPONSES.INVALID_PROFILE.error_code, cjson.encode(RESPONSES.INVALID_PROFILE)
             end
         else
             ngx.log(ngx.WARN, "Could not decode /validate-user response:" .. tostring(res.body) )
@@ -234,11 +233,15 @@ function _M:validateRequest()
         -- ngx.log(ngx.WARN, "Could not read /ims-profile. status=" .. res.status .. ".body=" .. res.body .. ". token=" .. ngx.var.authtoken)
         ngx.log(ngx.WARN, "Could not read /validate-user. status=" .. res.status .. ".body=" .. res.body )
         if ( res.status == ngx.HTTP_UNAUTHORIZED or res.status == ngx.HTTP_BAD_REQUEST ) then
-            return self:exitFn(RESPONSES.NOT_ALLOWED.error_code, cjson.encode(RESPONSES.NOT_ALLOWED))
+            return RESPONSES.NOT_ALLOWED.error_code, cjson.encode(RESPONSES.NOT_ALLOWED)
         end
     end
     --ngx.log(ngx.WARN, "Error validating Profile for Token:" .. tostring(ngx.var.authtoken))
-    return self:exitFn(RESPONSES.P_UNKNOWN_ERROR.error_code, cjson.encode(RESPONSES.P_UNKNOWN_ERROR))
+    return RESPONSES.P_UNKNOWN_ERROR.error_code, cjson.encode(RESPONSES.P_UNKNOWN_ERROR)
+end
+
+function _M:validateRequest()
+    return self:exitFn(self:validateUserProfile())
 end
 
 return _M

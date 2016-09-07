@@ -31,7 +31,7 @@ use Cwd qw(cwd);
 
 repeat_each(2);
 
-plan tests => repeat_each() * (blocks() * 9);
+plan tests => repeat_each() * (blocks() * 9) - 6;
 
 my $pwd = cwd();
 
@@ -347,6 +347,59 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST5
 GET /test-oauth-validation
 --- response_body_like: {"error_code":"401013","message":"Oauth token is not valid"}
 --- error_code: 401
+--- no_error_log
+[error]
+
+=== TEST 6: test that validation behaviour can be customized
+--- http_config eval: $::HttpConfig
+--- config
+        include ../../api-gateway/default_validators.conf;
+
+        error_log ../test-logs/oauthTokenValidator_test6_error.log debug;
+
+        location /validate_custom_oauth_token {
+            internal;
+
+            content_by_lua_block {
+
+                ngx.apiGateway.validation.validateOAuthToken({
+                    authtoken = ngx.var.custom_token_var,
+                    RESPONSES = {
+                        MISSING_TOKEN = { error_code = "401110", message = "User token is missing" },
+                        INVALID_TOKEN = { error_code = "403113", message = "User token is not valid" },
+                        TOKEN_MISSMATCH = { error_code = "401114", message = "User token not allowed in the current context" },
+                        SCOPE_MISMATCH = { error_code = "401115", message = "User token scope mismatch" },
+                        UNKNOWN_ERROR = { error_code = "503110", message = "Could not validate the user token" }
+                    }
+                });
+            }
+        }
+
+        location /test-custom-oauth {
+             set $validate_oauth_token "on; path=/validate_custom_oauth_token; order=1;";
+             set $custom_token_var $arg_custom_token;
+             access_by_lua "ngx.apiGateway.validation.validateRequest()";
+             content_by_lua "ngx.say('ims token is valid.')";
+        }
+
+        location /validate-token {
+            internal;
+            set_by_lua $generated_expires_at 'return ((os.time() + 4) * 1000 )';
+            return 200 '{"valid":false,"expires_at":$generated_expires_at,"token":{"id":"1234","scope":"openid email profile","user_id":"21961FF44F97F8A10A490D36","expires_in":"86400000","client_id":"test_Client_ID","type":"access_token"}}';
+        }
+
+--- pipelined_requests eval
+[
+"GET /test-custom-oauth",
+"GET /test-custom-oauth?custom_token=SOME_OAUTH_TOKEN_TEST6"
+]
+--- response_body_like eval
+[
+'^{"error_code":"401110","message":"User token is missing"}+',
+'^{"error_code":"403113","message":"User token is not valid"}+'
+]
+--- error_code_like eval
+[401,403]
 --- no_error_log
 [error]
 

@@ -101,8 +101,8 @@ local function _generateHmacSignature()
     return hmacSignatureValidator:generateSignature()
 end
 
-local function _validateOAuthToken()
-    local oauthTokenValidator = OAuthTokenValidator:new()
+local function _validateOAuthToken(config)
+    local oauthTokenValidator = OAuthTokenValidator:new(config)
     return oauthTokenValidator:validateRequest()
 end
 
