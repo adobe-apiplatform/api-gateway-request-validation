@@ -31,7 +31,7 @@ use Cwd qw(cwd);
 
 repeat_each(2);
 
-plan tests => repeat_each() * (blocks() * 8 ) - 6;
+plan tests => repeat_each() * (blocks() * 8 ) - 12;
 
 my $pwd = cwd();
 
@@ -80,7 +80,7 @@ __DATA__
             set $validate_user_profile on;
 
             access_by_lua "ngx.apiGateway.validation.validateRequest()";
-            content_by_lua 'ngx.say("user_email=" .. ngx.var.user_email .. ",user_country_code=" .. ngx.var.user_country_code .. ",user_region=" .. ngx.var.user_region .. ",user_name=" .. ngx.var.user_name)';
+            content_by_lua 'ngx.say("user_email=" .. ngx.var.user_email .. ",user_country_code=" .. ngx.var.user_country_code .. ",user_name=" .. ngx.var.user_name)';
         }
         location /local-cache {
             set $authtoken $http_authorization;
@@ -123,13 +123,13 @@ Authorization: Bearer SOME_OAUTH_PROFILE_TEST_1
 "GET /redis-cache"
 ]
 --- response_body_like eval
-['^user_email=johndoe_ĂÂă\@domain.com,user_country_code=AT,user_region=EU,user_name=display_name%E2%80%94%E5%A4%A7%EF%BC%8D%E5%A5%B3.*',
-'^Local: {"user_region":"EU","user_country_code":"AT","user_email":"johndoe_ĂÂă@domain.com","user_name":"display_name—大－女"}.*',
-'^Redis: {"user_region":"EU","user_country_code":"AT","user_email":"johndoe_ĂÂă@domain.com","user_name":"display_name—大－女"}.*']
+['^user_email=johndoe_ĂÂă\@domain.com,user_country_code=AT,user_name=display_name%E2%80%94%E5%A4%A7%EF%BC%8D%E5%A5%B3.*',
+'Local: {"user_name":"display_name—大－女","user_email":"johndoe_ĂÂă@domain.com","user_country_code":"AT"}',
+'Redis: {"user_name":"display_name—大－女","user_email":"johndoe_ĂÂă@domain.com","user_country_code":"AT"}']
 --- no_error_log
 [error]
 
-=== TEST 2: test ims_profile is saved correctly in cache and in request variables with US region
+=== TEST 2: test ims_profile is saved correctly in cache and in request variables
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api-gateway-cache.conf;
@@ -147,7 +147,7 @@ Authorization: Bearer SOME_OAUTH_PROFILE_TEST_1
             set $validate_user_profile on;
 
             access_by_lua "ngx.apiGateway.validation.validateRequest()";
-            content_by_lua 'ngx.say("user_email=" .. ngx.var.user_email .. ",user_country_code=" .. ngx.var.user_country_code .. ",user_region=" .. ngx.var.user_region .. ",user_name=" .. ngx.var.user_name)';
+            content_by_lua 'ngx.say("user_email=" .. ngx.var.user_email .. ",user_country_code=" .. ngx.var.user_country_code .. ",user_name=" .. ngx.var.user_name)';
         }
 
         location /local-cache {
@@ -181,9 +181,9 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_TWO
 "GET /redis-cache"
 ]
 --- response_body_like eval
-['^user_email=noreply\@domain.com,user_country_code=CA,user_region=US,user_name=display_name.*',
-'^{"user_region":"US","user_country_code":"CA","user_email":"noreply@domain.com","user_name":"display_name"}.*',
-'^{"user_region":"US","user_country_code":"CA","user_email":"noreply@domain.com","user_name":"display_name"}.*']
+['^user_email=noreply\@domain.com,user_country_code=CA,user_name=display_name.*',
+'{"user_name":"display_name","user_email":"noreply@domain.com","user_country_code":"CA"}',
+'{"user_name":"display_name","user_email":"noreply@domain.com","user_country_code":"CA"}']
 --- no_error_log
 [error]
 
@@ -205,11 +205,10 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_TWO
             set $validate_user_profile on;
 
             access_by_lua "ngx.apiGateway.validation.validateRequest()";
-            content_by_lua 'ngx.say("user_email=" .. ngx.var.user_email .. ",user_country_code=" .. ngx.var.user_country_code .. ",user_region=" .. ngx.var.user_region .. ",user_name=" .. ngx.var.user_name)';
+            content_by_lua 'ngx.say("user_email=" .. ngx.var.user_email .. ",user_country_code=" .. ngx.var.user_country_code .. ",user_name=" .. ngx.var.user_name)';
 
             add_header X-User-Id $user_email;
             add_header X-User-Country-Code $user_country_code;
-            add_header X-User-Region $user_region;
             add_header X-User-Name $user_name;
         }
 
@@ -222,11 +221,10 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_THREE
 --- request
 GET /test-validate-user
 --- response_body_like eval
-"^user_email=noreply-ăâ\@domain.com,user_country_code=CA,user_region=US,user_name=display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF.*"
+"^user_email=noreply-ăâ\@domain.com,user_country_code=CA,user_name=display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF.*"
 --- response_headers_like
 X-User-Id: noreply-ăâ@domain.com
 X-User-Country-Code: CA
-X-User-Region: US
 X-User-Name: display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF
 --- error_code: 200
 --- no_error_log
@@ -250,11 +248,10 @@ X-User-Name: display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF
             set $validate_user_profile on;
 
             access_by_lua "ngx.apiGateway.validation.validateRequest()";
-            content_by_lua 'ngx.say("user_email=" .. ngx.var.user_email .. ",user_country_code=" .. ngx.var.user_country_code .. ",user_region=" .. ngx.var.user_region .. ",user_name=" .. ngx.var.user_name)';
+            content_by_lua 'ngx.say("user_email=" .. ngx.var.user_email .. ",user_country_code=" .. ngx.var.user_country_code .. ",user_name=" .. ngx.var.user_name)';
 
             add_header X-User-Id $user_email;
             add_header X-User-Country-Code $user_country_code;
-            add_header X-User-Region $user_region;
             add_header X-User-Name $user_name;
         }
 
@@ -267,10 +264,9 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_FOUR
 --- request
 GET /test-validate-user
 --- response_body_like eval
-"^user_email=noreply-ăâ\@domain.com,user_country_code=,user_region=US,user_name=display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF.*"
+"^user_email=noreply-ăâ\@domain.com,user_country_code=,user_name=display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF.*"
 --- response_headers_like
 X-User-Id: noreply-ăâ@domain.com
-X-User-Region: US
 X-User-Name: display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF
 --- error_code: 200
 --- no_error_log
@@ -294,11 +290,10 @@ X-User-Name: display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF
             set $validate_user_profile on;
 
             access_by_lua "ngx.apiGateway.validation.validateRequest()";
-            content_by_lua 'ngx.say("user_email=" .. ngx.var.user_email .. ",user_country_code=" .. ngx.var.user_country_code .. ",user_region=" .. ngx.var.user_region .. ",user_name=" .. ngx.var.user_name)';
+            content_by_lua 'ngx.say("user_email=" .. ngx.var.user_email .. ",user_country_code=" .. ngx.var.user_country_code .. ",user_name=" .. ngx.var.user_name)';
 
             add_header X-User-Id $user_email;
             add_header X-User-Country-Code $user_country_code;
-            add_header X-User-Region $user_region;
             add_header X-User-Name $user_name;
         }
 
@@ -311,10 +306,9 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_FIVE
 --- request
 GET /test-validate-user
 --- response_body_like eval
-"^user_email=noreply-ăâ\@domain.com,user_country_code=,user_region=US,user_name=display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF.*"
+"^user_email=noreply-ăâ\@domain.com,user_country_code=,user_name=display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF.*"
 --- response_headers_like
 X-User-Id: noreply-ăâ@domain.com
-X-User-Region: US
 X-User-Name: display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF
 --- error_code: 200
 --- no_error_log

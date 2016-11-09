@@ -32,8 +32,7 @@
 -- Properties that can be set by this validator:
 --  1. user_email
 --  2. user_country_code
---  3. user_region
---  4. user_name
+--  3. user_name
 --
 -- User: ddascal
 -- Date: 17/12/13
@@ -53,16 +52,6 @@ local RESPONSES = {
         INVALID_PROFILE   = { error_code = "403023", message = "Profile is not valid"           },
         NOT_ALLOWED       = { error_code = "403024", message = "Not allowed to read the profile"},
         P_UNKNOWN_ERROR   = { error_code = "503020", message = "Could not read the profile"     }
-}
----
--- @field US - countries mapping to US region
--- @field EU - countries mapping to EU region
--- @field AP - countries mapping to AP region
---
-local DEFAULT_COUNTRY_MAP = {
-    US = { "AG", "AI", "AN", "AR", "AS", "AW", "BB", "BL", "BM", "BO", "BQ", "BR", "BS", "BZ", "CA", "CL", "CO", "CR", "CU", "CW", "DM", "DO", "EC", "FK", "GD", "GF", "GP", "GS", "GT", "GY", "HN", "HT", "JM", "KN", "KY", "LC", "MP", "MQ", "MS", "MX", "NI", "PA", "PE", "PM", "PR", "PY", "SR", "SV", "SX", "TC", "TT", "UM", "US", "UY", "VC", "VE", "VG", "VI" },
-    EU = { "AD", "AL", "AM", "AO", "AT", "AX", "AZ", "BA", "BE", "BF", "BG", "BI", "BJ", "BV", "BW", "BY", "CD", "CF", "CG", "CH", "CI", "CM", "CS", "CV", "CY", "CZ", "DE", "DJ", "DK", "DZ", "EE", "EG", "EH", "ER", "ES", "ET", "FI", "FO", "FR", "GA", "GB", "GE", "GG", "GH", "GI", "GL", "GM", "GN", "GQ", "GR", "GW", "HR", "HU", "IE", "IM", "IO", "IR", "IS", "IT", "JE", "KE", "KM", "KP", "KV", "LI", "LR", "LS", "LT", "LU", "LV", "LY", "MA", "MC", "MD", "ME", "MF", "MG", "MK", "ML", "MR", "MT", "MU", "MW", "MZ", "NA", "NE", "NG", "NL", "NO", "PL", "PS", "PT", "RE", "RO", "RS", "RW", "SC", "SD", "SE", "SH", "SI", "SJ", "SK", "SL", "SM", "SN", "SO", "SS", "ST", "SY", "SZ", "TD", "TF", "TG", "TN", "TZ", "UA", "UG", "VA", "YT", "ZA", "ZM", "ZW" },
-    AP = { "AE", "AF", "AQ", "AU", "BD", "BH", "BN", "BT", "CC", "CK", "CN", "CX", "FJ", "FM", "GU", "HK", "HM", "ID", "IL", "IN", "IQ", "IR", "JO", "JP", "KG", "KH", "KI", "KR", "KW", "KZ", "LA", "LB", "LK", "MH", "MM", "MN", "MO", "MV", "MY", "NC", "NF", "NP", "NR", "NU", "NZ", "OM", "PF", "PG", "PH", "PK", "PN", "PW", "QA", "RU", "SA", "SB", "SG", "TH", "TJ", "TK", "TL", "TM", "TO", "TR", "TV", "TW", "UZ", "VN", "VU", "WF", "WS", "YE" }
 }
 
 ---
@@ -152,24 +141,6 @@ function _M:isProfileValid(cachedProfile)
 end
 
 ---
---  Returns an object mapping countries to regions
-function _M:getDefaultCountryMap()
-    return DEFAULT_COUNTRY_MAP
-end
-
-function _M:getUserRegion( user_country_code, country_map )
-    local cmap = country_map or self:getDefaultCountryMap()
-    for region,countries in pairs(cmap) do
-        for i , countryCode in pairs(countries) do
-            if user_country_code == countryCode then
-                return region
-            end
-        end
-    end
-    return "US"
-end
-
----
 -- Returns an object with a set of variables to be saved in the request's context and later in the request's vars
 --  IMPORTANT: This method is only called when fetching a new profile, otherwise the information from the cache
 --             is read and automatically added to the context based on the object returned by this method
@@ -180,7 +151,6 @@ function _M:extractContextVars(profile)
     cachingObj.user_email           = profile.email
     cachingObj.user_country_code    = profile.countryCode
     cachingObj.user_name            = profile.displayName
-    cachingObj.user_region          = self:getUserRegion(profile.countryCode)
     cachingObj.user_first_name      = profile.first_name
     cachingObj.user_last_name       = profile.last_name
     return cachingObj
