@@ -188,10 +188,9 @@ function _M:validateUserProfile()
 
             local cachingObj = self:extractContextVars(json)
 
-            self:setContextProperties(self:getContextPropertiesObject(cachingObj))
-            self:storeProfileInCache(cacheLookupKey, cachingObj)
-
             if ( self:isProfileValid(cachingObj) == true ) then
+                self:setContextProperties(self:getContextPropertiesObject(cachingObj))
+                self:storeProfileInCache(cacheLookupKey, cachingObj)
                 return ngx.HTTP_OK
             else
                 return RESPONSES.INVALID_PROFILE.error_code, cjson.encode(RESPONSES.INVALID_PROFILE)
