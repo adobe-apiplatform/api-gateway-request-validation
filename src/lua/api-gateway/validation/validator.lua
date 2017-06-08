@@ -50,6 +50,7 @@ function BaseValidator:new(o)
     local o = o or {}
     setmetatable(o, self)
     self.__index = self
+    self.redisHost = o.redisHost or nil
     return o
 end
 
@@ -79,6 +80,9 @@ function BaseValidator:setKeyInLocalCache(key, string_value, exptime, dict_name)
 end
 
 function BaseValidator:getRedisUpstream(upstream_name)
+    if self.redisHost then
+        return redisHealthCheck:getHealthyRedisNode(self.redisHost)
+    end
     local n = upstream_name or redis_RO_upstream
     local upstream, host, port = redisHealthCheck:getHealthyRedisNode(n)
     ngx.log(ngx.DEBUG, "Obtained Redis Host:" .. tostring(host) .. ":" .. tostring(port), " from upstream:", n)

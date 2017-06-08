@@ -45,7 +45,9 @@
 local BaseValidator = require "api-gateway.validation.validator"
 local cjson = require "cjson"
 
-local _M = BaseValidator:new()
+local _M = BaseValidator:new({
+    redisHost = ngx.var.redis_backend_rw_token
+})
 
 local RESPONSES = {
         P_MISSING_TOKEN   = { error_code = "403020", message = "Oauth token is missing"         },
@@ -173,7 +175,6 @@ function _M:validateUserProfile()
             cachedUserProfile = cjson.decode(cachedUserProfile)
         end
         self:setContextProperties(self:getContextPropertiesObject(cachedUserProfile))
-        if ( self:isProfileValid(cachedUserProfile) == true ) then
             return ngx.HTTP_OK
         else
             return RESPONSES.INVALID_PROFILE.error_code, cjson.encode(RESPONSES.INVALID_PROFILE)
