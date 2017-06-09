@@ -36,10 +36,6 @@ local RedisHealthCheck  = require "api-gateway.redis.redisHealthCheck"
 local cjson             = require "cjson"
 local debug_mode        = ngx.config.debug
 
--- redis endpoints are assumed to be global per GW node and therefore are read here
-local redis_RO_upstream                      = "api-gateway-redis-replica"
-local redis_RW_upstream                      = "api-gateway-redis"
-
 -- class to be used as a base class for all api-gateway validators --
 local BaseValidator = {}
 local redisHealthCheck = RedisHealthCheck:new({
@@ -50,7 +46,8 @@ function BaseValidator:new(o)
     local o = o or {}
     setmetatable(o, self)
     self.__index = self
-    self.redisHost = o.redisHost or nil
+    self.redis_RO_upstream = o.redis_RO_upstream or "api-gateway-redis-replica"
+    self.redis_RW_upstream = o.redis_RW_upstream or "api-gateway-redis"
     return o
 end
 
@@ -80,10 +77,7 @@ function BaseValidator:setKeyInLocalCache(key, string_value, exptime, dict_name)
 end
 
 function BaseValidator:getRedisUpstream(upstream_name)
-    if self.redisHost then
-        return redisHealthCheck:getHealthyRedisNode(self.redisHost)
-    end
-    local n = upstream_name or redis_RO_upstream
+    local n = upstream_name or self.redis_RO_upstream
     local upstream, host, port = redisHealthCheck:getHealthyRedisNode(n)
     ngx.log(ngx.DEBUG, "Obtained Redis Host:" .. tostring(host) .. ":" .. tostring(port), " from upstream:", n)
     if (nil ~= host and nil ~= port) then
@@ -105,7 +99,7 @@ function BaseValidator:getKeyFromRedis(key, hash_name)
     end
 
     local redisread = redis:new()
-    local redis_host, redis_port = self:getRedisUpstream(redis_RO_upstream)
+    local redis_host, redis_port = self:getRedisUpstream(self.redis_RO_upstream)
     local ok, err = redisread:connect(redis_host, redis_port)
     if ok then
         local result, err = redisread:get(key)
@@ -129,7 +123,7 @@ end
 -- it returns the value of the key, when found in the cache, nil otherwise --
 function BaseValidator:getHashValueFromRedis(key, hash_field)
     local redisread = redis:new()
-    local redis_host, redis_port = self:getRedisUpstream(redis_RO_upstream)
+    local redis_host, redis_port = self:getRedisUpstream(self.redis_RO_upstream)
     local ok, err = redisread:connect(redis_host, redis_port)
     if ok then
         local redis_key, selecterror = redisread:hget(key, hash_field)
@@ -149,7 +143,7 @@ end
 function BaseValidator:setKeyInRedis(key, hash_name, keyexpires, value)
     ngx.log(ngx.DEBUG, "Storing in Redis the key [", tostring(key), "], expireat=", tostring(keyexpires), ", value=", tostring(value) )
     local rediss = redis:new()
-    local redis_host, redis_port = self:getRedisUpstream(redis_RW_upstream)
+    local redis_host, redis_port = self:getRedisUpstream(self.redis_RW_upstream)
     local ok, err = rediss:connect(redis_host, redis_port)
     if ok then
         --ngx.log(ngx.DEBUG, "WRITING IN REDIS JSON OBJ key=" .. key .. "=" .. value .. ",expiring in:" .. (keyexpires - (os.time() * 1000)) )
