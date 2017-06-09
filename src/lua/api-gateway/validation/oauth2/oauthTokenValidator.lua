@@ -112,7 +112,7 @@ function _M:storeTokenInCache(cacheLookupKey, cachingObj, expire_at_ms_utc)
     ngx.log(ngx.DEBUG, "Storing a new token expiring in  " .. tostring(local_expire_in) .. " s locally, out of a total validity of " .. tostring(expires_in_s) .. " s.")
     local cachingObjString = cjson.encode(cachingObj)
     self:setKeyInLocalCache(cacheLookupKey, cachingObjString, local_expire_in, "cachedOauthTokens")
-    self:setKeyInRedis(cacheLookupKey, "token_json", math.min( expire_at_ms_utc - (os.time() * 1000), REDIS_CACHE_TTL ), cachingObjString)
+    self:setKeyInRedis(cacheLookupKey, "token_json", math.min(expire_at_ms_utc, (os.time() + REDIS_CACHE_TTL) * 1000), cachingObjString)
 end
 
 ---
