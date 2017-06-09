@@ -49,7 +49,9 @@ local _M = BaseValidator:new({
         TOKEN_MISSMATCH = { error_code = "401014", message = "Token not allowed in the current context" },
         SCOPE_MISMATCH = { error_code = "401015", message = "Scope mismatch" },
         UNKNOWN_ERROR = { error_code = "503010", message = "Could not validate the oauth token" }
-    }
+    },
+    redis_RO_upstream = ngx.var.redis_RO_upstream_oauth,
+    redis_RW_upstream = ngx.var.redis_RW_upstream_oauth
 })
 
 ---

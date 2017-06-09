@@ -46,7 +46,8 @@ local BaseValidator = require "api-gateway.validation.validator"
 local cjson = require "cjson"
 
 local _M = BaseValidator:new({
-    redisHost = ngx.var.redis_backend_rw_token
+    redis_RO_upstream = ngx.var.redis_RO_upstream_oauth,
+    redis_RW_upstream = ngx.var.redis_RW_upstream_oauth
 })
 
 local RESPONSES = {
