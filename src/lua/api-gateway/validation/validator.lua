@@ -137,6 +137,29 @@ function BaseValidator:getHashValueFromRedis(key, hash_field)
     return nil;
 end
 
+
+-- is wrapper over redis exists  but returns boolean instead
+function BaseValidator:exists(key)
+    local redisread = redis:new()
+    local redis_host, redis_port = self:getRedisUpstream()
+    local ok, err = redisread:connect(redis_host, redis_port)
+    if ok then
+        local redis_key, selecterror = redisread:exists(key)
+        redisread:set_keepalive(30000, 100)
+        if redis_key then
+            if redis_key == 1 then
+              return true
+            end
+            return false
+        end
+    else
+        ngx.log(ngx.WARN, "Failed to read key ".. key .." from Redis cache:", ngx.var.redis_backend, ".Error:", err)
+    end
+    -- allow redis failures
+    return true;
+
+end
+
 -- saves a value into the redis cache. --
 -- the method uses HSET redis command --
 -- it retuns true if the information is saved in the cache, false otherwise --
