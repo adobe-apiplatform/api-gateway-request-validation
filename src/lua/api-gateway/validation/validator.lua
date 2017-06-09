@@ -147,7 +147,7 @@ function BaseValidator:setKeyInRedis(key, hash_name, keyexpires, value)
     local rediss = redis:new()
     local redis_host, redis_port = self:getRedisUpstream(redis_RW_upstream)
     local ok, err = rediss:connect(redis_host, redis_port)
-    rediss:set_timeout(1000)
+    rediss:set_timeout(5000)
     if ok then
         --ngx.log(ngx.DEBUG, "WRITING IN REDIS JSON OBJ key=" .. key .. "=" .. value .. ",expiring in:" .. (keyexpires - (os.time() * 1000)) )
         rediss:init_pipeline()
