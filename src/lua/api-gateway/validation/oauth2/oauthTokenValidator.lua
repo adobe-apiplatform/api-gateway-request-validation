@@ -57,7 +57,7 @@ local _M = BaseValidator:new({
 local LOCAL_CACHE_TTL = 60
 ---
 -- Maximum time in milliseconds specifying how long to cache a valid token in Redis
-local REDIS_CACHE_TTL = ngx.var.max_oauth_redis_cache_ttl or 6 * 60 * 60
+local REDIS_CACHE_TTL = 6 * 60 * 60
 
 -- Hook to override the logic verifying if a token is valid
 function _M:isTokenValid(json)
