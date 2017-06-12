@@ -47,9 +47,8 @@ local cjson = require "cjson"
 
 local _M = BaseValidator:new({
     redis_RO_upstream = ngx.var.redis_RO_upstream_oauth,
-    redis_RW_upstream = ngx.var.redis_RW_upstream_oauth
+    redis_RW_upstream = ngx.var.redis_RW_upstream_oauth,
 })
-
 local RESPONSES = {
         P_MISSING_TOKEN   = { error_code = "403020", message = "Oauth token is missing"         },
         INVALID_PROFILE   = { error_code = "403023", message = "Profile is not valid"           },
