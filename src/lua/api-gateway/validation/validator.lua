@@ -143,21 +143,19 @@ function BaseValidator:exists(key)
     local redisread = redis:new()
     local redis_host, redis_port = self:getRedisUpstream()
     local ok, err = redisread:connect(redis_host, redis_port)
-    if ok then
-        local redis_key, selecterror = redisread:exists(key)
-        redisread:set_keepalive(30000, 100)
-        if redis_key then
-            if redis_key == 1 then
-              return true
-            end
-            return false
-        end
-    else
-        ngx.log(ngx.WARN, "Failed to read key ".. key .." from Redis cache:", ngx.var.redis_backend, ".Error:", err)
+    if err then
+        ngx.log(ngx.WARN, "Failed to connect to redis for ".. key .." host:", redis_host, ".Error:", err)
+        return false
     end
-    -- allow redis failures
-    return true;
 
+    local redis_key, selecterror = redisread:exists(key)
+    redisread:set_keepalive(30000, 100)
+    if selecterror or redis_key ~= 1 then
+        ngx.log(ngx.WARN, "Failed to read key ".. key .." from Redis cache:", redis_host, ".Error:", err)
+        return false
+    end
+
+    return true;
 end
 
 -- saves a value into the redis cache. --
