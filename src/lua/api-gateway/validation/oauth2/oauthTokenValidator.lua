@@ -17,6 +17,8 @@
 --   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 --   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 --   DEALINGS IN THE SOFTWARE.
+
+
 --
 -- Validates an OAuth 2 token
 -- User: ddascal
@@ -35,8 +37,10 @@
 --  2. oauth_token_client_id
 --  3. oauth_token_user_id
 --  4. oauth_token_expires_at
+
 local BaseValidator = require "api-gateway.validation.validator"
 local cjson = require "cjson"
+
 local _M = BaseValidator:new({
     RESPONSES = {
         MISSING_TOKEN = { error_code = "403010", message = "Oauth token is missing" },
@@ -47,17 +51,21 @@ local _M = BaseValidator:new({
         UNKNOWN_ERROR = { error_code = "503010", message = "Could not validate the oauth token" }
     }
 })
+
 ---
 -- Maximum time in seconds specifying how long to cache a valid token in GW's memory
 local LOCAL_CACHE_TTL = 60
 ---
 -- Maximum time in milliseconds specifying how long to cache a valid token in Redis
 local REDIS_CACHE_TTL = 6 * 60 * 60
+
 -- Hook to override the logic verifying if a token is valid
 function _M:isTokenValid(json)
     return json.valid or false, self.RESPONSES.INVALID_TOKEN
 end
+
 -- override this if other checks need to be in place
+
 --- Returns a number specifying how long the token is valid. If the value is 0 or less the token is expired
 -- @param json Token info object
 --
@@ -65,6 +73,7 @@ function _M:isCachedTokenValid(json)
     local expires_in_s = self:getExpiresIn(json.oauth_token_expires_at)
     return expires_in_s
 end
+
 -- returns the key that should be used when looking up in the cache --
 function _M:getOauthTokenForCaching(token, oauth_host)
     local t = token;
@@ -74,6 +83,7 @@ function _M:getOauthTokenForCaching(token, oauth_host)
         return "cachedoauth:" .. t;
     end
 end
+
 --- Converts the expire_at into expire_in in seconds
 -- @param expire_at UTC expiration time in seconds
 --
@@ -81,14 +91,17 @@ function _M:getExpiresIn(expire_at)
     if ( expire_at == nil ) then
         return LOCAL_CACHE_TTL
     end
+
     local expire_at_s = expire_at
     if expire_at_s > 9999999999 then
         expire_at_s = expire_at / 1000
     end
+
     local local_t = ngx.time() -- os.time()
     local expires_in_s = expire_at_s - local_t
     return expires_in_s
 end
+
 function _M:storeTokenInCache(cacheLookupKey, cachingObj, expire_at_ms_utc)
     local expires_in_s = self:getExpiresIn(expire_at_ms_utc)
     if ( expires_in_s <= 0 ) then
@@ -105,6 +118,7 @@ function _M:storeTokenInCache(cacheLookupKey, cachingObj, expire_at_ms_utc)
     self:setKeyInLocalCache(cacheLookupKey, cachingObjString, local_expire_in, "cachedOauthTokens")
     self:setKeyInRedis(cacheLookupKey, "token_json", math.min(expire_at_ms_utc, (os.time() + default_ttl_expire * 1000)), cachingObjString)
 end
+
 ---
 -- Returns an object with a set of variables to be saved in the request's context and later in the request's vars
 --  IMPORTANT: This method is only called when validating a new token, otherwise the information from the cache
@@ -119,48 +133,60 @@ function _M:extractContextVars(tokenInfo)
     cachingObj.oauth_token_expires_at = tokenInfo.expires_at -- NOTE: Assumption: value in ms
     return cachingObj
 end
+
 -- TODO: cache invalid tokens too for a short while
 -- Check in the response if the token is valid --
 function _M:checkResponseFromAuth(res, cacheLookupKey)
     local json = cjson.decode(res.body)
     if json ~= nil then
+
         local tokenValidity, error = self:isTokenValid(json)
         if not tokenValidity and error ~= nil then
             return tokenValidity, error
         end
         if tokenValidity and json.token ~= nil then
             local cachingObj = self:extractContextVars(json)
+
             self:setContextProperties(cachingObj)
             self:storeTokenInCache(cacheLookupKey, cachingObj, json.expires_at)
             return true
         end
     end
+
     return false
 end
+
 function _M:getTokenFromCache(cacheLookupKey)
+
     local localCacheValue = self:getKeyFromLocalCache(cacheLookupKey, "cachedOauthTokens")
     if (localCacheValue ~= nil) then
         ngx.log(ngx.DEBUG, "Found IMS token in local cache")
         return localCacheValue
     end
+
     local redisCacheValue = self:getKeyFromRedis(cacheLookupKey, "token_json")
     if (redisCacheValue ~= nil) then
         ngx.log(ngx.DEBUG, "Found IMS token in redis cache")
-        --        self:setKeyInLocalCache(cacheLookupKey, redisCacheValue, 60, "cachedOauthTokens")
+--        self:setKeyInLocalCache(cacheLookupKey, redisCacheValue, 60, "cachedOauthTokens")
         return redisCacheValue
     end
     return nil;
 end
+
 function _M:validateOAuthToken()
+
     local oauth_host = ngx.var.oauth_host
     local oauth_token = self.authtoken or ngx.var.authtoken
+
     if oauth_token == nil or oauth_token == "" then
         return self.RESPONSES.MISSING_TOKEN.error_code, cjson.encode(self.RESPONSES.MISSING_TOKEN)
     end
+
     --1. try to get token info from the cache first ( local or redis cache )
     local oauth_token_hash = ngx.md5(oauth_token)
     local cacheLookupKey = self:getOauthTokenForCaching(oauth_token_hash, oauth_host)
     local cachedToken = self:getTokenFromCache(cacheLookupKey)
+
     if (cachedToken ~= nil) then
         -- ngx.log(ngx.WARN, "Cached token=" .. cachedToken)
         local obj = cjson.decode(cachedToken)
@@ -180,6 +206,7 @@ function _M:validateOAuthToken()
         error.error_code = error.error_code or self.RESPONSES.INVALID_TOKEN.error_code
         return error.error_code, cjson.encode(error)
     end
+
     -- 2. validate the token with the OAuth endpoint
     local res = ngx.location.capture("/validate-token", {
         share_all_vars = true,
@@ -200,7 +227,11 @@ function _M:validateOAuthToken()
     end
     return res.status, cjson.encode(self.RESPONSES.UNKNOWN_ERROR);
 end
+
 function _M:validateRequest()
     return self:exitFn(self:validateOAuthToken())
 end
+
+
 return _M
+
