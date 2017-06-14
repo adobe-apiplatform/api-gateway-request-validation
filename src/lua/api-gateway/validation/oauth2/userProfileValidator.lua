@@ -46,14 +46,12 @@ local BaseValidator = require "api-gateway.validation.validator"
 local cjson = require "cjson"
 
 local _M = BaseValidator:new()
-_M["redis_RO_upstream"] = "oauth-redis-ro-upstream"
-_M["redis_RW_upstream"] = "oauth-redis-rw-upstream"
 
 local RESPONSES = {
-        P_MISSING_TOKEN   = { error_code = "403020", message = "Oauth token is missing"         },
-        INVALID_PROFILE   = { error_code = "403023", message = "Profile is not valid"           },
-        NOT_ALLOWED       = { error_code = "403024", message = "Not allowed to read the profile"},
-        P_UNKNOWN_ERROR   = { error_code = "503020", message = "Could not read the profile"     }
+    P_MISSING_TOKEN   = { error_code = "403020", message = "Oauth token is missing"         },
+    INVALID_PROFILE   = { error_code = "403023", message = "Profile is not valid"           },
+    NOT_ALLOWED       = { error_code = "403024", message = "Not allowed to read the profile"},
+    P_UNKNOWN_ERROR   = { error_code = "503020", message = "Could not read the profile"     }
 }
 
 ---
@@ -127,12 +125,22 @@ function _M:storeProfileInCache(cacheLookupKey, cachingObj)
 
     local oauthTokenExpiration = ngx.ctx.oauth_token_expires_at
     local expiresIn = self:getExpiresIn(oauthTokenExpiration)
+
+    if ( expiresIn <= 0 ) then
+        ngx.log(ngx.DEBUG, "OAuth Token was not persisted in the cache as it has expired at:" .. tostring(expiresIn) .. ", while now is:" .. tostring(ngx.time() * 1000) .. " ms.")
+        return nil
+    end
+
     local localExpiresIn = math.min( expiresIn, LOCAL_CACHE_TTL )
     ngx.log(ngx.DEBUG, "Storing new cached User Profile in the local cache for " .. tostring(localExpiresIn) .. " s out of a total validity of " .. tostring(expiresIn) .. " s.")
 
+    local default_ttl_expire = REDIS_CACHE_TTL
+    if ngx.var.max_oauth_redis_cache_ttl ~= nil and ngx.var.max_oauth_redis_cache_ttl ~= '' then
+        default_ttl_expire = ngx.var.max_oauth_redis_cache_ttl
+    end
     self:setKeyInLocalCache(cacheLookupKey, cachingObjString, localExpiresIn , "cachedUserProfiles")
     -- cache the use profile for 5 minutes
-    self:setKeyInRedis(cacheLookupKey, "user_json", oauthTokenExpiration or ((ngx.time() + LOCAL_CACHE_TTL) * 1000 ), cachingObjString)
+    self:setKeyInRedis(cacheLookupKey, "user_json", math.min(expiresIn, (ngx.time() + default_ttl_expire) * 1000), cachingObjString)
 end
 
 --- Returns true if the profile is valid for the request context
@@ -182,11 +190,11 @@ function _M:validateUserProfile()
         end
     end
 
-	-- 2. get the user profile from the IMS profile
+    -- 2. get the user profile from the IMS profile
     local res = ngx.location.capture("/validate-user", { share_all_vars = true })
     if res.status == ngx.HTTP_OK then
-    	local json = cjson.decode(res.body)
-    	if json ~= nil then
+        local json = cjson.decode(res.body)
+        if json ~= nil then
 
             local cachingObj = self:extractContextVars(json)
 
