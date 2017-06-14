@@ -70,7 +70,7 @@
                 <configuration>
                     <shortRevisionLength>7</shortRevisionLength>
                     <doCheck>false</doCheck>
-                    <doUpdate>true</doUpdate>
+                    <doUpdate>false</doUpdate>
                 </configuration>
             </plugin>
         </plugins>
