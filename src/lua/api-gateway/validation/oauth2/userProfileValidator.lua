@@ -61,6 +61,10 @@ local RESPONSES = {
 -- Maximum time in seconds specifying how long to cache a valid token in GW's memory
 local LOCAL_CACHE_TTL = 60
 
+---
+-- Maximum time in milliseconds specifying how long to cache a valid token in Redis
+local REDIS_CACHE_TTL = 6 * 60 * 60
+
 -- returns the key that should be used when looking up in the cache --
 function _M:getCacheToken(token)
     local t = token;
