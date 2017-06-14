@@ -44,10 +44,10 @@ local redisHealthCheck = RedisHealthCheck:new({
 
 function BaseValidator:new(o)
     local o = o or {}
-    setmetatable(o, self)
-    self.__index = self
     self.redis_RO_upstream = o.redis_RO_upstream or "api-gateway-redis-replica"
     self.redis_RW_upstream = o.redis_RW_upstream or "api-gateway-redis"
+    setmetatable(o, self)
+    self.__index = self
     return o
 end
 
