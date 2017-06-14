@@ -57,6 +57,9 @@ local _M = BaseValidator:new({
 ---
 -- Maximum time in seconds specifying how long to cache a valid token in GW's memory
 local LOCAL_CACHE_TTL = 60
+---
+-- Maximum time in milliseconds specifying how long to cache a valid token in Redis
+local REDIS_CACHE_TTL = 6 * 60 * 60
 
 -- Hook to override the logic verifying if a token is valid
 function _M:isTokenValid(json)
@@ -110,8 +113,12 @@ function _M:storeTokenInCache(cacheLookupKey, cachingObj, expire_at_ms_utc)
     local local_expire_in =  math.min( expires_in_s, LOCAL_CACHE_TTL )
     ngx.log(ngx.DEBUG, "Storing a new token expiring in  " .. tostring(local_expire_in) .. " s locally, out of a total validity of " .. tostring(expires_in_s) .. " s.")
     local cachingObjString = cjson.encode(cachingObj)
+    local default_ttl_expire = REDIS_CACHE_TTL
+    if ngx.var.max_oauth_redis_cache_ttl ~= nil and ngx.var.max_oauth_redis_cache_ttl ~= '' then
+        default_ttl_expire = ngx.var.max_oauth_redis_cache_ttl
+    end
     self:setKeyInLocalCache(cacheLookupKey, cachingObjString, local_expire_in, "cachedOauthTokens")
-    self:setKeyInRedis(cacheLookupKey, "token_json", expire_at_ms_utc, cachingObjString)
+    self:setKeyInRedis(cacheLookupKey, "token_json", math.min(expire_at_ms_utc, (os.time() + default_ttl_expire * 1000)), cachingObjString)
 end
 
 ---
