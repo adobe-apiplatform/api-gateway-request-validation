@@ -118,6 +118,7 @@ function _M:storeTokenInCache(cacheLookupKey, cachingObj, expire_at_ms_utc)
     if ngx.var.max_oauth_redis_cache_ttl ~= nil and ngx.var.max_oauth_redis_cache_ttl ~= '' then
         default_ttl_expire = ngx.var.max_oauth_redis_cache_ttl
     end
+
     self:setKeyInLocalCache(cacheLookupKey, cachingObjString, local_expire_in, "cachedOauthTokens")
     self:setKeyInRedis(cacheLookupKey, "token_json", math.min(expire_at_ms_utc, (ngx.time() + default_ttl_expire) * 1000), cachingObjString)
 end
