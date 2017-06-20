@@ -36,6 +36,8 @@ local RedisHealthCheck  = require "api-gateway.redis.redisHealthCheck"
 local cjson             = require "cjson"
 local debug_mode        = ngx.config.debug
 
+local RedisConnectionProvider = require "api-gateway.redis.redisConnectionProvider"
+
 -- redis endpoints are assumed to be global per GW node and therefore are read here
 local redis_RO_upstream                      = "api-gateway-redis-replica"
 local redis_RW_upstream                      = "api-gateway-redis"
@@ -45,6 +47,8 @@ local BaseValidator = {}
 local redisHealthCheck = RedisHealthCheck:new({
     shared_dict = "cachedkeys"
 })
+
+local redisConnectionProvider = RedisConnectionProvider:new()
 
 function BaseValidator:new(o)
     local o = o or {}
@@ -100,14 +104,12 @@ function BaseValidator:getKeyFromRedis(key, hash_name)
         return self:getHashValueFromRedis(key, hash_name)
     end
 
-    local redisread = redis:new()
-    local redis_host, redis_port = self:getRedisUpstream(redis_RO_upstream)
-    local ok, err = redisread:connect(redis_host, redis_port)
+    local ok, redisread = redisConnectionProvider:getConnection(redis_RO_upstream);
     if ok then
         local result, err = redisread:get(key)
         redisread:set_keepalive(30000, 100)
         if ( not result and err ~= nil ) then
-            ngx.log(ngx.WARN, "Failed to read key " .. tostring(key) .. " from Redis cache:[", redis_host, ":", redis_port, "]. Error:", err)
+            ngx.log(ngx.WARN, "Failed to read key " .. tostring(key) .. ". Error:", err)
             return nil
         else
             if (type(result) == 'string') then
@@ -115,7 +117,7 @@ function BaseValidator:getKeyFromRedis(key, hash_name)
             end
         end
     else
-        ngx.log(ngx.WARN, "Failed to read key " .. tostring(key) .. " from Redis cache:[", redis_host, ":", redis_port, "]. Error:", err)
+        ngx.log(ngx.WARN, "Failed to read key " .. tostring(key) .. ". Error:", err)
     end
     return nil;
 end
@@ -124,9 +126,7 @@ end
 -- the method uses HGET redis command --
 -- it returns the value of the key, when found in the cache, nil otherwise --
 function BaseValidator:getHashValueFromRedis(key, hash_field)
-    local redisread = redis:new()
-    local redis_host, redis_port = self:getRedisUpstream(redis_RO_upstream)
-    local ok, err = redisread:connect(redis_host, redis_port)
+    local ok, redisread = redisConnectionProvider:getConnection(redis_RO_upstream)
     if ok then
         local redis_key, selecterror = redisread:hget(key, hash_field)
         redisread:set_keepalive(30000, 100)
@@ -134,7 +134,7 @@ function BaseValidator:getHashValueFromRedis(key, hash_field)
             return redis_key
         end
     else
-        ngx.log(ngx.WARN, "Failed to read key " .. tostring(key) .. " from Redis cache:[", redis_host, ":", redis_port, "]. Error:", err)
+        ngx.log(ngx.WARN, "Failed to read key " .. tostring(key))
     end
     return nil;
 end
@@ -144,9 +144,7 @@ end
 -- it retuns true if the information is saved in the cache, false otherwise --
 function BaseValidator:setKeyInRedis(key, hash_name, keyexpires, value)
     ngx.log(ngx.DEBUG, "Storing in Redis the key [", tostring(key), "], expireat=", tostring(keyexpires), ", value=", tostring(value) )
-    local rediss = redis:new()
-    local redis_host, redis_port = self:getRedisUpstream(redis_RW_upstream)
-    local ok, err = rediss:connect(redis_host, redis_port)
+    local ok, rediss = redisConnectionProvider:getConnection(redis_RW_upstream)
     if ok then
         --ngx.log(ngx.DEBUG, "WRITING IN REDIS JSON OBJ key=" .. key .. "=" .. value .. ",expiring in:" .. (keyexpires - (os.time() * 1000)) )
         rediss:init_pipeline()
@@ -154,7 +152,7 @@ function BaseValidator:setKeyInRedis(key, hash_name, keyexpires, value)
         if keyexpires ~= nil then
             rediss:pexpireat(key, keyexpires)
         end
-        local commit_res, commit_err = rediss:commit_pipeline()
+        local _, commit_err = rediss:commit_pipeline()
         rediss:set_keepalive(30000, 100)
         --ngx.log(ngx.WARN, "SAVE RESULT:" .. cjson.encode(commit_res) )
         if (commit_err == nil) then
@@ -163,9 +161,22 @@ function BaseValidator:setKeyInRedis(key, hash_name, keyexpires, value)
             ngx.log(ngx.WARN, "Failed to write the key [", key, "] in Redis. Error:", commit_err)
         end
     else
-        ngx.log(ngx.WARN, "Failed to save key:" .. tostring(key) .. " into cache: [", tostring(redis_host) .. ":" .. tostring(redis_port), "]. Error:", err)
+        ngx.log(ngx.WARN, "Failed to save key:" .. tostring(key) .. ". Error:", err)
     end
     return false;
+end
+
+function BaseValidator:deleteKeyFromRedis(key)
+    ngx.log(ngx.DEBUG, "Deleting key from Redis: " .. key)
+    local ok, redis = redisConnectionProvider:getConnection(redis_RW_upstream);
+    if ok then
+        local redisResponse, err = redis:del(key)
+        if err then
+            ngx.log(ngx.ERR, "Error while deleting key from redis: ", err)
+            return nil
+        end
+        return redisResponse
+    end
 end
 
 -- it accepts a table or a string and saves the properties into the current request context --
@@ -178,6 +189,22 @@ function BaseValidator:setContextProperties(cached_token)
     for k, v in pairs(jsonCacheObj) do
         ngx.ctx[k] = v
         self:debug("Setting ngx.ctx." .. tostring(k) .. "=" .. tostring(v))
+    end
+end
+
+-- TTL using LuaResty Redis
+function BaseValidator:executeTtl(key)
+    ngx.log(ngx.DEBUG, "Getting upstream from:" .. redis_RW_upstream)
+    local ok, redis = redisConnectionProvider:getConnection(redis_RW_upstream)
+    if ok then
+        ngx.log(ngx.DEBUG, "Executing TTL for key:" .. key)
+        local ttl, err = redis:ttl(key)
+        if not ttl then
+            ngx.log(ngx.ERR, "Could not execute TTL for key: " .. key .. ". Error: " .. err)
+        else
+            ngx.log(ngx.DEBUG, "TTL response: " .. ttl)
+            return ttl
+        end
     end
 end
 

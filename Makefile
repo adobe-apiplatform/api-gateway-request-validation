@@ -50,7 +50,8 @@ redis: all
 	echo " ... using REDIS_SERVER=$(REDIS_SERVER)"
 
 test-docker:
-	echo "running tests with docker ..."
+	export REDIS_PASS=
+	echo "Running tests with docker, using NO password protection for Redis"
 	mkdir  -p $(BUILD_DIR)
 	mkdir  -p $(BUILD_DIR)/test-logs
 	cp -r test/resources/api-gateway $(BUILD_DIR)
@@ -61,6 +62,22 @@ test-docker:
 	cp -r ./test ~/tmp/apiplatform/api-gateway-request-validation/
 	cp -r ./target ~/tmp/apiplatform/api-gateway-request-validation/
 	cd ./test && docker-compose up
+	cp -r ~/tmp/apiplatform/api-gateway-request-validation/target/ ./target
+	rm -rf  ~/tmp/apiplatform/api-gateway-request-validation
+
+test-docker-with-password:
+	export REDIS_PASS=redisPasswordForTests
+	echo "running tests with docker, using password protected Redis instance"
+	mkdir  -p $(BUILD_DIR)
+	mkdir  -p $(BUILD_DIR)/test-logs
+	cp -r test/resources/api-gateway $(BUILD_DIR)
+	sed -i '' 's/127\.0\.0\.1/redis\.docker/g' $(BUILD_DIR)/api-gateway/redis-upstream.conf
+	rm -f $(BUILD_DIR)/test-logs/*
+	mkdir -p ~/tmp/apiplatform/api-gateway-request-validation
+	cp -r ./src ~/tmp/apiplatform/api-gateway-request-validation/
+	cp -r ./test ~/tmp/apiplatform/api-gateway-request-validation/
+	cp -r ./target ~/tmp/apiplatform/api-gateway-request-validation/
+	cd ./test && docker-compose -f docker-compose-with-password.yml up
 	cp -r ~/tmp/apiplatform/api-gateway-request-validation/target/ ./target
 	rm -rf  ~/tmp/apiplatform/api-gateway-request-validation
 

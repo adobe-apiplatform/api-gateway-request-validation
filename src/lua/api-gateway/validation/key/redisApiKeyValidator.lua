@@ -36,10 +36,11 @@
 --
 local BaseValidator = require "api-gateway.validation.validator"
 local cjson = require "cjson"
-local redis = require "resty.redis"
-local RedisHealthCheck = require "api-gateway.redis.redisHealthCheck"
+
+local RedisConnectionProvider = require "api-gateway.redis.redisConnectionProvider"
 
 local ApiKeyValidator = BaseValidator:new()
+local redisConnectionProvider = RedisConnectionProvider:new()
 
 local super = {
     instance = BaseValidator,
@@ -59,29 +60,26 @@ local RESPONSES = {
 --
 function ApiKeyValidator:getLegacyKeyFromRedis(redis_key)
     ngx.log(ngx.DEBUG, "Looking for a legacy api-key in Redis")
-    local red = redis:new();
+    local ok, redis = redisConnectionProvider:getConnection()
 
-    local redis_host, redis_port = self:getRedisUpstream()
-    local ok, err = red:connect(redis_host, redis_port)
     if ok then
-
         --local selectresult, selecterror = red:hgetall(redis_key);
         -- these are the fields to be saved in the request variables.
         -- NOTE: all the fields have to be defined before in nginx configuration file like : set $realm 'default_value';
-        local fields =                                        {"key", "realm", "service_id", "service_name", "consumer_org_name", "app_name", "plan_name", "key_secret" }
-        local selectresult, selecterror = red:hmget(redis_key, "key", "realm", "service-id", "service-name", "consumer-org-name", "app-name", "plan-name", "key_secret")
-        red:set_keepalive(30000, 100);
+        local fields = { "key", "realm", "service_id", "service_name", "consumer_org_name", "app_name", "plan_name", "key_secret" }
+        local selectresult, selecterror = redis:hmget(redis_key, "key", "realm", "service-id", "service-name", "consumer-org-name", "app-name", "plan-name", "key_secret")
+        redis:set_keepalive(30000, 100);
         if selectresult then
             local api_key_obj = {}
             if selectresult and type(selectresult) == "table" then
                 local found = 0
-                for i,v in ipairs(selectresult) do
+                for i, v in ipairs(selectresult) do
                     if type(v) == "string" then
                         found = 1
                         api_key_obj[fields[i]] = v
                     end
                 end
-                if ( found == 0 ) then
+                if (found == 0) then
                     return ngx.HTTP_NOT_FOUND;
                 end
                 --ngx.log(ngx.WARN, "JSON:" .. cjson.encode(json_output) )
@@ -91,7 +89,6 @@ function ApiKeyValidator:getLegacyKeyFromRedis(redis_key)
             return api_key_obj;
         end
     else
-        ngx.log(ngx.WARN, "Could not connect to redis at[" .. redis_host .. ":" .. redis_port .. "]:", err);
         return ngx.HTTP_SERVICE_UNAVAILABLE;
     end
 end

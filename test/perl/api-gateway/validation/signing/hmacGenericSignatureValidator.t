@@ -59,6 +59,11 @@ __DATA__
 
 
 === TEST 1: test basic HMAC SHA1 signature validation
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/default_validators.conf;
@@ -81,6 +86,11 @@ __DATA__
 
 
 === TEST 2: test HMAC SHA1 validator with request validation
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api_key_service.conf;
@@ -122,15 +132,15 @@ __DATA__
 --- response_body eval
 [
 '{
-            "key":"test-key-1234",
-            "key_secret":"-",
-            "realm":"sandbox",
-            "service_id":"s-123",
-            "service_name":"_undefined_",
-            "consumer_org_name":"_undefined_",
-            "app_name":"_undefined_",
-            "plan_name":"_undefined_"
-            }
+    "key":"test-key-1234",
+    "key_secret":"-",
+    "realm":"sandbox",
+    "service_id":"s-123",
+    "service_name":"_undefined_",
+    "consumer_org_name":"_undefined_",
+    "app_name":"_undefined_",
+    "plan_name":"_undefined_"
+  }
 ',
 "signature is valid\n"
 ]
@@ -140,6 +150,11 @@ __DATA__
 [error]
 
 === TEST 3: test HMAC SHA1 validator with API KEY validation
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api_key_service.conf;
@@ -173,15 +188,15 @@ __DATA__
 --- response_body eval
 [
 '{
-            "key":"sZ28nvYnStSUS2dSzedgnwkJtUdLkNdR",
-            "key_secret":"mO2AIfdUQeQFiGQq",
-            "realm":"sandbox",
-            "service_id":"s-123",
-            "service_name":"_undefined_",
-            "consumer_org_name":"_undefined_",
-            "app_name":"_undefined_",
-            "plan_name":"_undefined_"
-            }
+    "key":"sZ28nvYnStSUS2dSzedgnwkJtUdLkNdR",
+    "key_secret":"mO2AIfdUQeQFiGQq",
+    "realm":"sandbox",
+    "service_id":"s-123",
+    "service_name":"_undefined_",
+    "consumer_org_name":"_undefined_",
+    "app_name":"_undefined_",
+    "plan_name":"_undefined_"
+  }
 ',
 "signature is valid\n"
 ]
@@ -191,9 +206,14 @@ __DATA__
 [error]
 
 === TEST 4: test HMAC SHA1 validator with API KEY validation with deprecated API-KEY API
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
-        include ../../api-gateway/api_key_service_deprecated.conf;
+        include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
 
         location /v1.0/accounts/ {
@@ -223,7 +243,17 @@ __DATA__
 ]
 --- response_body eval
 [
-"+OK\r\n",
+'{
+    "key":"sZ28nvYnStSUS2dSzedgnwkJtUdLkNdR",
+    "key_secret":"mO2AIfdUQeQFiGQq",
+    "realm":"sandbox",
+    "service_id":"s-123",
+    "service_name":"_undefined_",
+    "consumer_org_name":"_undefined_",
+    "app_name":"_undefined_",
+    "plan_name":"_undefined_"
+  }
+',
 "signature is valid\n"
 ]
 --- error_code_like eval
@@ -232,6 +262,11 @@ __DATA__
 [error]
 
 === TEST 5: test HMAC SHA1 validator with API KEY validation and custom ERROR MESSAGES
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api_key_service.conf;
@@ -281,15 +316,15 @@ __DATA__
 --- response_body eval
 [
 '{
-            "key":"sZ28nvYnStSUS2dSzedgnwkJtUdLkNdR",
-            "key_secret":"mO2AIfdUQeQFiGQq",
-            "realm":"sandbox",
-            "service_id":"s-123",
-            "service_name":"_undefined_",
-            "consumer_org_name":"_undefined_",
-            "app_name":"_undefined_",
-            "plan_name":"_undefined_"
-            }
+    "key":"sZ28nvYnStSUS2dSzedgnwkJtUdLkNdR",
+    "key_secret":"mO2AIfdUQeQFiGQq",
+    "realm":"sandbox",
+    "service_id":"s-123",
+    "service_name":"_undefined_",
+    "consumer_org_name":"_undefined_",
+    "app_name":"_undefined_",
+    "plan_name":"_undefined_"
+  }
 ',
 "signature is valid\n",
 'while (1) {}{"code":1033,"description":"Developer key missing or invalid"}' . "\n",
@@ -303,6 +338,11 @@ __DATA__
 [error]
 
 === TEST 6: test HMAC signature validation and generation
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         error_log ../test-logs/hmacGenericSignatureValidator_test6_error.log debug;
@@ -321,9 +361,9 @@ __DATA__
 
             set $api_key $arg_api_key;
             set_if_empty $api_key $http_x_api_key;
-            
+
             set_by_lua $hmac_source_string 'return string.lower(ngx.var.request_method .. ngx.var.uri .. ngx.var.api_key)';
-            
+
             set $hmac_target_string $arg_api_signature;
             set $hmac_method sha1;
 
@@ -356,15 +396,15 @@ __DATA__
 --- response_body eval
 [
 '{
-            "key":"sZ28nvYnStSUS2dSzedgnwkJtUdLkNdR",
-            "key_secret":"mO2AIfdUQeQFiGQq",
-            "realm":"sandbox",
-            "service_id":"123456",
-            "service_name":"_undefined_",
-            "consumer_org_name":"_undefined_",
-            "app_name":"_undefined_",
-            "plan_name":"_undefined_"
-            }
+    "key":"sZ28nvYnStSUS2dSzedgnwkJtUdLkNdR",
+    "key_secret":"mO2AIfdUQeQFiGQq",
+    "realm":"sandbox",
+    "service_id":"123456",
+    "service_name":"_undefined_",
+    "consumer_org_name":"_undefined_",
+    "app_name":"_undefined_",
+    "plan_name":"_undefined_"
+  }
 ',
 "5XPFapKr91/nLn3F+tzfkvSuE4A=\n",
 'while (1) {}{"code":1033,"description":"Developer key missing or invalid"}' . "\n",
@@ -378,6 +418,11 @@ __DATA__
 [error]
 
 === TEST 7: test HMAC digest in isolation
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         error_log ../test-logs/hmacGenericSignatureValidator_test7_error.log debug;

@@ -58,6 +58,11 @@ run_tests();
 __DATA__
 
 === TEST 1: test api_key is saved in redis
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api_key_service.conf;
@@ -68,22 +73,29 @@ X-Test: test
 --- request
 POST /cache/api_key?key=key-123&service_id=s-123
 --- response_body eval
-['{
-            "key":"key-123",
-            "key_secret":"-",
-            "realm":"sandbox",
-            "service_id":"s-123",
-            "service_name":"_undefined_",
-            "consumer_org_name":"_undefined_",
-            "app_name":"_undefined_",
-            "plan_name":"_undefined_"
-            }
-']
+[
+'{
+    "key":"key-123",
+    "key_secret":"-",
+    "realm":"sandbox",
+    "service_id":"s-123",
+    "service_name":"_undefined_",
+    "consumer_org_name":"_undefined_",
+    "app_name":"_undefined_",
+    "plan_name":"_undefined_"
+  }
+'
+]
 --- error_code: 200
 --- no_error_log
 [error]
 
 === TEST 2: check request without api_key parameter is rejected
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api_key_service.conf;
@@ -91,6 +103,7 @@ POST /cache/api_key?key=key-123&service_id=s-123
         error_log ../test-logs/apiKeyValidator_test2_error.log debug;
 
         location /test-api-key {
+
             set $service_id s-123;
 
             set $api_key $arg_api_key;
@@ -109,6 +122,11 @@ GET /test-api-key
 [error]
 
 === TEST 3: check request with invalid api_key is rejected
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api_key_service.conf;
@@ -134,6 +152,11 @@ GET /test-api-key?api_key=ab123
 [error]
 
 === TEST 4: test request with valid api_key
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api_key_service.conf;
@@ -157,15 +180,15 @@ GET /test-api-key?api_key=ab123
 "GET /test-api-key?api_key=test-apikey-1234"]
 --- response_body eval
 ['{
-            "key":"test-apikey-1234",
-            "key_secret":"-",
-            "realm":"sandbox",
-            "service_id":"s-123",
-            "service_name":"_undefined_",
-            "consumer_org_name":"_undefined_",
-            "app_name":"_undefined_",
-            "plan_name":"_undefined_"
-            }
+    "key":"test-apikey-1234",
+    "key_secret":"-",
+    "realm":"sandbox",
+    "service_id":"s-123",
+    "service_name":"_undefined_",
+    "consumer_org_name":"_undefined_",
+    "app_name":"_undefined_",
+    "plan_name":"_undefined_"
+  }
 ',
 "api-key is valid.\n",
 "api-key is valid.\n"
@@ -174,6 +197,11 @@ GET /test-api-key?api_key=ab123
 
 
 === TEST 5: test that api_key fields are saved in the request variables
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api_key_service.conf;
@@ -199,15 +227,15 @@ GET /test-api-key?api_key=ab123
 "GET /test-api-key-5?api_key=test-apikey-12345"]
 --- response_body eval
 ['{
-            "key":"test-apikey-12345",
-            "key_secret":"my-secret",
-            "realm":"sandbox",
-            "service_id":"s-123",
-            "service_name":"test-service-name",
-            "consumer_org_name":"test-consumer-name",
-            "app_name":"test-app-name",
-            "plan_name":"_undefined_"
-            }
+    "key":"test-apikey-12345",
+    "key_secret":"my-secret",
+    "realm":"sandbox",
+    "service_id":"s-123",
+    "service_name":"test-service-name",
+    "consumer_org_name":"test-consumer-name",
+    "app_name":"test-app-name",
+    "plan_name":"_undefined_"
+  }
 ',
 '{"valid":true}' . "\n",
 "service_name=test-service-name,consumer_org_name=test-consumer-name,app_name=test-app-name,secret=my-secret\n"]
@@ -215,6 +243,11 @@ GET /test-api-key?api_key=ab123
 
 
 === TEST 6: test debug headers
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api_key_service.conf;
@@ -237,15 +270,15 @@ GET /test-api-key?api_key=ab123
 "GET /test-api-key?api_key=test-key-123&debug=true"]
 --- response_body eval
 ['{
-            "key":"test-key-123",
-            "key_secret":"-",
-            "realm":"sandbox",
-            "service_id":"s-123",
-            "service_name":"_undefined_",
-            "consumer_org_name":"_undefined_",
-            "app_name":"_undefined_",
-            "plan_name":"_undefined_"
-            }
+    "key":"test-key-123",
+    "key_secret":"-",
+    "realm":"sandbox",
+    "service_id":"s-123",
+    "service_name":"_undefined_",
+    "consumer_org_name":"_undefined_",
+    "app_name":"_undefined_",
+    "plan_name":"_undefined_"
+  }
 ',
 "api-key is valid.\n"]
 --- response_headers_like eval
@@ -258,6 +291,11 @@ GET /test-api-key?api_key=ab123
 
 
 === TEST 7: test api-key related field starting with capital H
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api_key_service.conf;
@@ -282,15 +320,15 @@ GET /test-api-key?api_key=ab123
 --- response_body eval
 [
 '{
-            "key":"H-test-apikey-1234",
-            "key_secret":"-",
-            "realm":"sandbox",
-            "service_id":"HH-123",
-            "service_name":"_undefined_",
-            "consumer_org_name":"_undefined_",
-            "app_name":"HHHH",
-            "plan_name":"_undefined_"
-            }
+    "key":"H-test-apikey-1234",
+    "key_secret":"-",
+    "realm":"sandbox",
+    "service_id":"HH-123",
+    "service_name":"_undefined_",
+    "consumer_org_name":"_undefined_",
+    "app_name":"HHHH",
+    "plan_name":"_undefined_"
+  }
 ',
 "api-key is valid.\n"]
 --- response_headers_like eval
@@ -304,6 +342,11 @@ GET /test-api-key?api_key=ab123
 
 
 === TEST 8: test with more api-key fields
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api_key_service.conf;

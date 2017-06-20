@@ -61,6 +61,11 @@ run_tests();
 __DATA__
 
 === TEST 1: test ims_token is validated correctly
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api-gateway-cache.conf;
@@ -96,6 +101,11 @@ GET /test-oauth-validation
 [error]
 
 === TEST 2: test ims_token is saved in the cache
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api-gateway-cache.conf;
@@ -117,7 +127,6 @@ GET /test-oauth-validation
             content_by_lua "ngx.say('ims token is valid.')";
         }
         location /get-from-cache {
-
             set $authtoken $http_authorization;
             set_if_empty $authtoken $arg_user_token;
             set_by_lua $authtoken 'return ngx.re.gsub(ngx.arg[1], "bearer ", "","ijo") ' $authtoken;
@@ -142,8 +151,19 @@ GET /test-oauth-validation
             set_if_empty $authtoken $arg_user_token;
             set_by_lua $authtoken 'return ngx.re.gsub(ngx.arg[1], "bearer ", "","ijo") ' $authtoken;
             set_md5 $authtoken_hash $authtoken;
-            set $redis_ttl_cmd 'TTL cachedoauth:$authtoken_hash';
-            rewrite /test-oauth-token-expiry(.*)$ /cache/redis_query?$redis_ttl_cmd last;
+            # set $redis_ttl_cmd 'TTL cachedoauth:$authtoken_hash';
+            set $key 'cachedoauth:$authtoken_hash';
+            content_by_lua '
+                local BaseValidator = require "api-gateway.validation.validator"
+                local TestValidator = BaseValidator:new()
+                local validator = TestValidator:new()
+                local res = validator:executeTtl(ngx.var.key)
+                if ( res ~= nil) then
+                    validator:exitFn(200, res)
+                end
+            ';
+
+            # rewrite /test-oauth-token-expiry(.*)$ /cache/redis_query?$redis_ttl_cmd last;
             # echo $redis_ttl_cmd;
         }
         location /validate-token {
@@ -172,16 +192,21 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_2_X_0
 [ "ims token is valid.\n" ,
 '.*{"oauth_token_client_id":"client_id_test_2","oauth_token_expires_at":\\d{13},"oauth_token_scope":"openid email profile","oauth_token_user_id":"21961FF44F97F8A10A490D36"}.*',
 '.*"expires_at":\d+,.*',
-'^:[1-4]\r\n$', # the cached token expiry time is in seconds, and it can only be between 1s to 4s, but not less. -1 response indicated the key is not cached or it has expired
+'[1-4]', # the cached token expiry time is in seconds, and it can only be between 1s to 4s, but not less. -1 response indicated the key is not cached or it has expired
 'OK\n',
 'OAuth cachedoauth\:bd9fdbb91a974d1c94e65dc6a0ce31a4 not found in local cache',
-'-2\r\n' # redis should have expired the oauth token by now
+'-2' # redis should have expired the oauth token by now
 ]
 --- timeout: 10s
 --- no_error_log
 [error]
 
 === TEST 3: test oauth vars are saved in request variables
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api-gateway-cache.conf;
@@ -241,6 +266,11 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST3
 [error]
 
 === TEST 4: test IMS token is saved in redis and in the local cache
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api-gateway-cache.conf;
@@ -297,11 +327,29 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST3
                 end
             ";
         }
+
+        location /query-for-key {
+           set $service_id s-123;
+           set_if_empty $authtoken $arg_user_token;
+           set_by_lua $authtoken 'return ngx.re.gsub(ngx.arg[1], "bearer ", "","ijo") ' $authtoken;
+           set $authtoken $http_authorization;
+           set_unescape_uri $query $query_string;
+           content_by_lua '
+                ngx.log(ngx.DEBUG,"The query value is : "..ngx.var.query)
+                local BaseValidator = require "api-gateway.validation.validator"
+                local TestValidator = BaseValidator:new()
+                local validator = TestValidator:new()
+                local res = validator:getKeyFromRedis(ngx.var.query, "token_json")
+                if ( res ~= nil) then
+                   ngx.say(tostring(res))
+                end
+            ';
+        }
 --- more_headers
 Authorization: Bearer SOME_OAUTH_TOKEN_TEST4
 --- pipelined_requests eval
 ["GET /test-oauth-validation",
-"GET /cache/redis_query?HGET%20cachedoauth:1eb30b79089ce83d1b18a89501b41998%20token_json",
+"GET /query-for-key?cachedoauth:1eb30b79089ce83d1b18a89501b41998",
 "GET /test-oauth-validation-again",
 "GET /l2_cache/api_key?key=cachedoauth:1eb30b79089ce83d1b18a89501b41998"
 ]
@@ -315,6 +363,11 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST4
 [error]
 
 === TEST 5: test invalid token returns 401
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api-gateway-cache.conf;
@@ -351,6 +404,11 @@ GET /test-oauth-validation
 [error]
 
 === TEST 6: test that validation behaviour can be customized
+
+--- main_config
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/default_validators.conf;
