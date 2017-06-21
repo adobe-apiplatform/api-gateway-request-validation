@@ -17,7 +17,7 @@
 
     <groupId>com.adobe.api.gateway</groupId>
     <artifactId>api-gateway-request-validation</artifactId>
-    <version>1.2.7-SNAPSHOT</version>
+    <version>1.2.8-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -70,7 +70,7 @@
                 <configuration>
                     <shortRevisionLength>7</shortRevisionLength>
                     <doCheck>false</doCheck>
-                    <doUpdate>true</doUpdate>
+                    <doUpdate>false</doUpdate>
                 </configuration>
             </plugin>
         </plugins>
