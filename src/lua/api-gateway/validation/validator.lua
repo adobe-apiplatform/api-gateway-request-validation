@@ -30,17 +30,17 @@
 --   1. api-gateway-redis upstream needs to be set
 --   2. api-gateway-redis-replica needs to be set
 --
-local base              = require "api-gateway.validation.base"
-local redis             = require "resty.redis"
-local RedisHealthCheck  = require "api-gateway.redis.redisHealthCheck"
-local cjson             = require "cjson"
-local debug_mode        = ngx.config.debug
+local base = require "api-gateway.validation.base"
+local redis = require "resty.redis"
+local RedisHealthCheck = require "api-gateway.redis.redisHealthCheck"
+local cjson = require "cjson"
+local debug_mode = ngx.config.debug
 
 local RedisConnectionProvider = require "api-gateway.redis.redisConnectionProvider"
 
 -- redis endpoints are assumed to be global per GW node and therefore are read here
-local redis_RO_upstream                      = "api-gateway-redis-replica"
-local redis_RW_upstream                      = "api-gateway-redis"
+local redis_RO_upstream = "api-gateway-redis-replica"
+local redis_RW_upstream = "api-gateway-redis"
 
 -- class to be used as a base class for all api-gateway validators --
 local BaseValidator = {}
@@ -93,7 +93,7 @@ function BaseValidator:getRedisUpstream(upstream_name)
     end
 
     ngx.log(ngx.ERR, "Could not find a Redis upstream.")
-    return nil,nil
+    return nil, nil
 end
 
 -- retrieves a saved information from the Redis cache --
@@ -110,7 +110,7 @@ function BaseValidator:getKeyFromRedis(key, hash_name)
     if ok then
         local result, err = redisread:get(key)
         redisread:set_keepalive(30000, 100)
-        if ( not result and err ~= nil ) then
+        if (not result and err ~= nil) then
             ngx.log(ngx.WARN, "Failed to read key " .. tostring(key) .. ". Error:", err)
             return nil
         else
@@ -144,29 +144,26 @@ end
 
 -- is wrapper over redis exists  but returns boolean instead
 function BaseValidator:exists(key)
-    local redisread = redis:new()
-    local redis_host, redis_port = self:getRedisUpstream()
-    local ok, err = redisread:connect(redis_host, redis_port)
-    if err then
-        ngx.log(ngx.WARN, "Failed to connect to redis for ".. key .." host:", redis_host, ".Error:", err)
+    local ok, redisread = redisConnectionProvider:getConnection();
+    if ok then
+        local redis_key, selecterror = redisread:exists(key)
+        redisread:set_keepalive(30000, 100)
+        if selecterror or redis_key ~= 1 then
+            ngx.log(ngx.WARN, "Failed to read key " .. key .. " from Redis cache:", redis_host, ".Error:", err)
+            return false
+        end
+        return true;
+    else
+        ngx.log(ngx.WARN, "Failed to perform exists on key " .. tostring(key))
         return false
     end
-
-    local redis_key, selecterror = redisread:exists(key)
-    redisread:set_keepalive(30000, 100)
-    if selecterror or redis_key ~= 1 then
-        ngx.log(ngx.WARN, "Failed to read key ".. key .." from Redis cache:", redis_host, ".Error:", err)
-        return false
-    end
-
-    return true;
 end
 
 -- saves a value into the redis cache. --
 -- the method uses HSET redis command --
 -- it retuns true if the information is saved in the cache, false otherwise --
 function BaseValidator:setKeyInRedis(key, hash_name, keyexpires, value)
-    ngx.log(ngx.DEBUG, "Storing in Redis the key [", tostring(key), "], expireat=", tostring(keyexpires), ", value=", tostring(value) )
+    ngx.log(ngx.DEBUG, "Storing in Redis the key [", tostring(key), "], expireat=", tostring(keyexpires), ", value=", tostring(value))
     local ok, rediss = redisConnectionProvider:getConnection(redis_RW_upstream)
     if ok then
         --ngx.log(ngx.DEBUG, "WRITING IN REDIS JSON OBJ key=" .. key .. "=" .. value .. ",expiring in:" .. (keyexpires - (os.time() * 1000)) )
