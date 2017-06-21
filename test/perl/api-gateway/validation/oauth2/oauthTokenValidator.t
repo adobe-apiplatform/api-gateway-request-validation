@@ -136,6 +136,8 @@ env REDIS_PASS;
             content_by_lua '
                 local BaseValidator = require "api-gateway.validation.validator"
                 local TestValidator = BaseValidator:new()
+                TestValidator["redis_RO_upstream"] = "oauth-redis-ro-upstream"
+                TestValidator["redis_RW_upstream"] = "oauth-redis-rw-upstream"
                 local validator = TestValidator:new()
                 local res = validator:getKeyFromRedis(ngx.var.key, "token_json")
                 if ( res ~= nil) then

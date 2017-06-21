@@ -52,6 +52,8 @@ local redisConnectionProvider = RedisConnectionProvider:new()
 
 function BaseValidator:new(o)
     local o = o or {}
+    self.redis_RO_upstream = self.redis_RO_upstream or "api-gateway-redis-replica"
+    self.redis_RW_upstream = self.redis_RW_upstream or "api-gateway-redis"
     setmetatable(o, self)
     self.__index = self
     return o
@@ -83,7 +85,7 @@ function BaseValidator:setKeyInLocalCache(key, string_value, exptime, dict_name)
 end
 
 function BaseValidator:getRedisUpstream(upstream_name)
-    local n = upstream_name or redis_RO_upstream
+    local n = upstream_name or self.redis_RO_upstream
     local upstream, host, port = redisHealthCheck:getHealthyRedisNode(n)
     ngx.log(ngx.DEBUG, "Obtained Redis Host:" .. tostring(host) .. ":" .. tostring(port), " from upstream:", n)
     if (nil ~= host and nil ~= port) then
@@ -137,6 +139,27 @@ function BaseValidator:getHashValueFromRedis(key, hash_field)
         ngx.log(ngx.WARN, "Failed to read key " .. tostring(key))
     end
     return nil;
+end
+
+
+-- is wrapper over redis exists  but returns boolean instead
+function BaseValidator:exists(key)
+    local redisread = redis:new()
+    local redis_host, redis_port = self:getRedisUpstream()
+    local ok, err = redisread:connect(redis_host, redis_port)
+    if err then
+        ngx.log(ngx.WARN, "Failed to connect to redis for ".. key .." host:", redis_host, ".Error:", err)
+        return false
+    end
+
+    local redis_key, selecterror = redisread:exists(key)
+    redisread:set_keepalive(30000, 100)
+    if selecterror or redis_key ~= 1 then
+        ngx.log(ngx.WARN, "Failed to read key ".. key .." from Redis cache:", redis_host, ".Error:", err)
+        return false
+    end
+
+    return true;
 end
 
 -- saves a value into the redis cache. --
