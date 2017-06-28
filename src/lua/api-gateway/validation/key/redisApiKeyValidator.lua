@@ -49,9 +49,9 @@ local super = {
 }
 
 local RESPONSES = {
-        MISSING_KEY   = { error_code = "403000", message = "Api KEY is missing"        },
-        INVALID_KEY   = { error_code = "403003", message = "Api KEY is invalid"        },
-        UNKNOWN_ERROR = { error_code = "503000", message = "Could not validate API KEY"}
+    MISSING_KEY = { error_code = "403000", message = "Api KEY is missing" },
+    INVALID_KEY = { error_code = "403003", message = "Api KEY is invalid" },
+    UNKNOWN_ERROR = { error_code = "503000", message = "Could not validate API KEY" }
 }
 
 --- @Deprecated
@@ -68,7 +68,8 @@ function ApiKeyValidator:getLegacyKeyFromRedis(redis_key)
         -- NOTE: all the fields have to be defined before in nginx configuration file like : set $realm 'default_value';
         local fields = { "key", "realm", "service_id", "service_name", "consumer_org_name", "app_name", "plan_name", "key_secret" }
         local selectresult, selecterror = redis:hmget(redis_key, "key", "realm", "service-id", "service-name", "consumer-org-name", "app-name", "plan-name", "key_secret")
-        redis:set_keepalive(30000, 100);
+        --        redis:set_keepalive(30000, 100);
+        redisConnectionProvider:closeConnection(redis)
         if selectresult then
             local api_key_obj = {}
             if selectresult and type(selectresult) == "table" then
@@ -99,8 +100,8 @@ function ApiKeyValidator:getKeyFromRedis(hashed_key)
     local redis_metadata = super.getKeyFromRedis(ApiKeyValidator, redis_key, "metadata")
     if redis_metadata ~= nil then
         ngx.log(ngx.DEBUG, "Found API KEY Metadata in Redis:", tostring(redis_metadata))
-        local metadata = assert( cjson.decode(redis_metadata), "Invalid metadata found in Redis:" .. tostring(redis_metadata) )
-        if metadata ~= nil  then
+        local metadata = assert(cjson.decode(redis_metadata), "Invalid metadata found in Redis:" .. tostring(redis_metadata))
+        if metadata ~= nil then
             return metadata
         end
     end
@@ -136,11 +137,11 @@ function ApiKeyValidator:validate_api_key()
     end
 
     local redis_key = self:getKeyFromRedis(hashedkey);
-    if (redis_key == ngx.HTTP_NOT_FOUND ) then
+    if (redis_key == ngx.HTTP_NOT_FOUND) then
         --return self:exitFn(ngx.HTTP_FORBIDDEN)
         return self:exitFn(RESPONSES.INVALID_KEY.error_code, cjson.encode(RESPONSES.INVALID_KEY))
     end
-    if ( redis_key == ngx.HTTP_SERVICE_UNAVAILABLE ) then
+    if (redis_key == ngx.HTTP_SERVICE_UNAVAILABLE) then
         --return self:exitFn(ngx.HTTP_SERVICE_UNAVAILABLE)
         return self:exitFn(RESPONSES.UNKNOWN_ERROR.error_code, cjson.encode(RESPONSES.UNKNOWN_ERROR))
     end

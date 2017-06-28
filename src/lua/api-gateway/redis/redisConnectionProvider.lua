@@ -28,6 +28,8 @@ local redisHealthCheck = RedisHealthCheck:new({
     shared_dict = "cachedkeys"
 })
 
+local max_idle_timeout = 30000
+local pool_size = 100
 
 local RedisConnectionProvider = {}
 
@@ -71,7 +73,7 @@ function RedisConnectionProvider:getConnection(upstream)
         local ok, err = redis:auth(redisPassword)
         if not ok then
             ngx.log(ngx.ERR, "Redis authentication failed for server: " .. redis_host .. ":" .. redis_port .. ". Error: ", err)
-            return nil, nil
+            return false, nil
         end
         ngx.log(ngx.DEBUG, "Redis authentication successful")
         return ok, redis
@@ -79,6 +81,14 @@ function RedisConnectionProvider:getConnection(upstream)
         ngx.log(ngx.DEBUG, "No password authentication for Redis")
         return true, redis
     end
+end
+
+function RedisConnectionProvider:closeConnection(redis_instance)
+    redis_instance:set_keepalive(max_idle_timeout, pool_size)
+end
+
+function RedisConnectionProvider:closeConnectionWithTimeout(redis_instance, max_idle_timeout)
+    redis_instance:set_keepalive(max_idle_timeout, pool_size)
 end
 
 return RedisConnectionProvider

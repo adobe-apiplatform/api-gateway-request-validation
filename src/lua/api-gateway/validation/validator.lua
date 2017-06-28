@@ -109,7 +109,8 @@ function BaseValidator:getKeyFromRedis(key, hash_name)
     local ok, redisread = redisConnectionProvider:getConnection(redis_RO_upstream);
     if ok then
         local result, err = redisread:get(key)
-        redisread:set_keepalive(30000, 100)
+        --        redisread:set_keepalive(30000, 100)
+        redisConnectionProvider:closeConnection(redisread)
         if (not result and err ~= nil) then
             ngx.log(ngx.WARN, "Failed to read key " .. tostring(key) .. ". Error:", err)
             return nil
@@ -131,7 +132,8 @@ function BaseValidator:getHashValueFromRedis(key, hash_field)
     local ok, redisread = redisConnectionProvider:getConnection(redis_RO_upstream)
     if ok then
         local redis_key, selecterror = redisread:hget(key, hash_field)
-        redisread:set_keepalive(30000, 100)
+        --        redisread:set_keepalive(30000, 100)
+        redisConnectionProvider:closeConnection(redisread)
         if (type(redis_key) == 'string') then
             return redis_key
         end
@@ -147,7 +149,8 @@ function BaseValidator:exists(key)
     local ok, redisread = redisConnectionProvider:getConnection();
     if ok then
         local redis_key, selecterror = redisread:exists(key)
-        redisread:set_keepalive(30000, 100)
+        --        redisread:set_keepalive(30000, 100)
+        redisConnectionProvider:closeConnection(redisread)
         if selecterror or redis_key ~= 1 then
             ngx.log(ngx.WARN, "Failed to read key " .. key .. " from Redis cache:", redis_host, ".Error:", err)
             return false
@@ -173,7 +176,8 @@ function BaseValidator:setKeyInRedis(key, hash_name, keyexpires, value)
             rediss:pexpireat(key, keyexpires)
         end
         local _, commit_err = rediss:commit_pipeline()
-        rediss:set_keepalive(30000, 100)
+        --        redisread:set_keepalive(30000, 100)
+        redisConnectionProvider:closeConnection(rediss)
         --ngx.log(ngx.WARN, "SAVE RESULT:" .. cjson.encode(commit_res) )
         if (commit_err == nil) then
             return true
@@ -227,6 +231,7 @@ function BaseValidator:executeTtl(key)
         end
     end
 end
+
 
 -- generic exit function for a validator --
 function BaseValidator:exitFn(status, resp_body)
