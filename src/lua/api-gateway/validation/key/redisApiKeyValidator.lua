@@ -68,7 +68,6 @@ function ApiKeyValidator:getLegacyKeyFromRedis(redis_key)
         -- NOTE: all the fields have to be defined before in nginx configuration file like : set $realm 'default_value';
         local fields = { "key", "realm", "service_id", "service_name", "consumer_org_name", "app_name", "plan_name", "key_secret" }
         local selectresult, selecterror = redis:hmget(redis_key, "key", "realm", "service-id", "service-name", "consumer-org-name", "app-name", "plan-name", "key_secret")
-        --        redis:set_keepalive(30000, 100);
         redisConnectionProvider:closeConnection(redis)
         if selectresult then
             local api_key_obj = {}

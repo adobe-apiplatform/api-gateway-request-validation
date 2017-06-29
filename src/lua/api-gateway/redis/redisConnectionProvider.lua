@@ -23,7 +23,6 @@
 local restyRedis = require "resty.redis"
 local RedisHealthCheck = require "api-gateway.redis.redisHealthCheck"
 
-local redis_RO_upstream = "api-gateway-redis-replica"
 local redisHealthCheck = RedisHealthCheck:new({
     shared_dict = "cachedkeys"
 })
@@ -35,6 +34,8 @@ local RedisConnectionProvider = {}
 
 function RedisConnectionProvider:new(o)
     local o = o or {}
+    self.redis_RO_upstream = self.redis_RO_upstream or "api-gateway-redis-replica"
+    self.redis_RW_upstream = self.redis_RW_upstream or "api-gateway-redis"
     setmetatable(o, self)
     self.__index = self
     return o
@@ -45,8 +46,8 @@ function RedisConnectionProvider:isNotEmpty(s)
 end
 
 
-local function getRedisUpstream(upstream_name)
-    local upstream = upstream_name or redis_RO_upstream
+function RedisConnectionProvider:getRedisUpstream(upstream_name)
+    local upstream = upstream_name or self.redis_RO_upstream
     local _, host, port = redisHealthCheck:getHealthyRedisNode(upstream)
     ngx.log(ngx.DEBUG, "Obtained Redis Host:" .. tostring(host) .. ":" .. tostring(port), " from upstream:", upstream)
     if (nil ~= host and nil ~= port) then
@@ -57,10 +58,11 @@ local function getRedisUpstream(upstream_name)
     return nil, nil
 end
 
+
 -- Redis authentication
 function RedisConnectionProvider:getConnection(upstream)
     local redis = restyRedis:new()
-    local redis_host, redis_port = getRedisUpstream(upstream)
+    local redis_host, redis_port = self:getRedisUpstream(upstream)
     local ok, err = redis:connect(redis_host, redis_port)
 
     if not ok then
