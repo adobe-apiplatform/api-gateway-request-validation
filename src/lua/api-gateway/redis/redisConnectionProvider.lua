@@ -47,9 +47,9 @@ end
 
 
 function RedisConnectionProvider:getRedisUpstream(upstream_name)
-    local upstream = upstream_name or self.redis_RO_upstream
-    local _, host, port = redisHealthCheck:getHealthyRedisNode(upstream)
-    ngx.log(ngx.DEBUG, "Obtained Redis Host:" .. tostring(host) .. ":" .. tostring(port), " from upstream:", upstream)
+    local upstream_name = upstream_name or self.redis_RO_upstream
+    local _, host, port = redisHealthCheck:getHealthyRedisNode(upstream_name)
+    ngx.log(ngx.DEBUG, "Obtained Redis Host:" .. tostring(host) .. ":" .. tostring(port), " from upstream:", upstream_name)
     if (nil ~= host and nil ~= port) then
         return host, port
     end
