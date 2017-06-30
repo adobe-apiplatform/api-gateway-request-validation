@@ -22,6 +22,7 @@
 
 local restyRedis = require "resty.redis"
 local RedisHealthCheck = require "api-gateway.redis.redisHealthCheck"
+local apiGatewayRedisReadReplica = "api-gateway-redis-replica"
 
 local redisHealthCheck = RedisHealthCheck:new({
     shared_dict = "cachedkeys"
@@ -34,8 +35,6 @@ local RedisConnectionProvider = {}
 
 function RedisConnectionProvider:new(o)
     local o = o or {}
-    self.redis_RO_upstream = self.redis_RO_upstream or "api-gateway-redis-replica"
-    self.redis_RW_upstream = self.redis_RW_upstream or "api-gateway-redis"
     setmetatable(o, self)
     self.__index = self
     return o
@@ -47,7 +46,7 @@ end
 
 
 function RedisConnectionProvider:getRedisUpstream(upstream_name)
-    local upstream_name = upstream_name or self.redis_RO_upstream
+    local upstream_name = upstream_name or apiGatewayRedisReadReplica
     local _, host, port = redisHealthCheck:getHealthyRedisNode(upstream_name)
     ngx.log(ngx.DEBUG, "Obtained Redis Host:" .. tostring(host) .. ":" .. tostring(port), " from upstream:", upstream_name)
     if (nil ~= host and nil ~= port) then
