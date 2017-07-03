@@ -30,17 +30,20 @@
 --   1. api-gateway-redis upstream needs to be set
 --   2. api-gateway-redis-replica needs to be set
 --
-local base              = require "api-gateway.validation.base"
-local redis             = require "resty.redis"
-local RedisHealthCheck  = require "api-gateway.redis.redisHealthCheck"
-local cjson             = require "cjson"
-local debug_mode        = ngx.config.debug
+local base = require "api-gateway.validation.base"
+local RedisHealthCheck = require "api-gateway.redis.redisHealthCheck"
+local cjson = require "cjson"
+local debug_mode = ngx.config.debug
+
+local RedisConnectionProvider = require "api-gateway.redis.redisConnectionProvider"
 
 -- class to be used as a base class for all api-gateway validators --
 local BaseValidator = {}
 local redisHealthCheck = RedisHealthCheck:new({
     shared_dict = "cachedkeys"
 })
+
+local redisConnectionProvider = RedisConnectionProvider:new()
 
 function BaseValidator:new(o)
     local o = o or {}
@@ -85,8 +88,9 @@ function BaseValidator:getRedisUpstream(upstream_name)
     end
 
     ngx.log(ngx.ERR, "Could not find a Redis upstream.")
-    return nil,nil
+    return nil, nil
 end
+
 
 -- retrieves a saved information from the Redis cache --
 -- the method uses GET redis command --
@@ -98,14 +102,12 @@ function BaseValidator:getKeyFromRedis(key, hash_name)
         return self:getHashValueFromRedis(key, hash_name)
     end
 
-    local redisread = redis:new()
-    local redis_host, redis_port = self:getRedisUpstream(self.redis_RO_upstream)
-    local ok, err = redisread:connect(redis_host, redis_port)
+    local ok, redisread = redisConnectionProvider:getConnection(self.redis_RO_upstream);
     if ok then
         local result, err = redisread:get(key)
-        redisread:set_keepalive(30000, 100)
-        if ( not result and err ~= nil ) then
-            ngx.log(ngx.WARN, "Failed to read key " .. tostring(key) .. " from Redis cache:[", redis_host, ":", redis_port, "]. Error:", err)
+        redisConnectionProvider:closeConnection(redisread)
+        if (not result and err ~= nil) then
+            ngx.log(ngx.WARN, "Failed to read key " .. tostring(key) .. ". Error:", err)
             return nil
         else
             if (type(result) == 'string') then
@@ -113,7 +115,7 @@ function BaseValidator:getKeyFromRedis(key, hash_name)
             end
         end
     else
-        ngx.log(ngx.WARN, "Failed to read key " .. tostring(key) .. " from Redis cache:[", redis_host, ":", redis_port, "]. Error:", err)
+        ngx.log(ngx.WARN, "Failed to read key " .. tostring(key) .. ". Error:", err)
     end
     return nil;
 end
@@ -122,17 +124,15 @@ end
 -- the method uses HGET redis command --
 -- it returns the value of the key, when found in the cache, nil otherwise --
 function BaseValidator:getHashValueFromRedis(key, hash_field)
-    local redisread = redis:new()
-    local redis_host, redis_port = self:getRedisUpstream(self.redis_RO_upstream)
-    local ok, err = redisread:connect(redis_host, redis_port)
+    local ok, redisread = redisConnectionProvider:getConnection(self.redis_RO_upstream)
     if ok then
         local redis_key, selecterror = redisread:hget(key, hash_field)
-        redisread:set_keepalive(30000, 100)
+        redisConnectionProvider:closeConnection(redisread)
         if (type(redis_key) == 'string') then
             return redis_key
         end
     else
-        ngx.log(ngx.WARN, "Failed to read key " .. tostring(key) .. " from Redis cache:[", redis_host, ":", redis_port, "]. Error:", err)
+        ngx.log(ngx.WARN, "Failed to read key " .. tostring(key))
     end
     return nil;
 end
@@ -140,32 +140,27 @@ end
 
 -- is wrapper over redis exists  but returns boolean instead
 function BaseValidator:exists(key)
-    local redisread = redis:new()
-    local redis_host, redis_port = self:getRedisUpstream()
-    local ok, err = redisread:connect(redis_host, redis_port)
-    if err then
-        ngx.log(ngx.WARN, "Failed to connect to redis for ".. key .." host:", redis_host, ".Error:", err)
+    local ok, redisread = redisConnectionProvider:getConnection();
+    if ok then
+        local redis_key, selecterror = redisread:exists(key)
+        redisConnectionProvider:closeConnection(redisread)
+        if selecterror or redis_key ~= 1 then
+            ngx.log(ngx.WARN, "Failed to read key " .. key .. " from Redis cache:", redis_host, ".Error:", err)
+            return false
+        end
+        return true;
+    else
+        ngx.log(ngx.WARN, "Failed to perform exists on key " .. tostring(key))
         return false
     end
-
-    local redis_key, selecterror = redisread:exists(key)
-    redisread:set_keepalive(30000, 100)
-    if selecterror or redis_key ~= 1 then
-        ngx.log(ngx.WARN, "Failed to read key ".. key .." from Redis cache:", redis_host, ".Error:", err)
-        return false
-    end
-
-    return true;
 end
 
 -- saves a value into the redis cache. --
 -- the method uses HSET redis command --
 -- it retuns true if the information is saved in the cache, false otherwise --
 function BaseValidator:setKeyInRedis(key, hash_name, keyexpires, value)
-    ngx.log(ngx.DEBUG, "Storing in Redis the key [", tostring(key), "], expireat=", tostring(keyexpires), ", value=", tostring(value) )
-    local rediss = redis:new()
-    local redis_host, redis_port = self:getRedisUpstream(self.redis_RW_upstream)
-    local ok, err = rediss:connect(redis_host, redis_port)
+    ngx.log(ngx.DEBUG, "Storing in Redis the key [", tostring(key), "], expireat=", tostring(keyexpires), ", value=", tostring(value))
+    local ok, rediss = redisConnectionProvider:getConnection(self.redis_RW_upstream)
     if ok then
         --ngx.log(ngx.DEBUG, "WRITING IN REDIS JSON OBJ key=" .. key .. "=" .. value .. ",expiring in:" .. (keyexpires - (os.time() * 1000)) )
         rediss:init_pipeline()
@@ -173,8 +168,8 @@ function BaseValidator:setKeyInRedis(key, hash_name, keyexpires, value)
         if keyexpires ~= nil then
             rediss:pexpireat(key, keyexpires)
         end
-        local commit_res, commit_err = rediss:commit_pipeline()
-        rediss:set_keepalive(30000, 100)
+        local _, commit_err = rediss:commit_pipeline()
+        redisConnectionProvider:closeConnection(rediss)
         --ngx.log(ngx.WARN, "SAVE RESULT:" .. cjson.encode(commit_res) )
         if (commit_err == nil) then
             return true
@@ -182,9 +177,22 @@ function BaseValidator:setKeyInRedis(key, hash_name, keyexpires, value)
             ngx.log(ngx.WARN, "Failed to write the key [", key, "] in Redis. Error:", commit_err)
         end
     else
-        ngx.log(ngx.WARN, "Failed to save key:" .. tostring(key) .. " into cache: [", tostring(redis_host) .. ":" .. tostring(redis_port), "]. Error:", err)
+        ngx.log(ngx.WARN, "Failed to save key:" .. tostring(key) .. ". Error:", err)
     end
     return false;
+end
+
+function BaseValidator:deleteKeyFromRedis(key)
+    ngx.log(ngx.DEBUG, "Deleting key from Redis: " .. key)
+    local ok, redis = redisConnectionProvider:getConnection(self.redis_RW_upstream);
+    if ok then
+        local redisResponse, err = redis:del(key)
+        if err then
+            ngx.log(ngx.ERR, "Error while deleting key from redis: ", err)
+            return nil
+        end
+        return redisResponse
+    end
 end
 
 -- it accepts a table or a string and saves the properties into the current request context --
@@ -199,6 +207,23 @@ function BaseValidator:setContextProperties(cached_token)
         self:debug("Setting ngx.ctx." .. tostring(k) .. "=" .. tostring(v))
     end
 end
+
+-- TTL using LuaResty Redis
+function BaseValidator:executeTtl(key)
+    ngx.log(ngx.DEBUG, "Getting upstream from:" .. self.redis_RW_upstream)
+    local ok, redis = redisConnectionProvider:getConnection(self.redis_RW_upstream)
+    if ok then
+        ngx.log(ngx.DEBUG, "Executing TTL for key:" .. key)
+        local ttl, err = redis:ttl(key)
+        if not ttl then
+            ngx.log(ngx.ERR, "Could not execute TTL for key: " .. key .. ". Error: " .. err)
+        else
+            ngx.log(ngx.DEBUG, "TTL response: " .. ttl)
+            return ttl
+        end
+    end
+end
+
 
 -- generic exit function for a validator --
 function BaseValidator:exitFn(status, resp_body)
