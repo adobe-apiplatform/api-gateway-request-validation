@@ -60,7 +60,7 @@ __DATA__
 === TEST 1: test api_key is saved in redis
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
@@ -93,7 +93,7 @@ POST /cache/api_key?key=key-123&service_id=s-123
 === TEST 2: check request without api_key parameter is rejected
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
@@ -124,7 +124,7 @@ GET /test-api-key
 === TEST 3: check request with invalid api_key is rejected
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
@@ -154,7 +154,7 @@ GET /test-api-key?api_key=ab123
 === TEST 4: test request with valid api_key
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
@@ -199,7 +199,7 @@ env REDIS_PASS;
 === TEST 5: test that api_key fields are saved in the request variables
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
@@ -245,7 +245,7 @@ env REDIS_PASS;
 === TEST 6: test debug headers
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
@@ -293,7 +293,7 @@ env REDIS_PASS;
 === TEST 7: test api-key related field starting with capital H
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
@@ -344,7 +344,7 @@ env REDIS_PASS;
 === TEST 8: test with more api-key fields
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig

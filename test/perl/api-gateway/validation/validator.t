@@ -58,7 +58,7 @@ __DATA__
 === TEST 1: test core validator initialization
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
@@ -88,7 +88,7 @@ GET /test-base-validator
 === TEST 2: test core validator local caching
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
@@ -145,7 +145,7 @@ env REDIS_PASS;
 === TEST 3: test core validator with Redis caching
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
@@ -203,7 +203,7 @@ env REDIS_PASS;
 === TEST 4: test setContextProperties with object
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
@@ -236,7 +236,7 @@ GET /test-base-validator
 === TEST 5: test setContextProperties with string
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig

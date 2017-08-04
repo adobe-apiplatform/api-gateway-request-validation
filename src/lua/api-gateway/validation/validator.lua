@@ -102,7 +102,7 @@ function BaseValidator:getKeyFromRedis(key, hash_name)
         return self:getHashValueFromRedis(key, hash_name)
     end
 
-    local ok, redisread = redisConnectionProvider:getConnection(self.redis_RO_upstream);
+    local ok, redisread = redisConnectionProvider:getConnection("apiKey", true);
     if ok then
         local result, err = redisread:get(key)
         redisConnectionProvider:closeConnection(redisread)
@@ -124,7 +124,7 @@ end
 -- the method uses HGET redis command --
 -- it returns the value of the key, when found in the cache, nil otherwise --
 function BaseValidator:getHashValueFromRedis(key, hash_field)
-    local ok, redisread = redisConnectionProvider:getConnection(self.redis_RO_upstream)
+    local ok, redisread = redisConnectionProvider:getConnection("apiKey", true);
     if ok then
         local redis_key, selecterror = redisread:hget(key, hash_field)
         redisConnectionProvider:closeConnection(redisread)
@@ -140,7 +140,7 @@ end
 
 -- is wrapper over redis exists  but returns boolean instead
 function BaseValidator:exists(key)
-    local ok, redisread = redisConnectionProvider:getConnection();
+    local ok, redisread = redisConnectionProvider:getConnection("apiKey");
     if ok then
         local redis_key, selecterror = redisread:exists(key)
         redisConnectionProvider:closeConnection(redisread)
@@ -160,7 +160,7 @@ end
 -- it retuns true if the information is saved in the cache, false otherwise --
 function BaseValidator:setKeyInRedis(key, hash_name, keyexpires, value)
     ngx.log(ngx.DEBUG, "Storing in Redis the key [", tostring(key), "], expireat=", tostring(keyexpires), ", value=", tostring(value))
-    local ok, rediss = redisConnectionProvider:getConnection(self.redis_RW_upstream)
+    local ok, rediss = redisConnectionProvider:getConnection("apiKey", true)
     if ok then
         --ngx.log(ngx.DEBUG, "WRITING IN REDIS JSON OBJ key=" .. key .. "=" .. value .. ",expiring in:" .. (keyexpires - (os.time() * 1000)) )
         rediss:init_pipeline()
@@ -184,7 +184,7 @@ end
 
 function BaseValidator:deleteKeyFromRedis(key)
     ngx.log(ngx.DEBUG, "Deleting key from Redis: " .. key)
-    local ok, redis = redisConnectionProvider:getConnection(self.redis_RW_upstream);
+    local ok, redis = redisConnectionProvider:getConnection("apiKey", true)
     if ok then
         local redisResponse, err = redis:del(key)
         if err then
@@ -211,7 +211,7 @@ end
 -- TTL using LuaResty Redis
 function BaseValidator:executeTtl(key)
     ngx.log(ngx.DEBUG, "Getting upstream from:" .. self.redis_RW_upstream)
-    local ok, redis = redisConnectionProvider:getConnection(self.redis_RW_upstream)
+    local ok, redis = redisConnectionProvider:getConnection("apiKey", true)
     if ok then
         ngx.log(ngx.DEBUG, "Executing TTL for key:" .. key)
         local ttl, err = redis:ttl(key)

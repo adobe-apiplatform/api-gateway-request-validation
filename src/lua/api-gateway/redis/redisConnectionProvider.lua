@@ -23,6 +23,7 @@
 local restyRedis = require "resty.redis"
 local RedisHealthCheck = require "api-gateway.redis.redisHealthCheck"
 local apiGatewayRedisReadReplica = "api-gateway-redis-replica"
+local redisConfiguration = require "api-gateway.redis.redisConnectionConfiguration"
 
 local redisHealthCheck = RedisHealthCheck:new({
     shared_dict = "cachedkeys"
@@ -58,22 +59,75 @@ function RedisConnectionProvider:getRedisUpstream(upstream_name)
 end
 
 
--- Redis authentication
-function RedisConnectionProvider:getConnection(upstream)
-    local redis = restyRedis:new()
-    local redis_host, redis_port = self:getRedisUpstream(upstream)
-    local ok, err = redis:connect(redis_host, redis_port)
+--- - Redis authentication
+-- function RedisConnectionProvider:getConnection(upstream)
+-- local redis = restyRedis:new()
+-- local redis_host, redis_port = self:getRedisUpstream(upstream)
+-- local ok, err = redis:connect(redis_host, redis_port)
+--
+-- if not ok then
+-- ngx.log(ngx.ERR, "Failed to connect to Redis instance: " .. redis_host .. ", port: " .. redis_port .. ". Error: ", err)
+-- end
+--
+-- local redisPassword = os.getenv('REDIS_PASS') or os.getenv('REDIS_PASSWORD') or ''
+-- if self:isNotEmpty(redisPassword) then
+-- -- Authenticate
+-- local ok, err = redis:auth(redisPassword)
+-- if not ok then
+-- ngx.log(ngx.ERR, "Redis authentication failed for server: " .. redis_host .. ":" .. redis_port .. ". Error: ", err)
+-- return false, nil
+-- end
+-- ngx.log(ngx.DEBUG, "Redis authentication successful")
+-- return ok, redis
+-- else
+-- ngx.log(ngx.DEBUG, "No password authentication for Redis")
+-- return true, redis
+-- end
+-- end
 
-    if not ok then
-        ngx.log(ngx.ERR, "Failed to connect to Redis instance: " .. redis_host .. ", port: " .. redis_port .. ". Error: ", err)
+-- Redis authentication
+function RedisConnectionProvider:getConnection(cache_type, read_only, override_options)
+    local redisHost, redisPort, redisPassword
+    -- if override_options is present, we bypass all the previous parameters and go straight to the host and port
+    if override_options ~= nil then
+        redisPassword = override_options["password"]
+        redisHost = override_options["host"]
+        redisPort = override_options["port"]
+        return self:connectToRedis(redisHost, redisPort, redisPassword)
     end
 
-    local redisPassword = os.getenv('REDIS_PASS') or os.getenv('REDIS_PASSWORD') or ''
-    if self:isNotEmpty(redisPassword) then
+    local redisConfig = redisConfiguration[cache_type]
+    if redisConfig == nil or #redisConfig then
+        local redisUpstream
+        if read_only then
+            redisUpstream = redisConfig["ro_upstream_name"]
+        else
+            redisUpstream = redisConfig["rw_upstream_name"]
+        end
+        redisHost, redisPort = self:getRedisUpstream(redisUpstream)
+        redisPassword = os.getenv(redisConfig["env_password_variable"])
+        return self:connectToRedis(redisHost, redisPort, redisPassword)
+    else
+        ngx.log(ngx.ERRm "There is no Redis configuration for the provided [" .. cache_type .. "] cache type")
+        return false, nil
+    end
+end
+
+
+function RedisConnectionProvider:connectToRedis(host, port, password)
+    local redis = restyRedis:new()
+    local ok, err = redis:connect(host, port)
+
+    if not ok then
+        ngx.log(ngx.ERR, "Failed to connect to Redis instance: " .. host .. ", port: " .. port .. ". Error: ", err)
+        return false, nil
+    end
+
+    if self:isNotEmpty(password) then
         -- Authenticate
-        local ok, err = redis:auth(redisPassword)
+        local ok, err = redis:auth(password)
         if not ok then
-            ngx.log(ngx.ERR, "Redis authentication failed for server: " .. redis_host .. ":" .. redis_port .. ". Error: ", err)
+            ngx.log(ngx.ERR, "Redis authentication failed for server: " .. host .. ":" .. port .. ". Error: ", err)
             return false, nil
         end
         ngx.log(ngx.DEBUG, "Redis authentication successful")
@@ -83,6 +137,7 @@ function RedisConnectionProvider:getConnection(upstream)
         return true, redis
     end
 end
+
 
 function RedisConnectionProvider:closeConnection(redis_instance)
     redis_instance:set_keepalive(max_idle_timeout, pool_size)

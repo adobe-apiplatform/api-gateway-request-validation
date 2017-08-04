@@ -60,7 +60,7 @@ local RESPONSES = {
 --
 function ApiKeyValidator:getLegacyKeyFromRedis(redis_key)
     ngx.log(ngx.DEBUG, "Looking for a legacy api-key in Redis")
-    local ok, redis = redisConnectionProvider:getConnection()
+    local ok, redis = redisConnectionProvider:getConnection("apiKey")
 
     if ok then
         --local selectresult, selecterror = red:hgetall(redis_key);

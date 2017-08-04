@@ -61,7 +61,7 @@ __DATA__
 === TEST 1: test basic HMAC SHA1 signature validation
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
@@ -88,7 +88,7 @@ env REDIS_PASS;
 === TEST 2: test HMAC SHA1 validator with request validation
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
@@ -152,7 +152,7 @@ env REDIS_PASS;
 === TEST 3: test HMAC SHA1 validator with API KEY validation
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
@@ -208,7 +208,7 @@ env REDIS_PASS;
 === TEST 4: test HMAC SHA1 validator with API KEY validation with deprecated API-KEY API
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
@@ -264,7 +264,7 @@ env REDIS_PASS;
 === TEST 5: test HMAC SHA1 validator with API KEY validation and custom ERROR MESSAGES
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
@@ -340,7 +340,7 @@ env REDIS_PASS;
 === TEST 6: test HMAC signature validation and generation
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
@@ -420,7 +420,7 @@ env REDIS_PASS;
 === TEST 7: test HMAC digest in isolation
 
 --- main_config
-env REDIS_PASSWORD;
+env REDIS_PASS_API_KEY;
 env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
