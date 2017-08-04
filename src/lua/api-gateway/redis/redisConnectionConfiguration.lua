@@ -22,6 +22,3 @@ redisConf["apiKey"] = {
 }
 
 return redisConf
-
--- getConnection(type, readonly, override_options)
--- override_options: upstream and password_env_variable
