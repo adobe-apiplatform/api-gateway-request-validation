@@ -62,7 +62,6 @@ __DATA__
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -89,7 +88,6 @@ env REDIS_PASS;
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -153,7 +151,6 @@ env REDIS_PASS;
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -209,7 +206,6 @@ env REDIS_PASS;
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -265,7 +261,6 @@ env REDIS_PASS;
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -341,7 +336,6 @@ env REDIS_PASS;
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -421,7 +415,6 @@ env REDIS_PASS;
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config

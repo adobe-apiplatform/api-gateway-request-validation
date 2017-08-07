@@ -63,6 +63,10 @@ run_tests();
 __DATA__
 
 === TEST 1: test ims_profile is saved correctly in cache and in request variables
+
+--- main_config
+env REDIS_PASS_API_KEY;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api-gateway-cache.conf;
@@ -134,6 +138,10 @@ Authorization: Bearer SOME_OAUTH_PROFILE_TEST_1
 [error]
 
 === TEST 2: test ims_profile is saved correctly in cache and in request variables
+
+--- main_config
+env REDIS_PASS_API_KEY;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api-gateway-cache.conf;
@@ -201,6 +209,10 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_TWO
 [error]
 
 === TEST 3: test ims_profile can add corresponding headers to request
+
+--- main_config
+env REDIS_PASS_API_KEY;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api-gateway-cache.conf;
@@ -249,6 +261,10 @@ X-User-Name: display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF
 [error]
 
 === TEST 4: test ims_profile with a null field
+
+--- main_config
+env REDIS_PASS_API_KEY;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api-gateway-cache.conf;
@@ -291,6 +307,10 @@ X-User-Name: display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF
 [error]
 
 === TEST 5: test ims_profile with a null name field
+
+--- main_config
+env REDIS_PASS_API_KEY;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api-gateway-cache.conf;

@@ -64,7 +64,6 @@ __DATA__
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -104,7 +103,6 @@ GET /test-oauth-validation
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -207,7 +205,6 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_2_X_0
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -271,7 +268,6 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST3
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -368,7 +364,6 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST4
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -409,7 +404,6 @@ GET /test-oauth-validation
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config

@@ -50,7 +50,6 @@ redis: all
 	echo " ... using REDIS_SERVER=$(REDIS_SERVER)"
 
 test-docker:
-	export REDIS_PASS_API_KEY=
 	echo "Running tests with docker, using NO password protection for Redis"
 	mkdir  -p $(BUILD_DIR)
 	mkdir  -p $(BUILD_DIR)/test-logs
@@ -66,7 +65,6 @@ test-docker:
 	rm -rf  ~/tmp/apiplatform/api-gateway-request-validation
 
 test-docker-with-password:
-	export REDIS_PASS_API_KEY=redisPasswordForTests
 	echo "running tests with docker, using password protected Redis instance"
 	mkdir  -p $(BUILD_DIR)
 	mkdir  -p $(BUILD_DIR)/test-logs

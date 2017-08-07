@@ -61,7 +61,6 @@ __DATA__
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -94,7 +93,6 @@ POST /cache/api_key?key=key-123&service_id=s-123
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -125,7 +123,6 @@ GET /test-api-key
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -155,7 +152,6 @@ GET /test-api-key?api_key=ab123
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -200,7 +196,6 @@ env REDIS_PASS;
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -246,7 +241,6 @@ env REDIS_PASS;
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -294,7 +288,6 @@ env REDIS_PASS;
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -345,7 +338,6 @@ env REDIS_PASS;
 
 --- main_config
 env REDIS_PASS_API_KEY;
-env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config

@@ -140,7 +140,7 @@ end
 
 -- is wrapper over redis exists  but returns boolean instead
 function BaseValidator:exists(key)
-    local ok, redisread = redisConnectionProvider:getConnection("apiKey");
+    local ok, redisread = redisConnectionProvider:getConnection("apiKey", true);
     if ok then
         local redis_key, selecterror = redisread:exists(key)
         redisConnectionProvider:closeConnection(redisread)
@@ -160,7 +160,7 @@ end
 -- it retuns true if the information is saved in the cache, false otherwise --
 function BaseValidator:setKeyInRedis(key, hash_name, keyexpires, value)
     ngx.log(ngx.DEBUG, "Storing in Redis the key [", tostring(key), "], expireat=", tostring(keyexpires), ", value=", tostring(value))
-    local ok, rediss = redisConnectionProvider:getConnection("apiKey", true)
+    local ok, rediss = redisConnectionProvider:getConnection("apiKey", false)
     if ok then
         --ngx.log(ngx.DEBUG, "WRITING IN REDIS JSON OBJ key=" .. key .. "=" .. value .. ",expiring in:" .. (keyexpires - (os.time() * 1000)) )
         rediss:init_pipeline()
@@ -184,7 +184,7 @@ end
 
 function BaseValidator:deleteKeyFromRedis(key)
     ngx.log(ngx.DEBUG, "Deleting key from Redis: " .. key)
-    local ok, redis = redisConnectionProvider:getConnection("apiKey", true)
+    local ok, redis = redisConnectionProvider:getConnection("apiKey", false)
     if ok then
         local redisResponse, err = redis:del(key)
         if err then

@@ -97,7 +97,7 @@ function RedisConnectionProvider:getConnection(cache_type, read_only, override_o
     end
 
     local redisConfig = redisConfiguration[cache_type]
-    if redisConfig == nil or #redisConfig then
+    if redisConfig ~= nil or #redisConfig then
         local redisUpstream
         if read_only then
             redisUpstream = redisConfig["ro_upstream_name"]

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Checking for Redis authentication"
-readonly redis_password="${REDIS_PASSWORD}"
+readonly redis_password=$1
 
 if [ -z ${redis_password} ]
 then
