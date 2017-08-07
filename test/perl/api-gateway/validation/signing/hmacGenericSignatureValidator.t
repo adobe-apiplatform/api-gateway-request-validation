@@ -62,6 +62,7 @@ __DATA__
 
 --- main_config
 env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -88,6 +89,7 @@ env REDIS_PASS_API_KEY;
 
 --- main_config
 env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -151,6 +153,7 @@ env REDIS_PASS_API_KEY;
 
 --- main_config
 env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -206,6 +209,7 @@ env REDIS_PASS_API_KEY;
 
 --- main_config
 env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -261,6 +265,7 @@ env REDIS_PASS_API_KEY;
 
 --- main_config
 env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -336,6 +341,7 @@ env REDIS_PASS_API_KEY;
 
 --- main_config
 env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -415,6 +421,7 @@ env REDIS_PASS_API_KEY;
 
 --- main_config
 env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config

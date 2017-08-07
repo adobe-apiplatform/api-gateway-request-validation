@@ -59,58 +59,13 @@ function RedisConnectionProvider:getRedisUpstream(upstream_name)
 end
 
 
---- - Redis authentication
--- function RedisConnectionProvider:getConnection(upstream)
--- local redis = restyRedis:new()
--- local redis_host, redis_port = self:getRedisUpstream(upstream)
--- local ok, err = redis:connect(redis_host, redis_port)
---
--- if not ok then
--- ngx.log(ngx.ERR, "Failed to connect to Redis instance: " .. redis_host .. ", port: " .. redis_port .. ". Error: ", err)
--- end
---
--- local redisPassword = os.getenv('REDIS_PASS') or os.getenv('REDIS_PASSWORD') or ''
--- if self:isNotEmpty(redisPassword) then
--- -- Authenticate
--- local ok, err = redis:auth(redisPassword)
--- if not ok then
--- ngx.log(ngx.ERR, "Redis authentication failed for server: " .. redis_host .. ":" .. redis_port .. ". Error: ", err)
--- return false, nil
--- end
--- ngx.log(ngx.DEBUG, "Redis authentication successful")
--- return ok, redis
--- else
--- ngx.log(ngx.DEBUG, "No password authentication for Redis")
--- return true, redis
--- end
--- end
-
 -- Redis authentication
-function RedisConnectionProvider:getConnection(cache_type, read_only, override_options)
-    local redisHost, redisPort, redisPassword
-    -- if override_options is present, we bypass all the previous parameters and go straight to the host and port
-    if override_options ~= nil then
-        redisPassword = override_options["password"]
-        redisHost = override_options["host"]
-        redisPort = override_options["port"]
-        return self:connectToRedis(redisHost, redisPort, redisPassword)
-    end
+function RedisConnectionProvider:getConnection(connection_options)
+    local redisUpstream = connection_options["upstream"]
+    local redisPassword = connection_options["password"]
+    local redisHost, redisPort = self:getRedisUpstream(redisUpstream)
 
-    local redisConfig = redisConfiguration[cache_type]
-    if redisConfig ~= nil or #redisConfig then
-        local redisUpstream
-        if read_only then
-            redisUpstream = redisConfig["ro_upstream_name"]
-        else
-            redisUpstream = redisConfig["rw_upstream_name"]
-        end
-        redisHost, redisPort = self:getRedisUpstream(redisUpstream)
-        redisPassword = os.getenv(redisConfig["env_password_variable"])
-        return self:connectToRedis(redisHost, redisPort, redisPassword)
-    else
-        ngx.log(ngx.ERRm "There is no Redis configuration for the provided [" .. cache_type .. "] cache type")
-        return false, nil
-    end
+    return self:connectToRedis(redisHost, redisPort, redisPassword)
 end
 
 

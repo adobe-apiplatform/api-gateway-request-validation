@@ -49,6 +49,7 @@ local _M = BaseValidator:new()
 
 _M["redis_RO_upstream"] = "oauth-redis-ro-upstream"
 _M["redis_RW_upstream"] = "oauth-redis-rw-upstream"
+_M["redis_pass_env"] = "REDIS_PASS_OAUTH"
 
 local RESPONSES = {
     P_MISSING_TOKEN   = { error_code = "403020", message = "Oauth token is missing"         },

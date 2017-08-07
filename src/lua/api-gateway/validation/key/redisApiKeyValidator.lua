@@ -38,6 +38,7 @@ local BaseValidator = require "api-gateway.validation.validator"
 local cjson = require "cjson"
 
 local RedisConnectionProvider = require "api-gateway.redis.redisConnectionProvider"
+local RedisConnectionConfiguration = require "api-gateway.redis.redisConnectionConfiguration"
 
 local ApiKeyValidator = BaseValidator:new()
 local redisConnectionProvider = RedisConnectionProvider:new()
@@ -60,7 +61,12 @@ local RESPONSES = {
 --
 function ApiKeyValidator:getLegacyKeyFromRedis(redis_key)
     ngx.log(ngx.DEBUG, "Looking for a legacy api-key in Redis")
-    local ok, redis = redisConnectionProvider:getConnection("apiKey")
+    local connection_options = {
+        upstream = RedisConnectionConfiguration["apiKey"]["ro_upstream_name"],
+        password = os.getenv(RedisConnectionConfiguration["apiKey"]["env_password_variable"])
+    }
+
+    local ok, redis = redisConnectionProvider:getConnection(connection_options);
 
     if ok then
         --local selectresult, selecterror = red:hgetall(redis_key);

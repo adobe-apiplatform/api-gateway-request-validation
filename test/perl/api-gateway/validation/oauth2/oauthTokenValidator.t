@@ -64,6 +64,7 @@ __DATA__
 
 --- main_config
 env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -103,6 +104,7 @@ GET /test-oauth-validation
 
 --- main_config
 env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -136,6 +138,7 @@ env REDIS_PASS_API_KEY;
                 local TestValidator = BaseValidator:new()
                 TestValidator["redis_RO_upstream"] = "oauth-redis-ro-upstream"
                 TestValidator["redis_RW_upstream"] = "oauth-redis-rw-upstream"
+                TestValidator["redis_pass_env"] = "REDIS_PASS_OAUTH"
                 local validator = TestValidator:new()
                 local res = validator:getKeyFromRedis(ngx.var.key, "token_json")
                 if ( res ~= nil) then
@@ -205,6 +208,7 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_2_X_0
 
 --- main_config
 env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -268,6 +272,7 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST3
 
 --- main_config
 env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -364,6 +369,7 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST4
 
 --- main_config
 env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -404,6 +410,7 @@ GET /test-oauth-validation
 
 --- main_config
 env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
