@@ -23,6 +23,7 @@
 local restyRedis = require "resty.redis"
 local RedisHealthCheck = require "api-gateway.redis.redisHealthCheck"
 local apiGatewayRedisReadReplica = "api-gateway-redis-replica"
+local Monitor = require "api-gateway.util.Monitor"
 
 local redisHealthCheck = RedisHealthCheck:new({
     shared_dict = "cachedkeys"
@@ -61,6 +62,11 @@ end
 -- Redis authentication
 function RedisConnectionProvider:getConnection(upstream)
     local redis = restyRedis:new()
+
+    -- Introduce monitoring
+    Monitor.decorateClass("restyRedis", redis, {"get", "hget", "connect", "exists", "hset", "del", "ttl"},
+        Monitor.decorateRedisCallsWithTimeElapsedFunction)
+
     local redis_host, redis_port = self:getRedisUpstream(upstream)
     local ok, err = redis:connect(redis_host, redis_port)
 
