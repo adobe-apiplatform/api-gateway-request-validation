@@ -79,6 +79,7 @@ function BaseValidator:setKeyInLocalCache(key, string_value, exptime, dict_name)
     end
 end
 
+-- TODO: remove this if no more usage
 function BaseValidator:getRedisUpstream(upstream_name)
     local n = upstream_name or self.redis_RO_upstream
     local upstream, host, port = redisHealthCheck:getHealthyRedisNode(n)
@@ -115,7 +116,7 @@ function BaseValidator:getKeyFromRedis(key, hash_name)
             end
         end
     else
-        ngx.log(ngx.WARN, "Failed to read key " .. tostring(key) .. ". Error:", err)
+        ngx.log(ngx.WARN, "Failed to read key " .. tostring(key) .. ". Error:")
     end
     return nil;
 end
@@ -145,7 +146,7 @@ function BaseValidator:exists(key)
         local redis_key, selecterror = redisread:exists(key)
         redisConnectionProvider:closeConnection(redisread)
         if selecterror or redis_key ~= 1 then
-            ngx.log(ngx.WARN, "Failed to read key " .. key .. " from Redis cache:", redis_host, ".Error:", err)
+            ngx.log(ngx.WARN, "Failed to read key " .. key .. " from Redis cache ", selecterror)
             return false
         end
         return true;
@@ -177,7 +178,7 @@ function BaseValidator:setKeyInRedis(key, hash_name, keyexpires, value)
             ngx.log(ngx.WARN, "Failed to write the key [", key, "] in Redis. Error:", commit_err)
         end
     else
-        ngx.log(ngx.WARN, "Failed to save key:" .. tostring(key) .. ". Error:", err)
+        ngx.log(ngx.WARN, "Failed to save key:" .. tostring(key) .. ". Error")
     end
     return false;
 end
