@@ -178,7 +178,7 @@ function BaseValidator:setKeyInRedis(key, hash_name, keyexpires, value)
             ngx.log(ngx.WARN, "Failed to write the key [", key, "] in Redis. Error:", commit_err)
         end
     else
-        ngx.log(ngx.WARN, "Failed to save key:" .. tostring(key) .. ". Error")
+        ngx.log(ngx.WARN, "Failed to save key:" .. tostring(key))
     end
     return false;
 end
