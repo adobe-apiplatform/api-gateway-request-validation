@@ -132,8 +132,6 @@ function BaseValidator:getHashValueFromRedis(key, hash_field)
         if (type(redis_key) == 'string') then
             return redis_key
         end
-    else
-        ngx.log(ngx.WARN, "Failed to read key " .. tostring(key))
     end
     return nil;
 end
@@ -150,10 +148,8 @@ function BaseValidator:exists(key)
             return false
         end
         return true;
-    else
-        ngx.log(ngx.WARN, "Failed to perform exists on key " .. tostring(key))
-        return false
     end
+    return false
 end
 
 -- saves a value into the redis cache. --
@@ -177,8 +173,6 @@ function BaseValidator:setKeyInRedis(key, hash_name, keyexpires, value)
         else
             ngx.log(ngx.WARN, "Failed to write the key [", key, "] in Redis. Error:", commit_err)
         end
-    else
-        ngx.log(ngx.WARN, "Failed to save key:" .. tostring(key))
     end
     return false;
 end
