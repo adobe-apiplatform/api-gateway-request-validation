@@ -113,10 +113,10 @@ function BaseValidator:getKeyFromRedis(key, hash_name)
         else
             if (type(result) == 'string') then
                 return result
+            else
+                ngx.log(ngx.WARN, "type of result is not correct " .. tostring(type(result)))
             end
         end
-    else
-        ngx.log(ngx.WARN, "Failed to read key " .. tostring(key) .. ". Error:")
     end
     return nil;
 end
