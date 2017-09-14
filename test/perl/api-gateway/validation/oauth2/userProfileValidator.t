@@ -31,7 +31,7 @@ use Cwd qw(cwd);
 
 repeat_each(2);
 
-plan tests => repeat_each() * (blocks() * 8 ) - 12;
+plan tests => repeat_each() * (blocks() * 8) - 12;
 
 my $pwd = cwd();
 
@@ -63,6 +63,11 @@ run_tests();
 __DATA__
 
 === TEST 1: test ims_profile is saved correctly in cache and in request variables
+
+--- main_config
+env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api-gateway-cache.conf;
@@ -93,6 +98,7 @@ __DATA__
                 local v = BaseValidator:new()
                 v["redis_RO_upstream"] = "oauth-redis-ro-upstream"
                 v["redis_RW_upstream"] = "oauth-redis-rw-upstream"
+                v["redis_pass_env"] = "REDIS_PASS_OAUTH"
                 local k = v:getKeyFromLocalCache(ngx.var.key,"cachedUserProfiles")
                 v:exitFn(200,"Local: " .. tostring(k))
             ';
@@ -109,6 +115,7 @@ __DATA__
                 local v = BaseValidator:new()
                 v["redis_RO_upstream"] = "oauth-redis-ro-upstream"
                 v["redis_RW_upstream"] = "oauth-redis-rw-upstream"
+                v["redis_pass_env"] = "REDIS_PASS_OAUTH"
                 local k = v:getKeyFromRedis(ngx.var.key,"user_json")
                 v:exitFn(200,"Redis: " .. tostring(k))
             ';
@@ -134,6 +141,11 @@ Authorization: Bearer SOME_OAUTH_PROFILE_TEST_1
 [error]
 
 === TEST 2: test ims_profile is saved correctly in cache and in request variables
+
+--- main_config
+env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api-gateway-cache.conf;
@@ -160,6 +172,7 @@ Authorization: Bearer SOME_OAUTH_PROFILE_TEST_1
                 local v = BaseValidator:new()
                 v["redis_RO_upstream"] = "oauth-redis-ro-upstream"
                 v["redis_RW_upstream"] = "oauth-redis-rw-upstream"
+                v["redis_pass_env"] = "REDIS_PASS_OAUTH"
                 local k = v:getKeyFromLocalCache("cachedoauth:8cd12eadb5032aa2153c8f830d01e0be","cachedUserProfiles")
                 v:exitFn(200,k)
             ';
@@ -171,6 +184,7 @@ Authorization: Bearer SOME_OAUTH_PROFILE_TEST_1
                 local v = BaseValidator:new()
                 v["redis_RO_upstream"] = "oauth-redis-ro-upstream"
                 v["redis_RW_upstream"] = "oauth-redis-rw-upstream"
+                v["redis_pass_env"] = "REDIS_PASS_OAUTH"
                 local k = v:getKeyFromRedis("cachedoauth:8cd12eadb5032aa2153c8f830d01e0be","user_json")
                 v:exitFn(200,k)
             ';
@@ -201,6 +215,11 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_TWO
 [error]
 
 === TEST 3: test ims_profile can add corresponding headers to request
+
+--- main_config
+env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api-gateway-cache.conf;
@@ -249,6 +268,11 @@ X-User-Name: display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF
 [error]
 
 === TEST 4: test ims_profile with a null field
+
+--- main_config
+env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api-gateway-cache.conf;
@@ -291,6 +315,11 @@ X-User-Name: display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF
 [error]
 
 === TEST 5: test ims_profile with a null name field
+
+--- main_config
+env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
+
 --- http_config eval: $::HttpConfig
 --- config
         include ../../api-gateway/api-gateway-cache.conf;
