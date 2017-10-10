@@ -61,10 +61,18 @@ end
 
 -- Redis authentication
 function RedisConnectionProvider:getConnection(connection_options)
-    local redisUpstream = connection_options["upstream"]
-    local redisPassword = connection_options["password"]
-    local redisHost, redisPort = self:getRedisUpstream(redisUpstream)
+    local redisUpstream,
+        redisPassword;
 
+    if (type(connection_options) == 'table') then
+        redisUpstream = connection_options["upstream"]
+        redisPassword = connection_options["password"]
+    else
+        redisUpstream = connection_options
+        redisPassword = os.getenv('REDIS_PASS') or os.getenv('REDIS_PASSWORD') or ''
+    end
+
+    local redisHost, redisPort = self:getRedisUpstream(redisUpstream)
     return self:connectToRedis(redisHost, redisPort, redisPassword)
 end
 
