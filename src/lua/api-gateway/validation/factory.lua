@@ -65,6 +65,7 @@ local function _validateRequest()
     if res.status == ngx.HTTP_OK then
         if ( ngx.var.is_access_phase_tracking_enabled == "true" ) then
             if ( ngx.apiGateway.tracking ~= nil ) then
+                ngx.log(ngx.DEBUG, "Request tracking done on access phase.");
                 ngx.apiGateway.tracking.track()
             end
         end
