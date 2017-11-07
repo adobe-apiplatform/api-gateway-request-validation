@@ -63,8 +63,8 @@ __DATA__
 === TEST 1: test ims_token is validated correctly
 
 --- main_config
-env REDIS_PASSWORD;
-env REDIS_PASS;
+env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -103,8 +103,8 @@ GET /test-oauth-validation
 === TEST 2: test ims_token is saved in the cache
 
 --- main_config
-env REDIS_PASSWORD;
-env REDIS_PASS;
+env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -138,6 +138,7 @@ env REDIS_PASS;
                 local TestValidator = BaseValidator:new()
                 TestValidator["redis_RO_upstream"] = "oauth-redis-ro-upstream"
                 TestValidator["redis_RW_upstream"] = "oauth-redis-rw-upstream"
+                TestValidator["redis_pass_env"] = "REDIS_PASS_OAUTH"
                 local validator = TestValidator:new()
                 local res = validator:getKeyFromRedis(ngx.var.key, "token_json")
                 if ( res ~= nil) then
@@ -206,8 +207,8 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_2_X_0
 === TEST 3: test oauth vars are saved in request variables
 
 --- main_config
-env REDIS_PASSWORD;
-env REDIS_PASS;
+env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -270,8 +271,8 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST3
 === TEST 4: test IMS token is saved in redis and in the local cache
 
 --- main_config
-env REDIS_PASSWORD;
-env REDIS_PASS;
+env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -367,8 +368,8 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST4
 === TEST 5: test invalid token returns 401
 
 --- main_config
-env REDIS_PASSWORD;
-env REDIS_PASS;
+env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -408,8 +409,8 @@ GET /test-oauth-validation
 === TEST 6: test that validation behaviour can be customized
 
 --- main_config
-env REDIS_PASSWORD;
-env REDIS_PASS;
+env REDIS_PASS_API_KEY;
+env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config

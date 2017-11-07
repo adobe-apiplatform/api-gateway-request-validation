@@ -23,6 +23,7 @@
 local restyRedis = require "resty.redis"
 local RedisHealthCheck = require "api-gateway.redis.redisHealthCheck"
 local apiGatewayRedisReadReplica = "api-gateway-redis-replica"
+local redisConfiguration = require "api-gateway.redis.redisConnectionConfiguration"
 
 local redisHealthCheck = RedisHealthCheck:new({
     shared_dict = "cachedkeys"
@@ -59,21 +60,29 @@ end
 
 
 -- Redis authentication
-function RedisConnectionProvider:getConnection(upstream)
+function RedisConnectionProvider:getConnection(connection_options)
+    local redisUpstream = connection_options["upstream"]
+    local redisPassword = connection_options["password"]
+    local redisHost, redisPort = self:getRedisUpstream(redisUpstream)
+
+    return self:connectToRedis(redisHost, redisPort, redisPassword)
+end
+
+
+function RedisConnectionProvider:connectToRedis(host, port, password)
     local redis = restyRedis:new()
-    local redis_host, redis_port = self:getRedisUpstream(upstream)
-    local ok, err = redis:connect(redis_host, redis_port)
+    local ok, err = redis:connect(host, port)
 
     if not ok then
-        ngx.log(ngx.ERR, "Failed to connect to Redis instance: " .. redis_host .. ", port: " .. redis_port .. ". Error: ", err)
+        ngx.log(ngx.ERR, "Failed to connect to Redis instance: " .. host .. ", port: " .. port .. ". Error: ", err)
+        return false, nil
     end
 
-    local redisPassword = os.getenv('REDIS_PASS') or os.getenv('REDIS_PASSWORD') or ''
-    if self:isNotEmpty(redisPassword) then
+    if self:isNotEmpty(password) then
         -- Authenticate
-        local ok, err = redis:auth(redisPassword)
+        local ok, err = redis:auth(password)
         if not ok then
-            ngx.log(ngx.ERR, "Redis authentication failed for server: " .. redis_host .. ":" .. redis_port .. ". Error: ", err)
+            ngx.log(ngx.ERR, "Redis authentication failed for server: " .. host .. ":" .. port .. ". Error: ", err)
             return false, nil
         end
         ngx.log(ngx.DEBUG, "Redis authentication successful")
@@ -83,6 +92,7 @@ function RedisConnectionProvider:getConnection(upstream)
         return true, redis
     end
 end
+
 
 function RedisConnectionProvider:closeConnection(redis_instance)
     redis_instance:set_keepalive(max_idle_timeout, pool_size)
