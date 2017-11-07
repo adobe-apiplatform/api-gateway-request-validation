@@ -55,7 +55,6 @@ local function _validateRequest()
     if (ngx.var.request_method == 'OPTIONS') then
         return ngx.OK;
     end
-
     local res = ngx.location.capture("/validate-request", { share_all_vars = true });
     debug("Final validation result:" .. ngx.var.validate_request_response_body .. ", [" .. res.status .. "]")
 
@@ -64,6 +63,12 @@ local function _validateRequest()
     end
 
     if res.status == ngx.HTTP_OK then
+        if ( ngx.var.is_access_phase_tracking_enabled == "true" ) then
+            if ( ngx.apiGateway.tracking ~= nil ) then
+                ngx.log(ngx.DEBUG, "Request tracking done on access phase.");
+                ngx.apiGateway.tracking.track()
+            end
+        end
         return ngx.OK;
     end
 
