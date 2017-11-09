@@ -55,6 +55,7 @@ local _M = BaseValidator:new({
 _M["redis_RO_upstream"] = "oauth-redis-ro-upstream"
 _M["redis_RW_upstream"] = "oauth-redis-rw-upstream"
 _M["redis_pass_env"] = "REDIS_PASS_OAUTH"
+_M["log_identifier"] = "otvt";
 
 ---
 -- Maximum time in seconds specifying how long to cache a valid token in GW's memory

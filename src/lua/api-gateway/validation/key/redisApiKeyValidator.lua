@@ -41,6 +41,9 @@ local RedisConnectionProvider = require "api-gateway.redis.redisConnectionProvid
 local RedisConnectionConfiguration = require "api-gateway.redis.redisConnectionConfiguration"
 
 local ApiKeyValidator = BaseValidator:new()
+
+ApiKeyValidator["log_identifier"] = "akvt";
+
 local redisConnectionProvider = RedisConnectionProvider:new()
 
 local super = {
