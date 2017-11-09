@@ -43,13 +43,14 @@
 -- Added the logic to check for the user country and pass it as header.
 --
 local BaseValidator = require "api-gateway.validation.validator"
+local redisConfigurationProvider = require "api-gateway.redis.redisConnectionConfiguration"
 local cjson = require "cjson"
 
 local _M = BaseValidator:new()
 
-_M["redis_RO_upstream"] = "oauth-redis-ro-upstream"
-_M["redis_RW_upstream"] = "oauth-redis-rw-upstream"
-_M["redis_pass_env"] = "REDIS_PASS_OAUTH"
+_M["redis_RO_upstream"] = redisConfigurationProvider["oauth"]["ro_upstream_name"]
+_M["redis_RW_upstream"] = redisConfigurationProvider["oauth"]["rw_upstream_name"]
+_M["redis_pass_env"] = redisConfigurationProvider["oauth"]["env_password_variable"]
 
 local RESPONSES = {
     P_MISSING_TOKEN   = { error_code = "403020", message = "Oauth token is missing"         },
