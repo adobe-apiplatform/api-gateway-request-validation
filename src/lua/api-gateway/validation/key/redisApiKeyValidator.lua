@@ -42,7 +42,7 @@ local RedisConnectionConfiguration = require "api-gateway.redis.redisConnectionC
 
 local ApiKeyValidator = BaseValidator:new()
 
-ApiKeyValidator["log_identifier"] = "akvt";
+ApiKeyValidator["log_identifier"] = "api_key_validator_execution_time";
 
 local redisConnectionProvider = RedisConnectionProvider:new()
 

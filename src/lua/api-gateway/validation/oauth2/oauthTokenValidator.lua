@@ -56,7 +56,7 @@ local _M = BaseValidator:new({
 _M["redis_RO_upstream"] = redisConfigurationProvider["oauth"]["ro_upstream_name"]
 _M["redis_RW_upstream"] = redisConfigurationProvider["oauth"]["rw_upstream_name"]
 _M["redis_pass_env"] = redisConfigurationProvider["oauth"]["env_password_variable"]
-_M["log_identifier"] = "otvt";
+_M["log_identifier"] = "oauth_validator_execution_time";
 
 ---
 -- Maximum time in seconds specifying how long to cache a valid token in GW's memory
