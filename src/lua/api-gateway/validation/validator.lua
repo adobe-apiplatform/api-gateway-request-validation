@@ -259,7 +259,7 @@ function BaseValidator:exitFn(status, resp_body)
         if(ngx.var[self.log_identifier]) then
             ngx.var[self.log_identifier] = ngx.header["Response-Time"]
         else
-            ngx.log(ngx.ERR, "ngx variable ", self.log_identifier , " is not declared in ngx conf")
+            ngx.log(ngx.WARN, "ngx variable ", self.log_identifier , " is not declared in ngx conf")
         end
     end
 
