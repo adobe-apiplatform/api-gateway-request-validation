@@ -253,11 +253,12 @@ end
 
 -- generic exit function for a validator --
 function BaseValidator:exitFn(status, resp_body)
-    ngx.header["Response-Time"] = ngx.now() - ngx.req.start_time()
+    local responseTime = ngx.now() - ngx.req.start_time()
+    ngx.header["Response-Time"] = responseTime
 
     if(self.log_identifier) then
         if(ngx.var[self.log_identifier]) then
-            ngx.var[self.log_identifier] = ngx.header["Response-Time"]
+            ngx.var[self.log_identifier] = string.format("%.12f", responseTime)
         else
             ngx.log(ngx.WARN, "ngx variable ", self.log_identifier , " is not declared in ngx conf")
         end
