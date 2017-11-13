@@ -258,7 +258,7 @@ function BaseValidator:exitFn(status, resp_body)
 
     if(self.log_identifier) then
         if(ngx.var[self.log_identifier]) then
-            ngx.var[self.log_identifier] = string.format("%.12f", responseTime)
+            ngx.var[self.log_identifier] = string.format("%.2f", responseTime * 1000)
         else
             ngx.log(ngx.WARN, "ngx variable ", self.log_identifier , " is not declared in ngx conf")
         end
