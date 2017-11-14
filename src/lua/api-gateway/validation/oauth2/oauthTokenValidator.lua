@@ -39,6 +39,7 @@
 --  4. oauth_token_expires_at
 
 local BaseValidator = require "api-gateway.validation.validator"
+local redisConfigurationProvider = require "api-gateway.redis.redisConnectionConfiguration"
 local cjson = require "cjson"
 
 local _M = BaseValidator:new({
@@ -52,9 +53,10 @@ local _M = BaseValidator:new({
     }
 })
 
-_M["redis_RO_upstream"] = "oauth-redis-ro-upstream"
-_M["redis_RW_upstream"] = "oauth-redis-rw-upstream"
-_M["redis_pass_env"] = "REDIS_PASS_OAUTH"
+_M["redis_RO_upstream"] = redisConfigurationProvider["oauth"]["ro_upstream_name"]
+_M["redis_RW_upstream"] = redisConfigurationProvider["oauth"]["rw_upstream_name"]
+_M["redis_pass_env"] = redisConfigurationProvider["oauth"]["env_password_variable"]
+_M["log_identifier"] = "oauth_validator_execution_time";
 
 ---
 -- Maximum time in seconds specifying how long to cache a valid token in GW's memory

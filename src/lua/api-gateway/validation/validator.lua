@@ -50,6 +50,7 @@ function BaseValidator:new(o)
     self.redis_RO_upstream = self.redis_RO_upstream or "api-gateway-redis-replica"
     self.redis_RW_upstream = self.redis_RW_upstream or "api-gateway-redis"
     self.redis_pass_env = self.redis_pass_env or "REDIS_PASS_API_KEY"
+    self.log_identifier = self.log_identifier or nil
     setmetatable(o, self)
     self.__index = self
     return o
@@ -252,7 +253,16 @@ end
 
 -- generic exit function for a validator --
 function BaseValidator:exitFn(status, resp_body)
-    ngx.header["Response-Time"] = ngx.now() - ngx.req.start_time()
+    local responseTime = ngx.now() - ngx.req.start_time()
+    ngx.header["Response-Time"] = responseTime
+
+    if(self.log_identifier) then
+        if(ngx.var[self.log_identifier]) then
+            ngx.var[self.log_identifier] = string.format("%.2f", responseTime * 1000)
+        else
+            ngx.log(ngx.WARN, "ngx variable ", self.log_identifier , " is not declared in ngx conf")
+        end
+    end
 
     ngx.status = status
 
