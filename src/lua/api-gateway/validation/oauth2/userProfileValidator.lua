@@ -199,6 +199,7 @@ function _M:validateUserProfile()
         end
     end
 
+    ngx.log(ngx.WARN, "Failed to get profile from cache falling back to ims")
     -- 2. get the user profile from the IMS profile
     local res = ngx.location.capture("/validate-user", { share_all_vars = true })
     if res.status == ngx.HTTP_OK then

@@ -232,10 +232,8 @@ function _M:validateOAuthToken()
         end
         error.error_code = error.error_code or self.RESPONSES.INVALID_TOKEN.error_code
         return error.error_code, cjson.encode(error)
-    end
-
-    if res.status ~= ngx.HTTP_OK then
-        ngx.log(ngx.WARN, "IMS call failed with status code ", res.status)
+    else
+        ngx.log(ngx.WARN, "IMS call failed with status code=", res.status, " body=", res.body)
     end
 
     return res.status, cjson.encode(self.RESPONSES.UNKNOWN_ERROR);
