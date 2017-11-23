@@ -214,6 +214,7 @@ function _M:validateOAuthToken()
         return error.error_code, cjson.encode(error)
     end
 
+    ngx.log(ngx.WARN, "Failed to get oauth token from cache falling back to ims")
     -- 2. validate the token with the OAuth endpoint
     local res = ngx.location.capture("/validate-token", {
         share_all_vars = true,
@@ -232,6 +233,11 @@ function _M:validateOAuthToken()
         error.error_code = error.error_code or self.RESPONSES.INVALID_TOKEN.error_code
         return error.error_code, cjson.encode(error)
     end
+
+    if res.status ~= ngx.HTTP_OK then
+        ngx.log(ngx.WARN, "IMS call failed with status code ", res.status)
+    end
+
     return res.status, cjson.encode(self.RESPONSES.UNKNOWN_ERROR);
 end
 
