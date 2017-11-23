@@ -74,17 +74,17 @@ function RedisConnectionProvider:getConnection(connection_options)
     end
 
     local redisHost, redisPort = self:getRedisUpstream(redisUpstream)
-    local ok, redis = self:connectToRedis(redisHost, redisPort, redisPassword)
-    if ok and redis then
-        local redis_timeout = ngx.var.redis_timeout or default_redis_timeout
-        redis:set_timeout(redis_timeout)
-    end
-    return ok, redis
+    return self:connectToRedis(redisHost, redisPort, redisPassword)
 end
 
 
 function RedisConnectionProvider:connectToRedis(host, port, password)
     local redis = restyRedis:new()
+
+    -- sets general timeout - for all operations
+    local redis_timeout = ngx.var.redis_timeout or default_redis_timeout
+    redis:set_timeout(redis_timeout)
+
     local ok, err = redis:connect(host, port)
 
     if not ok then
