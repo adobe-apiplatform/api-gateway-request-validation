@@ -451,11 +451,11 @@ env REDIS_PASS_OAUTH;
 --- response_body eval
 [
 "DYUCC7E/MCyn+aNcCb5EhM7OPDE=\n",
-'{"error_code":"400002","message"="Missing digest secret"}
+'{"error_code":"400002","message":"Missing digest secret"}
 ',
-'{"error_code":"400001","message"="Missing digest source"}
+'{"error_code":"400001","message":"Missing digest source"}
 ',
-'{"error_code":"400001","message"="Missing digest source"}
+'{"error_code":"400001","message":"Missing digest source"}
 '
 ]
 --- error_code_like eval
