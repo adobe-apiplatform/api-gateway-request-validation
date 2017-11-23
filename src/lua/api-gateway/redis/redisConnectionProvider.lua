@@ -31,6 +31,7 @@ local redisHealthCheck = RedisHealthCheck:new({
 
 local max_idle_timeout = 30000
 local pool_size = 100
+local default_redis_timeout = 1000
 
 local RedisConnectionProvider = {}
 
@@ -73,7 +74,12 @@ function RedisConnectionProvider:getConnection(connection_options)
     end
 
     local redisHost, redisPort = self:getRedisUpstream(redisUpstream)
-    return self:connectToRedis(redisHost, redisPort, redisPassword)
+    local ok, redis = self:connectToRedis(redisHost, redisPort, redisPassword)
+    if ok and redis then
+        local redis_timeout = ngx.var.redis_timeout or default_redis_timeout
+        redis:set_timeout(redis_timeout)
+    end
+    return ok, redis
 end
 
 
