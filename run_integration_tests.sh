@@ -6,14 +6,14 @@ while docker ps | grep test_gateway_1  ; do
     sleep 5
 done
 echo "Finished integration tests"
-if docker logs test_gateway_1 --tail 1 | grep "FAIL" ; then
+if ! docker logs test_gateway_1 --tail 1 | grep "PASS" ; then
     echo "FAILED TESTS"
     docker logs test_gateway_1
     cd ./tests && docker-compose stop && docker-compose rm -f
     exit 64
 fi
 docker logs test_gateway_1 --tail 1
-cd ./test && docker-compose -f docker-compose-jenkins.yml stop && docker-compose -f docker-compose-jenkins.yml rm -f
+cd ./test && docker-compose -f docker-compose-jenkins.yml stop && docker-compose -f docker-compose-jenkins.yml rm -fk
 rm -rf  ~/tmp/apiplatform/api-gateway-request-validation
 cd ../
 
@@ -25,7 +25,7 @@ while docker ps | grep test_gateway_1  ; do
     sleep 5
 done
 echo "Finished integration tests"
-if docker logs test_gateway_1 --tail 1 | grep "FAIL" ; then
+if ! docker logs test_gateway_1 --tail 1 | grep "PASS" ; then
     echo "FAILED TESTS"
     docker logs test_gateway_1
     cd ./tests && docker-compose stop && docker-compose rm -f
