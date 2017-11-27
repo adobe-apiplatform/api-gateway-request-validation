@@ -13,7 +13,7 @@ if ! docker logs test_gateway_1 --tail 1 | grep "PASS" ; then
     exit 64
 fi
 docker logs test_gateway_1 --tail 1
-cd ./test && docker-compose -f docker-compose-jenkins.yml stop && docker-compose -f docker-compose-jenkins.yml rm -fk
+cd ./test && docker-compose -f docker-compose-jenkins.yml stop && docker-compose -f docker-compose-jenkins.yml rm -f
 rm -rf  ~/tmp/apiplatform/api-gateway-request-validation
 cd ../
 
