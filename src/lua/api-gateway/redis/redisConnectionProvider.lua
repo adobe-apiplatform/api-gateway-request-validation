@@ -63,26 +63,28 @@ end
 -- Redis authentication
 function RedisConnectionProvider:getConnection(connection_options)
     local redisUpstream,
-        redisPassword;
+        redisPassword,
+        redisTimeout;
 
     if (type(connection_options) == 'table') then
         redisUpstream = connection_options["upstream"]
         redisPassword = connection_options["password"]
+        redisTimeout = connection_options["redis_timeout"]
     else
         redisUpstream = connection_options
         redisPassword = os.getenv('REDIS_PASS') or os.getenv('REDIS_PASSWORD') or ''
     end
 
     local redisHost, redisPort = self:getRedisUpstream(redisUpstream)
-    return self:connectToRedis(redisHost, redisPort, redisPassword)
+    return self:connectToRedis(redisHost, redisPort, redisPassword, redisTimeout)
 end
 
 
-function RedisConnectionProvider:connectToRedis(host, port, password)
+function RedisConnectionProvider:connectToRedis(host, port, password, redisTimeout)
     local redis = restyRedis:new()
 
     -- sets general timeout - for all operations
-    local redis_timeout = ngx.var.redis_timeout or default_redis_timeout
+    local redis_timeout = redisTimeout or ngx.var.redis_timeout or default_redis_timeout
     redis:set_timeout(redis_timeout)
 
     local ok, err = redis:connect(host, port)
