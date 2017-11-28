@@ -31,7 +31,7 @@ local redisHealthCheck = RedisHealthCheck:new({
 
 local max_idle_timeout = 30000
 local pool_size = 100
-local default_redis_timeout = 1000
+local default_redis_timeout = 5000
 
 local RedisConnectionProvider = {}
 

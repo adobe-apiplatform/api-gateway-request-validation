@@ -9,7 +9,7 @@ echo "Finished integration tests"
 if ! docker logs test_gateway_1 --tail 1 | grep "PASS" ; then
     echo "FAILED TESTS"
     docker logs test_gateway_1
-    cd ./tests && docker-compose stop && docker-compose rm -f
+    cd ./test && docker-compose -f docker-compose-jenkins.yml stop && docker-compose -f docker-compose-jenkins.yml rm -f
     exit 64
 fi
 docker logs test_gateway_1 --tail 1
@@ -28,7 +28,7 @@ echo "Finished integration tests"
 if ! docker logs test_gateway_1 --tail 1 | grep "PASS" ; then
     echo "FAILED TESTS"
     docker logs test_gateway_1
-    cd ./tests && docker-compose stop && docker-compose rm -f
+    cd ./test && docker-compose -f docker-compose-with-password-jenkins.yml stop && docker-compose -f docker-compose-with-password-jenkins.yml rm -f
     exit 64
 fi
 docker logs test_gateway_1 --tail 1

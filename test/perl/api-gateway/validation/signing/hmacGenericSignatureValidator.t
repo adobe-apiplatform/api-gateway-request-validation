@@ -66,6 +66,7 @@ env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
+        error_log ../test-logs/hmacGenericSignatureValidator_test1_error.log debug;
         include ../../api-gateway/default_validators.conf;
 
         location /validate-hmac-sha1 {
@@ -93,6 +94,7 @@ env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
+        error_log ../test-logs/hmacGenericSignatureValidator_test2_error.log debug;
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
 
@@ -157,6 +159,7 @@ env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
+        error_log ../test-logs/hmacGenericSignatureValidator_test3_error.log debug;
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
 
@@ -213,6 +216,7 @@ env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
+        error_log ../test-logs/hmacGenericSignatureValidator_test4_error.log debug;
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
 
@@ -269,6 +273,7 @@ env REDIS_PASS_OAUTH;
 
 --- http_config eval: $::HttpConfig
 --- config
+        error_log ../test-logs/hmacGenericSignatureValidator_test5_error.log debug;
         include ../../api-gateway/api_key_service.conf;
         include ../../api-gateway/default_validators.conf;
         # customize error response

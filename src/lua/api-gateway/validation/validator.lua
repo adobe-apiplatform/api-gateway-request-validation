@@ -143,6 +143,8 @@ function BaseValidator:getHashValueFromRedis(key, hash_field)
         redisConnectionProvider:closeConnection(redisread)
         if (type(redis_key) == 'string') then
             return redis_key
+        elseif selecterror then
+            ngx.log(ngx.ERR, "failed to get key from redis ", tostring(key), " error: ", selecterror)
         end
     end
     return nil;
