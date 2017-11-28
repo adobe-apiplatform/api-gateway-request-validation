@@ -62,7 +62,7 @@ local DEFAULT_RESPONSES = {
     -- Service limit errrors
     LIMIT_EXCEEDED = { http_status = 429, error_code = 429001, message = '{"error_code":"429001","message":"Service usage limit reached"}', headers = { ["X-Request-Id"] = "ngx.var.requestId" } },
     DEV_KEY_LIMIT_EXCEEDED = { http_status = 429, error_code = 429002, message = '{"error_code":"429002","message":"Developer key usage limit reached"}', headers = { ["X-Request-Id"] = "ngx.var.requestId" } },
-    BLOCK_REQUEST = { http_status = 429, error_code = 429050, message = '{"error_code":"429050","message":"Too many requests"}', headers = { ["X-Request-Id"] = "ngx.var.requestId" } },
+    BLOCK_REQUEST = { http_status = 429, error_code = 429050, message = '{"error_code":"429050","message":"Too many requests"}', headers = { ["X-Request-Id"] = "ngx.var.requestId", ["Retry-After"] = "ngx.var.retry_after" } },
     -- App valdations
     DELAY_CLIENT_ON_REQUEST = { http_status = 503, error_code = 503071, messsage = '', headers = { ["Retry_After"] = "300s" }, headers = { ["X-Request-Id"] = "ngx.var.requestId" } },
     -- CC Link validation
