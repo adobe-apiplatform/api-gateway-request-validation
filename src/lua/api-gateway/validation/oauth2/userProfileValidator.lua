@@ -175,16 +175,15 @@ function _M:extractContextVars(profile)
     return cachingObj
 end
 
-function _M:validateUserProfile()
-    -- ngx.var.authtoken needs to be set before calling this method
+function _M:getCacheLookupKey()
     local oauth_token = ngx.var.authtoken
-    if oauth_token == nil or oauth_token == "" then
-        return RESPONSES.P_MISSING_TOKEN.error_code, cjson.encode(RESPONSES.P_MISSING_TOKEN)
-    end
-
-    --1. try to get user's profile from the cache first ( local or redis cache )
     local oauth_token_hash = ngx.md5(oauth_token)
-    local cacheLookupKey = self:getCacheToken(oauth_token_hash)
+    return self:getCacheToken(oauth_token_hash)
+end
+
+function _M:validateUserProfile()
+    --1. try to get user's profile from the cache first ( local or redis cache )
+    local cacheLookupKey = self:getCacheLookupKey()
     local cachedUserProfile = self:getProfileFromCache(cacheLookupKey)
 
     if ( cachedUserProfile ~= nil ) then
@@ -230,6 +229,13 @@ function _M:validateUserProfile()
 end
 
 function _M:validateRequest()
+
+    local oauth_token = ngx.var.authtoken
+    if oauth_token == nil or oauth_token == "" then
+        ngx.log(ngx.DEBUG, "Token is either null or empty")
+        return self:exitFn(RESPONSES.P_MISSING_TOKEN.error_code, cjson.encode(RESPONSES.P_MISSING_TOKEN))
+    end
+
     return self:exitFn(self:validateUserProfile())
 end
 

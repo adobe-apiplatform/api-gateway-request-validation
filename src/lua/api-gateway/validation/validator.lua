@@ -81,6 +81,17 @@ function BaseValidator:setKeyInLocalCache(key, string_value, exptime, dict_name)
     end
 end
 
+function BaseValidator:deleteKeyInLocalCache(key, dict_name)
+    local localCachedKeys = ngx.shared[dict_name]
+
+    if (nil ~= localCachedKeys) then
+        ngx.log(ngx.DEBUG, "Deleting entry with key " .. key .. " from local cache [" .. dict_name .. "]")
+        return localCachedKeys:delete(key)
+    else
+        ngx.log(ngx.ERR, "Dictionary " .. dict_name .. " does not exist")
+    end
+end
+
 -- TODO: remove this if no more usage
 function BaseValidator:getRedisUpstream(upstream_name)
     local n = upstream_name or self.redis_RO_upstream
