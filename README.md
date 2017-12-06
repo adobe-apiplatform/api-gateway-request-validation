@@ -109,15 +109,15 @@ Sample usage
         location /validate-token {
             internal;
             set_if_empty $oauth_client_id '--change-me--';
-            set_if_empty $oauth_host 'ims-na1.adobelogin.com';
-            proxy_pass https://$oauth_host/ims/validate_token/v1?client_id=$oauth_client_id&token=$authtoken;
+            set_if_empty $oauth_host 'oauth-na1.adobelogin.com';
+            proxy_pass https://$oauth_host/oauth/validate_token/v1?client_id=$oauth_client_id&token=$authtoken;
             proxy_method GET;
             proxy_pass_request_body off;
             proxy_pass_request_headers off;
         }
 
         # validators can be combined and even executed in a different order
-        location /with-api-key-and-ims-token {
+        location /with-api-key-and-oauth-token {
             # capture $api_key and $authtoken
             ...
             set $validate_api_key      "on; order=2; ";
@@ -320,8 +320,8 @@ location /validate_oauth_token {
 location /validate-token {
     internal;
     set_if_empty $oauth_client_id '--change-me--';
-    set_if_empty $oauth_host 'ims-na1.adobelogin.com';
-    proxy_pass https://$oauth_host/ims/validate_token/v1?client_id=$oauth_client_id&token=$authtoken;
+    set_if_empty $oauth_host 'oauth-na1.adobelogin.com';
+    proxy_pass https://$oauth_host/oauth/validate_token/v1?client_id=$oauth_client_id&token=$authtoken;
     proxy_method GET;
     proxy_pass_request_body off;
     proxy_pass_request_headers off;
@@ -369,8 +369,8 @@ location /validate-user {
      internal;
      #resolver 8.8.8.8;
      set_if_empty $oauth_client_id '--change-me--';
-     set_if_empty $oauth_host 'ims-na1-stg1.adobelogin.com';
-     proxy_pass https://$oauth_host/ims/profile/v1?client_id=$oauth_client_id&bearer_token=$authtoken;
+     set_if_empty $oauth_host 'oauth-na1-stg1.adobelogin.com';
+     proxy_pass https://$oauth_host/oauth/profile/v1?client_id=$oauth_client_id&bearer_token=$authtoken;
      proxy_method GET;
      proxy_pass_request_body off;
      proxy_pass_request_headers off;

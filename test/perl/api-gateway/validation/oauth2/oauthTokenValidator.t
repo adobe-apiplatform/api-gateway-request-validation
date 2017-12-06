@@ -60,7 +60,7 @@ run_tests();
 
 __DATA__
 
-=== TEST 1: test ims_token is validated correctly
+=== TEST 1: test oauth_token is validated correctly
 
 --- main_config
 env REDIS_PASS_API_KEY;
@@ -83,7 +83,7 @@ env REDIS_PASS_OAUTH;
             set $validate_oauth_token on;
 
             access_by_lua "ngx.apiGateway.validation.validateRequest()";
-            content_by_lua "ngx.say('ims token is valid.')";
+            content_by_lua "ngx.say('oauth token is valid.')";
         }
         location /validate-token {
             internal;
@@ -95,12 +95,12 @@ Authorization: Bearer SOME_OAUTH_TOKEN_1
 --- request
 GET /test-oauth-validation
 --- response_body eval
-["ims token is valid.\n"]
+["oauth token is valid.\n"]
 --- error_code: 200
 --- no_error_log
 [error]
 
-=== TEST 2: test ims_token is saved in the cache
+=== TEST 2: test oauth_token is saved in the cache
 
 --- main_config
 env REDIS_PASS_API_KEY;
@@ -124,7 +124,7 @@ env REDIS_PASS_OAUTH;
             set $validate_oauth_token on;
 
             access_by_lua "ngx.apiGateway.validation.validateRequest()";
-            content_by_lua "ngx.say('ims token is valid.')";
+            content_by_lua "ngx.say('oauth token is valid.')";
         }
         location /get-from-cache {
             set $authtoken $http_authorization;
@@ -192,7 +192,7 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_2_X_0
 "GET /test-oauth-token-expiry",
 ]
 --- response_body_like eval
-[ "ims token is valid.\n" ,
+[ "oauth token is valid.\n" ,
 '.*{"oauth_token_client_id":"client_id_test_2","oauth_token_expires_at":\\d{13},"oauth_token_scope":"openid email profile","oauth_token_user_id":"21961FF44F97F8A10A490D36"}.*',
 '.*"expires_at":\d+,.*',
 '[1-4]', # the cached token expiry time is in seconds, and it can only be between 1s to 4s, but not less. -1 response indicated the key is not cached or it has expired
@@ -268,7 +268,7 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST3
 --- no_error_log
 [error]
 
-=== TEST 4: test IMS token is saved in redis and in the local cache
+=== TEST 4: test oauth token is saved in redis and in the local cache
 
 --- main_config
 env REDIS_PASS_API_KEY;
@@ -296,7 +296,7 @@ env REDIS_PASS_OAUTH;
             set $validate_oauth_token on;
 
             access_by_lua "ngx.apiGateway.validation.validateRequest()";
-            content_by_lua "ngx.say('ims token is valid.')";
+            content_by_lua "ngx.say('oauth token is valid.')";
         }
         location /test-oauth-validation-again {
             #set $oauth_token_scope 'unset';
@@ -312,7 +312,7 @@ env REDIS_PASS_OAUTH;
             set $validate_oauth_token on;
 
             access_by_lua "ngx.apiGateway.validation.validateRequest()";
-            content_by_lua "ngx.say('ims token is also valid.')";
+            content_by_lua "ngx.say('oauth token is also valid.')";
         }
         location /validate-token {
             internal;
@@ -357,9 +357,9 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST4
 "GET /l2_cache/api_key?key=cachedoauth:1eb30b79089ce83d1b18a89501b41998"
 ]
 --- response_body_like eval
-["ims token is valid.\n",
+["oauth token is valid.\n",
 '.*{"oauth_token_client_id":"test_Client_ID","oauth_token_expires_at":\\d{13},"oauth_token_scope":"openid,AdobeID","oauth_token_user_id":"21961FF44F97F8A10A490D36"}.*',
-"ims token is also valid.\n",
+"oauth token is also valid.\n",
 'Local cache:{"oauth_token_client_id":"test_Client_ID","oauth_token_expires_at":\\d{13},"oauth_token_scope":"openid,AdobeID","oauth_token_user_id":"21961FF44F97F8A10A490D36"}\n'
 ]
 --- no_error_log
@@ -388,7 +388,7 @@ env REDIS_PASS_OAUTH;
             set $validate_oauth_token on;
 
             access_by_lua "ngx.apiGateway.validation.validateRequest()";
-            content_by_lua "ngx.say('ims token is valid.')";
+            content_by_lua "ngx.say('oauth token is valid.')";
         }
 
         location /validate-token {
@@ -440,7 +440,7 @@ env REDIS_PASS_OAUTH;
              set $validate_oauth_token "on; path=/validate_custom_oauth_token; order=1;";
              set $custom_token_var $arg_custom_token;
              access_by_lua "ngx.apiGateway.validation.validateRequest()";
-             content_by_lua "ngx.say('ims token is valid.')";
+             content_by_lua "ngx.say('oauth token is valid.')";
         }
 
         location /validate-token {

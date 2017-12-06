@@ -62,7 +62,7 @@ run_tests();
 
 __DATA__
 
-=== TEST 1: test ims_profile is saved correctly in cache and in request variables
+=== TEST 1: test oauth_profile is saved correctly in cache and in request variables
 
 --- main_config
 env REDIS_PASS_API_KEY;
@@ -140,7 +140,7 @@ Authorization: Bearer SOME_OAUTH_PROFILE_TEST_1
 --- no_error_log
 [error]
 
-=== TEST 2: test ims_profile is saved correctly in cache and in request variables
+=== TEST 2: test oauth_profile is saved correctly in cache and in request variables
 
 --- main_config
 env REDIS_PASS_API_KEY;
@@ -214,7 +214,7 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_TWO
 --- no_error_log
 [error]
 
-=== TEST 3: test ims_profile can add corresponding headers to request
+=== TEST 3: test oauth_profile can add corresponding headers to request
 
 --- main_config
 env REDIS_PASS_API_KEY;
@@ -267,7 +267,7 @@ X-User-Name: display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF
 --- no_error_log
 [error]
 
-=== TEST 4: test ims_profile with a null field
+=== TEST 4: test oauth_profile with a null field
 
 --- main_config
 env REDIS_PASS_API_KEY;
@@ -314,7 +314,7 @@ X-User-Name: display_name-%E5%B7%A5%EF%BC%8D%E5%A5%B3%EF%BC%8D%E9%95%BF
 --- no_error_log
 [error]
 
-=== TEST 5: test ims_profile with a null name field
+=== TEST 5: test oauth_profile with a null name field
 
 --- main_config
 env REDIS_PASS_API_KEY;

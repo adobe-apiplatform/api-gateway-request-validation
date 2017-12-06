@@ -299,7 +299,7 @@ env REDIS_PASS_OAUTH;
 
             set $validate_api_key on;
             set $validate_hmac_signature on;
-            # set $validate_ims_oauth on;
+            # set $validate_oauth_oauth on;
 
             access_by_lua "ngx.apiGateway.validation.validateRequest()";
             content_by_lua 'ngx.say("signature is valid")';

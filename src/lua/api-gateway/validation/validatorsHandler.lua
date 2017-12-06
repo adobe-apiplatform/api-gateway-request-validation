@@ -27,8 +27,8 @@
 --
 -- location /my-location {
 --    request_validator "on; path=/validate_api_key;        args=api_key,service_id;    order=1";
---    request_validator "on; path=/validate_ims_oauth;      args=authtoken;             order=1";
---    request_validator "on; path=/validate_ims_profile";   args=authtoken;             order=1";
+--    request_validator "on; path=/validate_oauth_oauth;      args=authtoken;             order=1";
+--    request_validator "on; path=/validate_oauth_profile";   args=authtoken;             order=1";
 --    request_validator "on; path=/validate_user_plan;      args=oauth_user_id;         order=2";
 -- }
 --
@@ -36,8 +36,8 @@
 -- Subrequests share all variables, and write properties into the request context
 -- location /my-location {
 --    set $validate_api_key     "on; path=/validate_api_key;        order=1; ";
---    set $validate_ims_oauth   "on; path=/validate_ims_oauth;      order=1; ";
---    set $validate_ims_profile "on; path=/validate_ims_profile";   order=1; ";
+--    set $validate_oauth_oauth   "on; path=/validate_oauth_oauth;      order=1; ";
+--    set $validate_oauth_profile "on; path=/validate_oauth_profile";   order=1; ";
 --    set $validate_user_plan   "on; path=/validate_user_plan;      order=2; ";
 --    set $request_validator_1   "on; path=/validate_a_custom_case;      order=2; ";
 --
