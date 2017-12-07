@@ -198,7 +198,8 @@ function _M:validateUserProfile()
         end
     end
 
-    -- 2. get the user profile from the IMS profile
+    ngx.log(ngx.WARN, "Failed to get profile from cache falling back to oauth provider")
+    -- 2. get the user profile from the oauth profile
     local res = ngx.location.capture("/validate-user", { share_all_vars = true })
     if res.status == ngx.HTTP_OK then
         local json = cjson.decode(res.body)
@@ -218,7 +219,7 @@ function _M:validateUserProfile()
             ngx.log(ngx.WARN, "Could not decode /validate-user response:" .. tostring(res.body) )
         end
     else
-        -- ngx.log(ngx.WARN, "Could not read /ims-profile. status=" .. res.status .. ".body=" .. res.body .. ". token=" .. ngx.var.authtoken)
+        -- ngx.log(ngx.WARN, "Could not read /oauth-profile. status=" .. res.status .. ".body=" .. res.body .. ". token=" .. ngx.var.authtoken)
         ngx.log(ngx.WARN, "Could not read /validate-user. status=" .. res.status .. ".body=" .. res.body )
         if ( res.status == ngx.HTTP_UNAUTHORIZED or res.status == ngx.HTTP_BAD_REQUEST ) then
             return RESPONSES.NOT_ALLOWED.error_code, cjson.encode(RESPONSES.NOT_ALLOWED)

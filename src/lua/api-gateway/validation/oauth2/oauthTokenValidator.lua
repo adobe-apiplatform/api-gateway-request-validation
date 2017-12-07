@@ -167,13 +167,13 @@ function _M:getTokenFromCache(cacheLookupKey)
 
     local localCacheValue = self:getKeyFromLocalCache(cacheLookupKey, "cachedOauthTokens")
     if (localCacheValue ~= nil) then
-        ngx.log(ngx.DEBUG, "Found IMS token in local cache")
+        ngx.log(ngx.DEBUG, "Found oauth token in local cache")
         return localCacheValue
     end
 
     local redisCacheValue = self:getKeyFromRedis(cacheLookupKey, "token_json")
     if (redisCacheValue ~= nil) then
-        ngx.log(ngx.DEBUG, "Found IMS token in redis cache")
+        ngx.log(ngx.DEBUG, "Found oauth token in redis cache")
         --        self:setKeyInLocalCache(cacheLookupKey, redisCacheValue, 60, "cachedOauthTokens")
         return redisCacheValue
     end
@@ -214,6 +214,7 @@ function _M:validateOAuthToken()
         return error.error_code, cjson.encode(error)
     end
 
+    ngx.log(ngx.WARN, "Failed to get oauth token from cache falling back to oauth provider")
     -- 2. validate the token with the OAuth endpoint
     local res = ngx.location.capture("/validate-token", {
         share_all_vars = true,
@@ -231,7 +232,10 @@ function _M:validateOAuthToken()
         end
         error.error_code = error.error_code or self.RESPONSES.INVALID_TOKEN.error_code
         return error.error_code, cjson.encode(error)
+    else
+        ngx.log(ngx.WARN, "Oauth provider call failed with status code=", res.status, " body=", res.body)
     end
+
     return res.status, cjson.encode(self.RESPONSES.UNKNOWN_ERROR);
 end
 

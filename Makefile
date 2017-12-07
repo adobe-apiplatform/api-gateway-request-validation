@@ -64,6 +64,19 @@ test-docker:
 	cp -r ~/tmp/apiplatform/api-gateway-request-validation/target/ ./target
 	rm -rf  ~/tmp/apiplatform/api-gateway-request-validation
 
+test-docker-jenkins:
+	echo "Running tests with docker, using NO password protection for Redis"
+	mkdir  -p $(BUILD_DIR)
+	mkdir  -p $(BUILD_DIR)/test-logs
+	cp -r test/resources/api-gateway $(BUILD_DIR)
+	sed -i '' 's/127\.0\.0\.1/redis\.docker/g' $(BUILD_DIR)/api-gateway/redis-upstream.conf
+	rm -f $(BUILD_DIR)/test-logs/*
+	mkdir -p ~/tmp/apiplatform/api-gateway-request-validation
+	cp -r ./src ~/tmp/apiplatform/api-gateway-request-validation/
+	cp -r ./test ~/tmp/apiplatform/api-gateway-request-validation/
+	cp -r ./target ~/tmp/apiplatform/api-gateway-request-validation/
+	cd ./test && docker-compose -f docker-compose-jenkins.yml up --force-recreate -d
+
 test-docker-with-password:
 	echo "running tests with docker, using password protected Redis instance"
 	mkdir  -p $(BUILD_DIR)
@@ -78,6 +91,19 @@ test-docker-with-password:
 	cd ./test && docker-compose -f docker-compose-with-password.yml up
 	cp -r ~/tmp/apiplatform/api-gateway-request-validation/target/ ./target
 	rm -rf  ~/tmp/apiplatform/api-gateway-request-validation
+
+test-docker-with-password-jenkins:
+	echo "running tests with docker, using password protected Redis instance"
+	mkdir  -p $(BUILD_DIR)
+	mkdir  -p $(BUILD_DIR)/test-logs
+	cp -r test/resources/api-gateway $(BUILD_DIR)
+	sed -i '' 's/127\.0\.0\.1/redis\.docker/g' $(BUILD_DIR)/api-gateway/redis-upstream.conf
+	rm -f $(BUILD_DIR)/test-logs/*
+	mkdir -p ~/tmp/apiplatform/api-gateway-request-validation
+	cp -r ./src ~/tmp/apiplatform/api-gateway-request-validation/
+	cp -r ./test ~/tmp/apiplatform/api-gateway-request-validation/
+	cp -r ./target ~/tmp/apiplatform/api-gateway-request-validation/
+	cd ./test && docker-compose -f docker-compose-with-password-jenkins.yml up --force-recreate -d
 
 package:
 	git archive --format=tar --prefix=api-gateway-request-validation-1.3.0/ -o api-gateway-request-validation-1.3.0.tar.gz -v HEAD
