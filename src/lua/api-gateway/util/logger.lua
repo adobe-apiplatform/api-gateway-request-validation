@@ -1,6 +1,6 @@
 local set = false
 
-function getLogFormatExtended(level, debugInfo, ...)
+function getLogFormat(level, debugInfo, ...)
     return level, "[", debugInfo.short_src,
         ":", debugInfo.currentline,
         ":", debugInfo.name,
@@ -8,23 +8,15 @@ function getLogFormatExtended(level, debugInfo, ...)
         "] ", ...
 end
 
-function getLogFormat(level, debugInfo, ...)
-    return level, "[", debugInfo.short_src,
-    ":", debugInfo.currentline,
-    ":", debugInfo.name,
-    "()]", ...
-end
-
 function _decorateLogger()
     if not set then
         local oldNgx = ngx.log
         ngx.log = function(level, ...)
             local debugInfo =  debug.getinfo(2)
-            if not pcall(function()
-                oldNgx(getLogFormatExtended(level, debugInfo, ...))
-            end) then
-                oldNgx(getLogFormat(level, debugInfo, ...))
-            end
+            local args = ...
+            pcall(function()
+                oldNgx(getLogFormat(level, debugInfo, args))
+            end)
         end
         set = true
     end
