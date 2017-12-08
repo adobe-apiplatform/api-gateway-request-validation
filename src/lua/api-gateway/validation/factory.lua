@@ -41,7 +41,6 @@ local OAuthTokenValidator = require "api-gateway.validation.oauth2.oauthTokenVal
 local UserProfileValidator = require "api-gateway.validation.oauth2.userProfileValidator"
 local logger = require "api-gateway.util.logger"
 
-local generalDebug = debug
 local function debug(...)
     if debug_mode then
         ngx.log(ngx.DEBUG, "validator: ", ...)
