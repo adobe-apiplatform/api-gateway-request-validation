@@ -1,31 +1,25 @@
-local oldNgx
-
-function post_init_phase()
-    return true
-end
+local set = false
 
 function getLogFormat(level, debugInfo, ...)
-    if pcall(post_init_phase) then
-        return level, "[", debugInfo.short_src,
+    return level, "[", debugInfo.short_src,
         ":", debugInfo.currentline,
         ":", debugInfo.name,
         "() req_id=", ngx.var.requestId,
         "] ", ...
-    else
-        return level, "[", debugInfo.short_src,
-        ":", debugInfo.currentline,
-        ":", debugInfo.name,
-        "()] ", ...
-    end
 end
 
 function _decorateLogger()
-    if not oldNgx then
-        oldNgx = ngx.log
+    if not set then
+        local oldNgx = ngx.log
         ngx.log = function(level, ...)
             local debugInfo =  debug.getinfo(2)
-            oldNgx(getLogFormat(level, debugInfo, ...))
+            if not(pcall(function()
+                oldNgx(getLogFormat(level, debugInfo, ...))
+            end)) then
+                oldNgx(level, debugInfo, ...)
+            end
         end
+        set = true
     end
 end
 
