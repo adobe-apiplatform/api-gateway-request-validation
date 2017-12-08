@@ -4,7 +4,7 @@ function getLogFormat(level, debugInfo, ...)
     return level, "[", debugInfo.short_src,
         ":", debugInfo.currentline,
         ":", debugInfo.name,
-        " req_id=", ngx.var.requestId,
+        "() req_id=", ngx.var.requestId,
         "] ", ...
 end
 
