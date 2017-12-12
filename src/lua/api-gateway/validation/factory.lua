@@ -39,9 +39,8 @@ local ApiKeyValidatorCls = require "api-gateway.validation.key.redisApiKeyValida
 local HmacSignatureValidator = require "api-gateway.validation.signing.hmacGenericSignatureValidator"
 local OAuthTokenValidator = require "api-gateway.validation.oauth2.oauthTokenValidator"
 local UserProfileValidator = require "api-gateway.validation.oauth2.userProfileValidator"
+local logger = require "api-gateway.util.logger"
 
-
-local debug_mode = ngx.config.debug
 local function debug(...)
     if debug_mode then
         ngx.log(ngx.DEBUG, "validator: ", ...)
@@ -52,6 +51,8 @@ end
 -- Function designed to be called from access_by_lua
 -- It calls an internal /validate-request path which can provide any custom implementation for request validation
 local function _validateRequest()
+    logger.decorateLogger()
+
     if (ngx.var.request_method == 'OPTIONS') then
         return ngx.OK;
     end
