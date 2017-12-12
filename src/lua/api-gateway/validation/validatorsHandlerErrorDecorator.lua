@@ -127,6 +127,10 @@ function ValidatorHandlerErrorDecorator:decorateResponse(response_status, respon
                 ngx.header[k] = val
             end
         end
+        -- initialize an nginx variable with the error_code in order to print it in the logging file
+        if (o.error_code ~= nil) then
+            ngx.var.request_validator_error_code = o.error_code;
+        end
         -- ngx.say(o.message)
         -- add custom message
         local msg = self:parseResponseMessage(o.message)
