@@ -46,8 +46,4 @@ function OauthClient:makeProfileCall(internalPath, oauth_host)
     return res
 end
 
-function OauthClient:getServiceTokenFromOauth()
-
-end
-
 return OauthClient
