@@ -44,6 +44,7 @@
 --
 local BaseValidator = require "api-gateway.validation.validator"
 local redisConfigurationProvider = require "api-gateway.redis.redisConnectionConfiguration"
+local OauthClient = require "api-gateway.util.OauthClient":new()
 local cjson = require "cjson"
 
 local _M = BaseValidator:new()
@@ -200,7 +201,8 @@ function _M:validateUserProfile()
 
     ngx.log(ngx.WARN, "Failed to get profile from cache falling back to oauth provider")
     -- 2. get the user profile from the oauth profile
-    local res = ngx.location.capture("/validate-user", { share_all_vars = true })
+    local res = OauthClient:makeProfileCall("/validate-user")
+
     if res.status == ngx.HTTP_OK then
         local json = cjson.decode(res.body)
         if json ~= nil then
