@@ -6,7 +6,6 @@
 --- Created by trifan.
 --- DateTime: 10/01/2018 11:36
 ---
-local cjson = require("cjson")
 
 local OauthClient = {}
 
