@@ -3,6 +3,7 @@ gateway:
   links:
     - redis:redis.docker
   volumes:
+    - ~/tmp/apiplatform/api-gateway-request-validation/src/lua/api-gateway/util:/usr/local/api-gateway/lualib/api-gateway/util
     - ~/tmp/apiplatform/api-gateway-request-validation/src/lua/api-gateway/validation:/usr/local/api-gateway/lualib/api-gateway/validation
     - ~/tmp/apiplatform/api-gateway-request-validation/src/lua/api-gateway/redis:/usr/local/api-gateway/lualib/api-gateway/redis
     - ~/tmp/apiplatform/api-gateway-request-validation/test/perl:/tmp/perl
