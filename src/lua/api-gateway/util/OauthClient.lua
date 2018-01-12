@@ -28,6 +28,7 @@ function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token
         args = { authtoken = oauth_token }
     })
 
+    --- WARN ~200
     ngx.log(ngx.INFO, "Host= ", oauth_host, " responded with status= ", res.status, " and x-debug-id=",
         tostring(res.header["x-debug-id"]))
 
@@ -40,6 +41,7 @@ function OauthClient:makeProfileCall(internalPath, oauth_host)
     ngx.log(ngx.INFO, "profileCall request to host=", oauth_host)
     local res = ngx.location.capture(internalPath, { share_all_vars = true })
 
+    --- WARN ~200
     ngx.log(ngx.INFO, "Host= ", oauth_host, " responded with status= ", res.status, " and x-debug-id=",
         tostring(res.header["x-debug-id"]))
 
