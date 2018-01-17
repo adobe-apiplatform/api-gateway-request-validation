@@ -40,7 +40,9 @@ local debug_mode = ngx.config.debug
 -- When a validator fail with the given "error_code", the HTTP response code is the "http_status" associated to the "error_code"
 -- The "message" associated to the "error_code" is returned as well.
 local DEFAULT_RESPONSES = {
-        BLACKLIST_IP = { http_status = 403, error_code = 403012, message = '{"error_code":"403012","message":"Your IP is blacklisted"}', headers = { ["X-Request-Id"] = "ngx.var.requestId" }},
+    -- ip filtering
+    BLACKLIST_IP = { http_status = 403, error_code = 403012, message = '{"error_code":"403012","message":"Your IP is blacklisted"}', headers = { ["X-Request-Id"] = "ngx.var.requestId" } },
+    WHITELIST_IP = { http_status = 403, error_code = 403013, message = '{"error_code":"403013","message":"Your IP is not whitelisted"}', headers = { ["X-Request-Id"] = "ngx.var.requestId" } },
     -- redisApiKeyValidator error
     MISSING_KEY = { http_status = 403, error_code = 403000, message = '{"error_code":"403000","message":"Api Key is required"}', headers = { ["X-Request-Id"] = "ngx.var.requestId" } },
     INVALID_KEY = { http_status = 403, error_code = 403003, message = '{"error_code":"403003","message":"Api Key is invalid"}', headers = { ["X-Request-Id"] = "ngx.var.requestId" } },
