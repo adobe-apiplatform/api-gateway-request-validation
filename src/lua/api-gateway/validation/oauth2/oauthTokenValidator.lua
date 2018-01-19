@@ -40,6 +40,7 @@
 
 local BaseValidator = require "api-gateway.validation.validator"
 local redisConfigurationProvider = require "api-gateway.redis.redisConnectionConfiguration"
+local OauthClient = require "api-gateway.util.OauthClient":new()
 local cjson = require "cjson"
 
 local _M = BaseValidator:new({
@@ -216,10 +217,8 @@ function _M:validateOAuthToken()
 
     ngx.log(ngx.WARN, "Failed to get oauth token from cache falling back to oauth provider")
     -- 2. validate the token with the OAuth endpoint
-    local res = ngx.location.capture("/validate-token", {
-        share_all_vars = true,
-        args = { authtoken = oauth_token }
-    })
+
+    local res = OauthClient:makeValidateTokenCall("/validate-token", oauth_host, oauth_token)
     if res.status == ngx.HTTP_OK then
         local tokenValidity, error = self:checkResponseFromAuth(res, cacheLookupKey)
         if (tokenValidity == true) then
