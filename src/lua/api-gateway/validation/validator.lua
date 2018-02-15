@@ -286,4 +286,34 @@ function BaseValidator:exitFn(status, resp_body)
     return ngx.OK
 end
 
+function BaseValidator:overrideErrorResponses(custom_error_responses)
+
+    --- handle the case when custom_error_responses is passed as string
+    if type(custom_error_responses) == "string" then
+        custom_error_responses = cjson.decode(custom_error_responses)
+    end
+
+    if custom_error_responses ~= nil and type(custom_error_responses) == "table" then
+
+        local existing_custom_error_responses = ngx.var.validator_custom_error_responses
+        if existing_custom_error_responses ~= nil and existing_custom_error_responses ~= "" then
+            ngx.log(ngx.DEBUG, "ngx.var.validator_custom_error_responses already exist. Going to merge...")
+
+            existing_custom_error_responses = cjson.decode(existing_custom_error_responses)
+            for k, v in pairs(custom_error_responses) do
+                if (existing_custom_error_responses[k] == nil) then
+                    existing_custom_error_responses[k] = v
+                end
+            end
+
+            ngx.var.validator_custom_error_responses = cjson.encode(existing_custom_error_responses)
+        else
+
+            ngx.var.validator_custom_error_responses = cjson.encode(custom_error_responses)
+        end
+    else
+        ngx.log(ngx.DEBUG, "No custom error responses defined for validator")
+    end
+end
+
 return BaseValidator
