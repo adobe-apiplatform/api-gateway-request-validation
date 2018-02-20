@@ -153,11 +153,13 @@ function _M:storeProfileInCache(cacheLookupKey, cachingObj)
     self:setKeyInRedis(cacheLookupKey, "user_json", math.min(oauthTokenExpiration, (ngx.time() + default_ttl_expire) * 1000), cachingObjString)
 end
 
---- Returns true if the profile is valid for the request context
---     This method is to be overritten when this class is extended
+--- Returns true if the profile is valid for the request context. If profile is not valid then it returns the failure
+-- status code and message.
+-- This method is to be overritten when this class is extended.
 -- @param cachedProfile The information about the user profile that gets cached
+--
 function _M:isProfileValid(cachedProfile)
-    return true
+    return true, nil, nil
 end
 
 ---
@@ -192,10 +194,12 @@ function _M:validateUserProfile()
             cachedUserProfile = cjson.decode(cachedUserProfile)
         end
         self:setContextProperties(self:getContextPropertiesObject(cachedUserProfile))
-        if ( self:isProfileValid(cachedUserProfile) == true ) then
+
+        local isValid, failureErrorCode, failureMessage = self:isProfileValid(cachedUserProfile)
+        if ( isValid == true ) then
             return ngx.HTTP_OK
         else
-            return RESPONSES.INVALID_PROFILE.error_code, cjson.encode(RESPONSES.INVALID_PROFILE)
+            return failureErrorCode, failureMessage
         end
     end
 
@@ -212,10 +216,11 @@ function _M:validateUserProfile()
             self:setContextProperties(self:getContextPropertiesObject(cachingObj))
             self:storeProfileInCache(cacheLookupKey, cachingObj)
 
-            if ( self:isProfileValid(cachingObj) == true ) then
+            local isValid, failureErrorCode, failureMessage = self:isProfileValid(cachingObj)
+            if ( isValid == true ) then
                 return ngx.HTTP_OK
             else
-                return RESPONSES.INVALID_PROFILE.error_code, cjson.encode(RESPONSES.INVALID_PROFILE)
+                return failureErrorCode, failureMessage
             end
         else
             ngx.log(ngx.WARN, "Could not decode /validate-user response:" .. tostring(res.body) )
