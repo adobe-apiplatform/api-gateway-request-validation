@@ -185,7 +185,6 @@ function ValidatorsHandler:validateSubrequests(order, subrequests, localContext,
 
     if (subrequests_count == 0) then
         ngx.log(ngx.WARN, "Nothing to validate on subrequest")
-        ngx.exit(ngx.HTTP_OK)
     end
 
      -- issue all the requests at once and wait until they all return
