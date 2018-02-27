@@ -1,5 +1,5 @@
 package="api-gateway-request-validation"
-version="1.3-6"
+version="1.3.6-1"
 local function make_plat(plat)
     return { modules = {
         ["api-gateway.redis.redisConnectionConfiguration"] = "src/lua/api-gateway/redis/redisConnectionConfiguration.lua",
