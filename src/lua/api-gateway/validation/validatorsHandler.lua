@@ -233,7 +233,7 @@ function ValidatorsHandler:saveContextInRequestVars(localContext)
     -- for i,k in pairs(varsToSet) do
         if ngx.var[k] ~= nil and (type(localContext[k]) == "string" or type(localContext[k]) == "number") then
             -- ngx.log(ngx.DEBUG, "Setting " .. k .. ",from: " .. ngx.var[k] .. ",to:" .. v)
-            ngx.var[k] = localContext[k]
+            ngx.var[k] = v
         end
     end
 end
