@@ -22,6 +22,8 @@
 # */
 # vim:set ft= ts=4 sw=4 et fdm=marker:
 use lib 'lib';
+use strict;
+use warnings;
 use Test::Nginx::Socket::Lua;
 use Cwd qw(cwd);
 
@@ -31,7 +33,7 @@ use Cwd qw(cwd);
 
 repeat_each(2);
 
-plan tests => repeat_each() * (blocks() * 9) + 2;
+plan tests => repeat_each() * (blocks() * 10) - 16;
 
 my $pwd = cwd();
 
@@ -617,5 +619,74 @@ custom-header-2: this is a lua variable",
 [401,500,409]
 --- no_error_log
 [error]
+
+=== TEST 10: test validator handler can execute subrequests from order 2 and 3 (without order 1 declared)
+--- http_config eval: $::HttpConfig
+--- config
+        include ../../api-gateway/default_validators.conf;
+
+        error_log ../test-logs/validatorhandler_test10_error.log debug;
+
+        set $custom_prop1 "unset";
+        set $temp_prop '';
+
+        location /validator_1 {
+            set $temp_prop $arg_k;
+            content_by_lua '
+                ngx.ctx.custom_prop1 = ngx.var.temp_prop
+                ngx.header["Response-Time"] = ngx.now() - ngx.req.start_time()
+                ngx.say("OK")
+            ';
+        }
+        location /validator_2 {
+            set $temp_prop $arg_key;
+            content_by_lua '
+                ngx.header["Response-Time"] = ngx.now() - ngx.req.start_time()
+                if ( ngx.ctx.custom_prop1 == ngx.var.temp_prop) then
+                    ngx.say("OK")
+                    ngx.exit(ngx.OK)
+                end
+                ngx.status = 401
+                ngx.print("you called me too soon")
+                ngx.exit(ngx.OK)
+            ';
+        }
+
+        location /validate-request-test {
+            set $custom_prop1 "unset";
+            set $request_validator_1 "on; path=/validator_1?k=123; order=2;";
+            set $request_validator_2 "on; path=/validator_2?key=123; order=3;";
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
+            content_by_lua '
+                ngx.say("request is valid:" .. ngx.var.custom_prop1)
+            ';
+        }
+        location /validate-reverse-order {
+            set $custom_prop1 "unset";
+            set $request_validator_1  "on; path=/validator_2?key=123; order=2;";
+            set $request_validator_2 "on; path=/validator_1?k=123; order=3;";
+            access_by_lua "ngx.apiGateway.validation.validateRequest()";
+            content_by_lua '
+                ngx.say("request is valid.")
+            ';
+        }
+--- pipelined_requests eval
+[
+"GET /validate-request-test?debug=true",
+"GET /validate-reverse-order?debug=true"
+]
+--- response_body_like eval
+["request is valid:\\d+.*", "^you called me too soon"]
+--- response_headers_like eval
+[
+"X-Debug-Validation-Response-Times: /validator_1\\?k=\\d+, \\d+ ms, status:200, request_validator \\[order:2\\], \\d+ ms, status:200, /validator_2\\?key=\\d+, \\d+ ms, status:200, request_validator \\[order:3\\], \\d+ ms, status:200
+Content-Type: text/plain",
+"X-Debug-Validation-Response-Times: /validator_2\\?key=\\d+, \\d+ ms, status:401, request_validator \\[order:2\\], \\d+ ms, status:401
+Content-Type: text/plain"
+]
+--- no_error_log
+[error]
+--- error_code_like eval
+[200,401]
 
 
