@@ -47,10 +47,6 @@
 -- Time: 2:55 PM
 --
 
-
-local base = require "api-gateway.validation.base"
-local cjson = require "cjson"
-
 -- class to be used as a base class for all api-gateway validators --
 local ValidatorsHandler = {}
 
