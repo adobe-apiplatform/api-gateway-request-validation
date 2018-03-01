@@ -196,11 +196,14 @@ function _M:validateUserProfile()
         self:setContextProperties(self:getContextPropertiesObject(cachedUserProfile))
 
         local isValid, failureErrorCode, failureMessage = self:isProfileValid(cachedUserProfile)
-        if ( isValid == true ) then
+        if isValid == true then
             return ngx.HTTP_OK
-        else
+        elseif failureErrorCode ~= nil and failureMessage ~= nil then
             return failureErrorCode, failureMessage
+        else
+            return RESPONSES.INVALID_PROFILE.error_code, cjson.encode(RESPONSES.INVALID_PROFILE)
         end
+
     end
 
     ngx.log(ngx.WARN, "Failed to get profile from cache falling back to oauth provider")
@@ -217,10 +220,12 @@ function _M:validateUserProfile()
             self:storeProfileInCache(cacheLookupKey, cachingObj)
 
             local isValid, failureErrorCode, failureMessage = self:isProfileValid(cachingObj)
-            if ( isValid == true ) then
+            if isValid == true then
                 return ngx.HTTP_OK
-            else
+            elseif failureErrorCode ~= nil and failureMessage ~= nil then
                 return failureErrorCode, failureMessage
+            else
+                return RESPONSES.INVALID_PROFILE.error_code, cjson.encode(RESPONSES.INVALID_PROFILE)
             end
         else
             ngx.log(ngx.WARN, "Could not decode /validate-user response:" .. tostring(res.body) )

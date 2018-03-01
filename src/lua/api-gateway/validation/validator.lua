@@ -71,6 +71,8 @@ function BaseValidator:getKeyFromLocalCache(key, dict_name)
     local localCachedKeys = ngx.shared[dict_name];
     if (nil ~= localCachedKeys) then
         return localCachedKeys:get(key);
+    else
+        ngx.log(ngx.ERR, "Dictionary " .. dict_name .. " does not exist")
     end
 end
 
@@ -78,6 +80,8 @@ function BaseValidator:setKeyInLocalCache(key, string_value, exptime, dict_name)
     local localCachedKeys = ngx.shared[dict_name];
     if (nil ~= localCachedKeys) then
         return localCachedKeys:safe_set(key, string_value, exptime);
+    else
+        ngx.log(ngx.ERR, "Dictionary " .. dict_name .. " does not exist")
     end
 end
 
