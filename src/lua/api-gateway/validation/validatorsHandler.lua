@@ -47,10 +47,6 @@
 -- Time: 2:55 PM
 --
 
-
-local base = require "api-gateway.validation.base"
-local cjson = require "cjson"
-
 -- class to be used as a base class for all api-gateway validators --
 local ValidatorsHandler = {}
 
@@ -174,7 +170,6 @@ function ValidatorsHandler:getValidatorsFromConfiguration( localContext )
             )
         end
     end
-
     return reqs;
 end
 
@@ -182,11 +177,6 @@ end
 function ValidatorsHandler:validateSubrequests(order, subrequests, localContext, responseTimesHeaders )
     local subrequests_count = table.getn(subrequests)
     ngx.log(ngx.DEBUG, "Validating " .. subrequests_count .. " subrequests. Order=" .. order )
-
-    if (subrequests_count == 0) then
-        ngx.log(ngx.WARN, "Nothing to validate on subrequest")
-        ngx.exit(ngx.HTTP_OK)
-    end
 
      -- issue all the requests at once and wait until they all return
     local resps = { ngx.location.capture_multi(subrequests) }
@@ -243,7 +233,9 @@ function ValidatorsHandler:saveContextInRequestVars(localContext)
     -- for i,k in pairs(varsToSet) do
         if ngx.var[k] ~= nil and (type(localContext[k]) == "string" or type(localContext[k]) == "number") then
             -- ngx.log(ngx.DEBUG, "Setting " .. k .. ",from: " .. ngx.var[k] .. ",to:" .. v)
-            ngx.var[k] = localContext[k]
+            if v ~= nil then
+                ngx.var[k] = v
+            end
         end
     end
 end
@@ -254,19 +246,22 @@ function ValidatorsHandler:validateRequest()
     local subrequestResultStatus = ngx.HTTP_OK
     local subrequestResultBody
     local responseTimesHeaders = {}
-    local reqs_count = table.getn(reqs)
+    local reqs_count = table.maxn(reqs)
     ngx.log(ngx.DEBUG, "Executing " .. reqs_count .. " ordered subrequests")
 
     for i = 1,reqs_count do
-        --ngx.log(ngx.DEBUG, "Executing validators with order=" .. i)
+        ngx.log(ngx.DEBUG, "Executing validators with order=" .. i)
         --ngx.log(ngx.DEBUG, "Printing ctx object before executing validators of order:" .. i)
         local requests = reqs[i]
-        if ( requests ~= nil ) then
+--        ngx.log(ngx.DEBUG, "Table requests " .. table.getn(requests))
+        if ( requests ~= nil and table.maxn(requests) > 0) then
             subrequestResultStatus, subrequestResultBody = self:validateSubrequests(i, requests, localContext, responseTimesHeaders)
             if ( subrequestResultStatus ~= ngx.HTTP_OK ) then
                 self:saveContextInRequestVars(localContext)
                 return ngx.exit(subrequestResultStatus)
             end
+        else
+            ngx.log(ngx.DEBUG, "Skipped this validator.")
         end
     end
     self:saveContextInRequestVars(localContext)
