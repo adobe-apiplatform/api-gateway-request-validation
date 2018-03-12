@@ -9,11 +9,46 @@
 
 local OauthClient = {}
 
+local oauthCalls = 'oauth.http_calls'
+
 function OauthClient:new(o)
     local o = o or {}
     setmetatable(o, self)
     self.__index = self
     return o
+end
+
+--- Loads a lua gracefully. If the module doesn't exist the exception is caught, logged and the execution continues
+-- @param module path to the module to be loaded
+--
+local function loadrequire(module)
+    ngx.log(ngx.DEBUG, "Loading module [" .. tostring(module) .. "]")
+    local function requiref(module)
+        require(module)
+    end
+
+    local res = pcall(requiref, module)
+    if not (res) then
+        ngx.log(ngx.WARN, "Could not load module [", module, "].")
+        return nil
+    end
+    return require(module)
+end
+
+local restyDogstatsd = loadrequire('resty_dogstatsd')
+
+function OauthClient:getDogstatsd()
+    local dogstatsd = restyDogstatsd.new({
+        statsd = {
+            host = "datadog.docker",
+            port = 8125,
+            namespace = "api_gateway",
+        },
+        tags = {
+            "application:lua",
+        },
+    })
+    return dogstatsd
 end
 
 function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token)
@@ -27,6 +62,9 @@ function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token
         share_all_vars = true,
         args = { authtoken = oauth_token }
     })
+
+    local dogstatsd = self:getDogstatsd()
+    dogstatsd:increment(oauthCalls, 1)
 
     local logLevel = ngx.INFO
     if res.status ~= 200 then
@@ -48,6 +86,10 @@ function OauthClient:makeProfileCall(internalPath, oauth_host)
     if res.status ~= 200 then
         logLevel = ngx.WARN
     end
+
+    local dogstatsd = self:getDogstatsd()
+    dogstatsd:increment(oauthCalls, 1)
+
     ngx.log(logLevel, "profileCall Host=", oauth_host, " responded with status=", res.status, " and x-debug-id=",
         tostring(res.header["X-DEBUG-ID"]), " body=", res.body)
 
