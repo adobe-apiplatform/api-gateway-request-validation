@@ -42,6 +42,7 @@ local BaseValidator = require "api-gateway.validation.validator"
 local redisConfigurationProvider = require "api-gateway.redis.redisConnectionConfiguration"
 local OauthClient = require "api-gateway.util.OauthClient":new()
 local cjson = require "cjson"
+local restyDogstatsd = require('resty_dogstatsd')
 
 local _M = BaseValidator:new({
     RESPONSES = {
@@ -215,10 +216,25 @@ function _M:validateOAuthToken()
         return error.error_code, cjson.encode(error)
     end
 
+    local dogstatsd = resty_dogstatsd.new({
+        statsd = {
+            host = "127.0.0.1",
+            port = 8125,
+            namespace = "nginx_lua",
+        },
+        tags = {
+            "environment:develop",
+            "application:lua",
+        },
+    })
+
     ngx.log(ngx.WARN, "Failed to get oauth token from cache falling back to oauth provider")
     -- 2. validate the token with the OAuth endpoint
 
     local res = OauthClient:makeValidateTokenCall("/validate-token", oauth_host, oauth_token)
+
+    dogstatsd:increment('lua.events', 1)
+
     if res.status == ngx.HTTP_OK then
         local tokenValidity, error = self:checkResponseFromAuth(res, cacheLookupKey)
         if (tokenValidity == true) then
