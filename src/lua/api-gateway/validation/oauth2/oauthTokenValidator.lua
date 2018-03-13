@@ -38,11 +38,28 @@
 --  3. oauth_token_user_id
 --  4. oauth_token_expires_at
 
+--- Loads a lua gracefully. If the module doesn't exist the exception is caught, logged and the execution continues
+-- @param module path to the module to be loaded
+--
+local function loadrequire(module)
+    ngx.log(ngx.DEBUG, "Loading module [" .. tostring(module) .. "]")
+    local function requiref(module)
+        require(module)
+    end
+
+    local res = pcall(requiref, module)
+    if not (res) then
+        ngx.log(ngx.WARN, "Could not load module [", module, "].")
+        return nil
+    end
+    return require(module)
+end
+
 local BaseValidator = require "api-gateway.validation.validator"
 local redisConfigurationProvider = require "api-gateway.redis.redisConnectionConfiguration"
 local OauthClient = require "api-gateway.util.OauthClient":new()
 local cjson = require "cjson"
-local restyDogstatsd = require('resty_dogstatsd')
+local restyDogstatsd = loadrequire('resty_dogstatsd')
 
 local _M = BaseValidator:new({
     RESPONSES = {
@@ -216,7 +233,7 @@ function _M:validateOAuthToken()
         return error.error_code, cjson.encode(error)
     end
 
-    local dogstatsd = resty_dogstatsd.new({
+    local dogstatsd = restyDogstatsd.new({
         statsd = {
             host = "127.0.0.1",
             port = 8125,
