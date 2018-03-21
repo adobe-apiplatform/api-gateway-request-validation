@@ -9,8 +9,6 @@
 
 local OauthClient = {}
 
-local oauthCalls = 'oauth.http_calls'
-
 function OauthClient:new(o)
     local o = o or {}
     setmetatable(o, self)
@@ -37,6 +35,7 @@ end
 
 local restyDogstatsd = loadrequire('resty_dogstatsd')
 
+--- Returns an instance of dogstatsd only if it does not already exist
 function OauthClient:getDogstatsd()
     if self.dogstatsd ~= nil then
         return self.dogstatsd
@@ -55,6 +54,13 @@ function OauthClient:getDogstatsd()
     return dogstatsd
 end
 
+--- Increments the number of calls to the Oauth provider
+function OauthClient:incrementOauthCalls()
+    local oauthCalls = 'oauth.http_calls'
+    local dogstatsd = self:getDogstatsd()
+    dogstatsd:increment(oauthCalls, 1)
+end
+
 function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token)
     oauth_host = oauth_host or ngx.var.oauth_host
     oauth_token = oauth_token or ngx.var.authtoken
@@ -67,8 +73,7 @@ function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token
         args = { authtoken = oauth_token }
     })
 
-    local dogstatsd = self:getDogstatsd()
-    dogstatsd:increment(oauthCalls, 1)
+    self.incrementOauthCalls()
 
     local logLevel = ngx.INFO
     if res.status ~= 200 then
@@ -91,8 +96,7 @@ function OauthClient:makeProfileCall(internalPath, oauth_host)
         logLevel = ngx.WARN
     end
 
-    local dogstatsd = self:getDogstatsd()
-    dogstatsd:increment(oauthCalls, 1)
+    self.incrementOauthCalls()
 
     ngx.log(logLevel, "profileCall Host=", oauth_host, " responded with status=", res.status, " and x-debug-id=",
         tostring(res.header["X-DEBUG-ID"]), " body=", res.body)
