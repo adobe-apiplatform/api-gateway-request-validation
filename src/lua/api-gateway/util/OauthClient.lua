@@ -73,7 +73,7 @@ function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token
         args = { authtoken = oauth_token }
     })
 
-    self.incrementOauthCalls()
+    self:incrementOauthCalls()
 
     local logLevel = ngx.INFO
     if res.status ~= 200 then
@@ -96,7 +96,7 @@ function OauthClient:makeProfileCall(internalPath, oauth_host)
         logLevel = ngx.WARN
     end
 
-    self.incrementOauthCalls()
+    self:incrementOauthCalls()
 
     ngx.log(logLevel, "profileCall Host=", oauth_host, " responded with status=", res.status, " and x-debug-id=",
         tostring(res.header["X-DEBUG-ID"]), " body=", res.body)
