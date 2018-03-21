@@ -38,6 +38,10 @@ end
 local restyDogstatsd = loadrequire('resty_dogstatsd')
 
 function OauthClient:getDogstatsd()
+    if self.dogstatsd ~= nil then
+        return self.dogstatsd
+    end
+
     local dogstatsd = restyDogstatsd.new({
         statsd = {
             host = "datadog.docker",
