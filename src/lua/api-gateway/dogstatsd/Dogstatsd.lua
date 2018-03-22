@@ -18,13 +18,15 @@ local function loadrequire(module)
     end
 
     local res, cls = pcall(requiref, module)
-    if res then
-        return cls
-    else
+    if not (res) then
         ngx.log(ngx.WARN, "Could not load module [", module, "].")
         return nil
     end
+
+    return cls
 end
+
+local dogstatsd
 
 --- Returns an instance of dogstatsd only if it does not already exist
 function Dogstatsd:getDogstatsd()
@@ -39,7 +41,7 @@ function Dogstatsd:getDogstatsd()
         return nil
     end
 
-    local dogstatsd = restyDogstatsd.new({
+    dogstatsd = restyDogstatsd.new({
         statsd = {
             host = "datadog.docker",
             port = 8125,
@@ -56,8 +58,7 @@ end
 --  @param metric - metric to be identified in the Dogstatsd dashboard
 --
 function Dogstatsd:increment(metric)
-    local dogstatsd
-    if self.dogstatsd == nil then
+    if dogstatsd == nil then
         dogstatsd = self:getDogstatsd()
     end
     if dogstatsd ~= nil then
