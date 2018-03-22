@@ -18,57 +18,13 @@ end
 
 local dogstats = require "api-gateway.dogstatsd.Dogstatsd"
 
---- Loads a lua gracefully. If the module doesn't exist the exception is caught, logged and the execution continues
--- @param module path to the module to be loaded
---
-local function loadrequire(module)
-    ngx.log(ngx.DEBUG, "Loading module [" .. tostring(module) .. "]")
-    local function requiref(module)
-        require(module)
-    end
-
-    local res, cls = pcall(requiref, module)
-    if res then
-        return cls
-    else
-        ngx.log(ngx.WARN, "Could not load module [", module, "].")
-        return nil
-    end
-end
-
---- Returns an instance of dogstatsd only if it does not already exist
-function OauthClient:getDogstatsd()
-
-    if dogstatsd ~= nil then
-        return dogstatsd
-    end
-
-    local restyDogstatsd = loadrequire('resty_dogstatsd')
-
-    if restyDogstatsd == nil then
-        return nil
-    end
-
-    local dogstatsd = restyDogstatsd.new({
-        statsd = {
-            host = "datadog.docker",
-            port = 8125,
-            namespace = "api_gateway",
-        },
-        tags = {
-            "application:lua",
-        },
-    })
-    return dogstatsd
-end
-
 --- Increments the number of calls to the Oauth provider
 --  @param oauthCalls metric to be identified in the Dogstatsd dashboard
 --
 function OauthClient:incrementOauthCalls(oauthCalls)
     local dogstatsd
     if self.dogstatsd == nil then
-        dogstatsd = self:getDogstatsd()
+        dogstatsd = dogstats:getDogstatsd()
     end
     if dogstatsd ~= nil then
         dogstatsd:increment(oauthCalls, 1)
