@@ -17,12 +17,13 @@ local function loadrequire(module)
         require(module)
     end
 
-    local res = pcall(requiref, module)
-    if not (res) then
+    local res, cls = pcall(requiref, module)
+    if res then
+        return cls
+    else
         ngx.log(ngx.WARN, "Could not load module [", module, "].")
         return nil
     end
-    return require(module)
 end
 
 --- Returns an instance of dogstatsd only if it does not already exist
