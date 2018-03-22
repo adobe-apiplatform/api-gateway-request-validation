@@ -16,7 +16,6 @@ function OauthClient:new(o)
     return o
 end
 
-
 --- Loads a lua gracefully. If the module doesn't exist the exception is caught, logged and the execution continues
 -- @param module path to the module to be loaded
 --
@@ -63,7 +62,7 @@ end
 
 --- Increments the number of calls to the Oauth provider
 --  @param oauthCalls metric to be identified in the Dogstatsd dashboard
---
+--run
 function OauthClient:incrementOauthCalls(oauthCalls)
     local dogstatsd
     if self.dogstatsd == nil then
@@ -73,8 +72,6 @@ function OauthClient:incrementOauthCalls(oauthCalls)
         dogstatsd:increment(oauthCalls, 1)
     end
 end
-
-local dogstatsd = require "api-gateway.dogstatsd.Dogstatsd"
 
 local oauthCalls = 'oauth.http_calls'
 
