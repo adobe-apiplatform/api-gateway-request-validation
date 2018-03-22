@@ -41,6 +41,10 @@ function OauthClient:getDogstatsd()
         return dogstatsd
     end
 
+    if restyDogstatsd == nil then
+        return nil
+    end
+
     local dogstatsd = restyDogstatsd.new({
         statsd = {
             host = "datadog.docker",
@@ -58,8 +62,13 @@ local oauthCalls = 'oauth.http_calls'
 
 --- Increments the number of calls to the Oauth provider
 function OauthClient:incrementOauthCalls(oauthCalls)
-    local dogstatsd = self:getDogstatsd()
-    dogstatsd:increment(oauthCalls, 1)
+    local dogstatsd
+    if self.dogstatsd == nil then
+        dogstatsd = self:getDogstatsd()
+    end
+    if dogstatsd ~= nil then
+        dogstatsd:increment(oauthCalls, 1)
+    end
 end
 
 function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token)
