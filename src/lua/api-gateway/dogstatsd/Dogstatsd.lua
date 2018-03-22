@@ -29,7 +29,7 @@ end
 local dogstatsd
 
 --- Returns an instance of dogstatsd only if it does not already exist
-function Dogstatsd:getDogstatsd()
+local function getDogstatsd()
 
     if dogstatsd ~= nil then
         return dogstatsd
@@ -58,9 +58,8 @@ end
 --  @param metric - metric to be identified in the Dogstatsd dashboard
 --
 function Dogstatsd:increment(metric)
-    if dogstatsd == nil then
-        dogstatsd = self:getDogstatsd()
-    end
+    dogstatsd = self:getDogstatsd()
+
     if dogstatsd ~= nil then
         dogstatsd:increment(metric, 1)
     end
