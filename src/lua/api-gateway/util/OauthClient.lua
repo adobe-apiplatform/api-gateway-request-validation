@@ -64,7 +64,7 @@ end
 
 --- Increments the number of calls to the Oauth provider
 --  @param oauthCalls metric to be identified in the Dogstatsd dashboard
---run
+--
 function OauthClient:incrementOauthCalls(oauthCalls)
     local dogstatsd
     if self.dogstatsd == nil then
