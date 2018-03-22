@@ -52,6 +52,19 @@ function Dogstatsd:getDogstatsd()
     return dogstatsd
 end
 
+--- Increments the number of calls to the Oauth provider
+--  @param metric - metric to be identified in the Dogstatsd dashboard
+--
+function Dogstatsd:increment(metric)
+    local dogstatsd
+    if self.dogstatsd == nil then
+        dogstatsd = self:getDogstatsd()
+    end
+    if dogstatsd ~= nil then
+        dogstatsd:increment(metric, 1)
+    end
+end
+
 return Dogstatsd
 
 

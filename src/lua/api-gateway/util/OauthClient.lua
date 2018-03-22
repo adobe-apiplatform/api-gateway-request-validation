@@ -17,21 +17,15 @@ function OauthClient:new(o)
 end
 
 local dogstats = require "api-gateway.dogstatsd.Dogstatsd"
+local metric = 'oauth.http_calls'
 
 --- Increments the number of calls to the Oauth provider
---  @param oauthCalls metric to be identified in the Dogstatsd dashboard
+--  @param metric - metric to be identified in the Dogstatsd dashboard
 --
-function OauthClient:incrementOauthCalls(oauthCalls)
-    local dogstatsd
-    if self.dogstatsd == nil then
-        dogstatsd = dogstats:getDogstatsd()
-    end
-    if dogstatsd ~= nil then
-        dogstatsd:increment(oauthCalls, 1)
-    end
+function OauthClient:increment(metric)
+    dogstats:increment(metric)
 end
 
-local oauthCalls = 'oauth.http_calls'
 
 function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token)
     oauth_host = oauth_host or ngx.var.oauth_host
@@ -45,7 +39,7 @@ function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token
         args = { authtoken = oauth_token }
     })
 
-    self:incrementOauthCalls(oauthCalls)
+    self:increment(metric)
 
     local logLevel = ngx.INFO
     if res.status ~= 200 then
@@ -68,7 +62,7 @@ function OauthClient:makeProfileCall(internalPath, oauth_host)
         logLevel = ngx.WARN
     end
 
-    self:incrementOauthCalls(oauthCalls)
+    self:increment(metric)
 
     ngx.log(logLevel, "profileCall Host=", oauth_host, " responded with status=", res.status, " and x-debug-id=",
         tostring(res.header["X-DEBUG-ID"]), " body=", res.body)
