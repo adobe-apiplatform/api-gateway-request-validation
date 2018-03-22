@@ -32,11 +32,12 @@ function Dogstatsd:getDogstatsd()
         return dogstatsd
     end
 
+    local restyDogstatsd = loadrequire('resty_dogstatsd')
+
     if restyDogstatsd == nil then
         return nil
     end
 
-    local restyDogstatsd = loadrequire('resty_dogstatsd')
     local dogstatsd = restyDogstatsd.new({
         statsd = {
             host = "datadog.docker",
