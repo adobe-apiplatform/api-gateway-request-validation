@@ -37,8 +37,8 @@ local restyDogstatsd = loadrequire('resty_dogstatsd')
 
 --- Returns an instance of dogstatsd only if it does not already exist
 function OauthClient:getDogstatsd()
-    if self.dogstatsd ~= nil then
-        return self.dogstatsd
+    if dogstatsd ~= nil then
+        return dogstatsd
     end
 
     local dogstatsd = restyDogstatsd.new({
