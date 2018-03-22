@@ -58,7 +58,7 @@ end
 --  @param metric - metric to be identified in the Dogstatsd dashboard
 --
 function Dogstatsd:increment(metric)
-    dogstatsd = self:getDogstatsd()
+    dogstatsd = getDogstatsd()
 
     if dogstatsd ~= nil then
         dogstatsd:increment(metric, 1)
