@@ -1,4 +1,8 @@
 
+--- Auxiliary module used to extract dogstats deamon initialization methods, incrementation of metrics
+-- and calls to other useful functions
+-- employed to measure calls to the Oauth provider: number, duration, etc.
+
 local Dogstatsd = {}
 
 function Dogstatsd:new(o)
@@ -10,6 +14,7 @@ end
 
 --- Loads a lua gracefully. If the module doesn't exist the exception is caught, logged and the execution continues
 -- @param module path to the module to be loaded
+-- @return The loaded module, or nil if the module cannot be loaded
 --
 local function loadrequire(module)
     ngx.log(ngx.DEBUG, "Loading module [" .. tostring(module) .. "]")
@@ -29,6 +34,9 @@ end
 local dogstatsd
 
 --- Returns an instance of dogstatsd only if it does not already exist
+-- @param none
+-- @return An instance of dogstatsd or nil if the class cannot be instantiated
+--
 local function getDogstatsd()
 
     if dogstatsd ~= nil then
@@ -56,6 +64,7 @@ end
 
 --- Increments the number of calls to the Oauth provider
 --  @param metric - metric to be identified in the Dogstatsd dashboard
+-- @return - void method
 --
 function Dogstatsd:increment(metric)
     dogstatsd = getDogstatsd()
