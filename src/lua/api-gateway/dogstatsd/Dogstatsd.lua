@@ -63,7 +63,7 @@ local function getDogstatsd()
 end
 
 --- Increments the number of calls to the Oauth provider
---  @param metric - metric to be identified in the Dogstatsd dashboard
+-- @param metric - metric to be identified in the Dogstatsd dashboard
 -- @return - void method
 --
 function Dogstatsd:increment(metric)
@@ -71,6 +71,19 @@ function Dogstatsd:increment(metric)
 
     if dogstatsd ~= nil then
         dogstatsd:increment(metric, 1)
+    end
+end
+
+--- Measures the number of milliseconds elapsed
+-- @param metric - metric to be identified in the Dogstatsd dashboard
+-- @param ms - the time it took a call to finish in milliseconds
+-- @return - void method
+--
+function Dogstatsd:time(metric, ms)
+    dogstatsd = getDogstatsd()
+
+    if dogstatsd ~= nil then
+        dogstatsd:timer(metric, ms)
     end
 end
 

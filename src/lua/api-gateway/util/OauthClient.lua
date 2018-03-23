@@ -24,9 +24,19 @@ local failedHttpCalls = 'oauth.failed.http_calls'
 
 --- Increments the number of calls to the Oauth provider
 --  @param metric - metric to be identified in the Dogstatsd dashboard
+-- @return - void method
 --
 function OauthClient:increment(metric)
     dogstats:increment(metric)
+end
+
+--- Measures the number of milliseconds elapsed
+-- @param metric - metric to be identified in the Dogstatsd dashboard
+-- @param ms - the time it took a call to finish in milliseconds
+-- @return - void method
+--
+function OauthClient:time(metric, ms)
+    dogstats:time(metric, ms)
 end
 
 
@@ -36,12 +46,17 @@ function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token
 
     ngx.log(ngx.INFO, "validateToken request to host=", oauth_host)
 
-
+    local startTime = os.time()
     local res = ngx.location.capture(internalPath, {
         share_all_vars = true,
         args = { authtoken = oauth_token }
     })
+    local endTime = os.time()
     self:increment(httpCalls)
+
+    local elapsedTime = os.difftime(endTime,startTime) * 1000
+    local elapsedTimeMetric = 'oauth.makeValidateTokenCall.duration'
+    self:time(elapsedTimeMetric, elapsedTime)
 
     local logLevel = ngx.INFO
     if res.status ~= 200 then
@@ -59,8 +74,14 @@ function OauthClient:makeProfileCall(internalPath, oauth_host)
 
     oauth_host = oauth_host or ngx.var.oauth_host
     ngx.log(ngx.INFO, "profileCall request to host=", oauth_host)
+    local startTime = os.time()
     local res = ngx.location.capture(internalPath, { share_all_vars = true })
+    local endTime = os.time()
     self:increment(httpCalls)
+
+    local elapsedTime = os.difftime(endTime,startTime) * 1000
+    local elapsedTimeMetric = 'oauth.makeProfileCall.duration'
+    self:time(elapsedTimeMetric, elapsedTime)
 
     local logLevel = ngx.INFO
     if res.status ~= 200 then
