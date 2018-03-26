@@ -17,6 +17,8 @@ function OauthClient:new(o)
 end
 
 local dogstats = require "api-gateway.dogstatsd.Dogstatsd"
+local dogstatsInstance = dogstats:new()
+
 --- metrics for Dogstatsd
 local httpCalls = 'oauth.http_calls'
 local successfulHttpCalls = 'oauth.successful.http_calls'
@@ -27,7 +29,6 @@ local failedHttpCalls = 'oauth.failed.http_calls'
 -- @return - void method
 --
 function OauthClient:increment(metric)
-    local dogstatsInstance = dogstats:new()
     dogstatsInstance:increment(metric)
 end
 
@@ -37,7 +38,6 @@ end
 -- @return - void method
 --
 function OauthClient:time(metric, ms)
-    local dogstatsInstance = dogstats:new()
     dogstatsInstance:time(metric, ms)
 end
 
