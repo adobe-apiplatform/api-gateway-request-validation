@@ -31,7 +31,7 @@ local function loadrequire(module)
     return cls
 end
 
-local dogstatsd
+--local dogstatsd
 
 --- Returns an instance of dogstatsd only if it does not already exist. Returns the instance if the feature is enabled
 -- @param none
@@ -43,9 +43,9 @@ local function getDogstatsd()
         return nil
     end
 
-    if dogstatsd ~= nil then
-        return dogstatsd
-    end
+--    if dogstatsd ~= nil then
+--        return dogstatsd
+--    end
 
     local restyDogstatsd = loadrequire('resty_dogstatsd')
 
@@ -53,7 +53,7 @@ local function getDogstatsd()
         return nil
     end
 
-    dogstatsd = restyDogstatsd.new({
+    local dogstatsd = restyDogstatsd.new({
         statsd = {
             host = "datadog.docker",
             port = 8125,
@@ -71,7 +71,7 @@ end
 -- @return - void method
 --
 function Dogstatsd:increment(metric)
-    dogstatsd = getDogstatsd()
+    local dogstatsd = getDogstatsd()
 
     if dogstatsd ~= nil then
         dogstatsd:increment(metric, 1)
@@ -84,7 +84,7 @@ end
 -- @return - void method
 --
 function Dogstatsd:time(metric, ms)
-    dogstatsd = getDogstatsd()
+    local dogstatsd = getDogstatsd()
 
     if dogstatsd ~= nil then
         dogstatsd:timer(metric, ms)
