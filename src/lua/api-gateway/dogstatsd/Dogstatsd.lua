@@ -31,7 +31,7 @@ local function loadrequire(module)
     return cls
 end
 
---local dogstatsd
+local dogstatsd
 
 --- Returns an instance of dogstatsd only if it does not already exist. Returns the instance if the feature is enabled
 -- @param none
@@ -43,17 +43,18 @@ local function getDogstatsd()
         return nil
     end
 
---    if dogstatsd ~= nil then
---        return dogstatsd
---    end
+    if dogstatsd ~= nil then
+        return dogstatsd
+    end
 
     local restyDogstatsd = loadrequire('resty_dogstatsd')
 
     if restyDogstatsd == nil then
+        ngx.log(ngx.WARN, "Could not loadrequire resty_dogstatsd.")
         return nil
     end
 
-    local dogstatsd = restyDogstatsd.new({
+    dogstatsd = restyDogstatsd.new({
         statsd = {
             host = "datadog.docker",
             port = 8125,
@@ -63,6 +64,7 @@ local function getDogstatsd()
             "application:lua",
         },
     })
+    ngx.log(ngx.DEBUG, "Instantiated dogstatsd.")
     return dogstatsd
 end
 
@@ -71,10 +73,12 @@ end
 -- @return - void method
 --
 function Dogstatsd:increment(metric)
-    local dogstatsd = getDogstatsd()
+    dogstatsd = getDogstatsd()
 
     if dogstatsd ~= nil then
         dogstatsd:increment(metric, 1)
+    else
+        ngx.log(ngx.WARN, "Could not increment metric ", metric)
     end
 end
 
@@ -84,10 +88,12 @@ end
 -- @return - void method
 --
 function Dogstatsd:time(metric, ms)
-    local dogstatsd = getDogstatsd()
+    dogstatsd = getDogstatsd()
 
     if dogstatsd ~= nil then
         dogstatsd:timer(metric, ms)
+    else
+        ngx.log(ngx.WARN, "Could count elapsed time for metric ", metric)
     end
 end
 
