@@ -27,11 +27,7 @@ local failedHttpCalls = 'oauth.failed.http_calls'
 -- @return - void method
 --
 function OauthClient:increment(metric)
-    if dogstats ~= nil then
-        dogstats:increment(metric)
-    else
-        ngx.log(ngx.WARN, "Could not increment metric " .. metric .. " because dogstats could not be loaded")
-    end
+    dogstats:increment(metric)
 end
 
 --- Measures the number of milliseconds elapsed
@@ -40,11 +36,7 @@ end
 -- @return - void method
 --
 function OauthClient:time(metric, ms)
-    if dogstats ~= nil then
-        dogstats:time(metric, ms)
-    else
-        ngx.log(ngx.WARN, "Could not compute elapsed time for metric " .. metric .. " because dogstats could not be loaded")
-    end
+    dogstats:time(metric, ms)
 end
 
 

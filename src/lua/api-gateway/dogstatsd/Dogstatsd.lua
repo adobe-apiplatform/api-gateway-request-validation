@@ -73,12 +73,12 @@ end
 -- @return - void method
 --
 function Dogstatsd:increment(metric)
-    dogstatsd = getDogstatsd()
+    if getDogstatsd() ~= nil then
+        dogstatsd = getDogstatsd()
+    end
 
     if dogstatsd ~= nil then
         dogstatsd:increment(metric, 1)
-    else
-        ngx.log(ngx.WARN, "Could not increment metric ", metric)
     end
 end
 
@@ -88,12 +88,12 @@ end
 -- @return - void method
 --
 function Dogstatsd:time(metric, ms)
-    dogstatsd = getDogstatsd()
+    if getDogstatsd() ~= nil then
+        dogstatsd = getDogstatsd()
+    end
 
     if dogstatsd ~= nil then
         dogstatsd:timer(metric, ms)
-    else
-        ngx.log(ngx.WARN, "Could count elapsed time for metric ", metric)
     end
 end
 
