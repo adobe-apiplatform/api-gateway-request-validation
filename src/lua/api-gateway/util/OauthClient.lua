@@ -27,7 +27,7 @@ local failedHttpCalls = 'oauth.failed.http_calls'
 -- @return - void method
 --
 function OauthClient:increment(metric)
-    local dogstatsInstance = dogstats.new()
+    local dogstatsInstance = dogstats:new()
     dogstatsInstance:increment(metric)
 end
 
@@ -37,7 +37,7 @@ end
 -- @return - void method
 --
 function OauthClient:time(metric, ms)
-    local dogstatsInstance = dogstats.new()
+    local dogstatsInstance = dogstats:new()
     dogstatsInstance:time(metric, ms)
 end
 

@@ -73,9 +73,7 @@ end
 -- @return - void method
 --
 function Dogstatsd:increment(metric)
-    if getDogstatsd() ~= nil then
-        dogstatsd = getDogstatsd()
-    end
+    dogstatsd = getDogstatsd()
 
     if dogstatsd ~= nil then
         dogstatsd:increment(metric, 1)
@@ -88,9 +86,7 @@ end
 -- @return - void method
 --
 function Dogstatsd:time(metric, ms)
-    if getDogstatsd() ~= nil then
-        dogstatsd = getDogstatsd()
-    end
+    dogstatsd = getDogstatsd()
 
     if dogstatsd ~= nil then
         dogstatsd:timer(metric, ms)
