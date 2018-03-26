@@ -33,11 +33,15 @@ end
 
 local dogstatsd
 
---- Returns an instance of dogstatsd only if it does not already exist
+--- Returns an instance of dogstatsd only if it does not already exist. Returns the instance if the feature is enabled
 -- @param none
 -- @return An instance of dogstatsd or nil if the class cannot be instantiated
 --
 local function getDogstatsd()
+    if ngx.var.isDogstatsEnabled == nil or ngx.var.isDogstatsEnabled == "false" then
+        ngx.log(ngx.INFO, "dogstats module is disabled")
+        return nil
+    end
 
     if dogstatsd ~= nil then
         return dogstatsd
