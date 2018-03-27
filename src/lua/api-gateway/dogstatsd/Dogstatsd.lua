@@ -17,16 +17,18 @@ end
 -- @return The loaded module, or nil if the module cannot be loaded
 --
 local function loadrequire(module)
+    ngx.log(ngx.DEBUG, "Loading module [" .. tostring(module) .. "]")
     local function requiref(module)
         require(module)
     end
 
-    local res = pcall(requiref, module)
+    local res, cls = pcall(requiref, module)
     if not (res) then
-        ngx.log(ngx.WARN, "Module ", module, " was not found.")
+        ngx.log(ngx.WARN, "Could not load module [", module, "].")
         return nil
     end
-    return require(module)
+
+    return cls
 end
 
 local dogstatsd
@@ -74,6 +76,7 @@ function Dogstatsd:increment(metric)
     dogstatsd = getDogstatsd()
 
     if dogstatsd ~= nil then
+        ngx.log(ngx.DEBUG, "[Dogstatsd] Incrementing " .. metric)
         dogstatsd:increment(metric, 1)
     end
 end
@@ -87,6 +90,7 @@ function Dogstatsd:time(metric, ms)
     dogstatsd = getDogstatsd()
 
     if dogstatsd ~= nil then
+        ngx.log(ngx.DEBUG, "[Dogstatsd] Computing elapsed time for " .. metric)
         dogstatsd:timer(metric, ms)
     end
 end
