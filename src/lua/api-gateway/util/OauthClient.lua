@@ -21,8 +21,6 @@ local dogstatsInstance = dogstats:new()
 
 --- metrics for Dogstatsd
 local httpCalls = 'oauth.http_calls'
-local successfulHttpCalls = 'oauth.successful.http_calls'
-local failedHttpCalls = 'oauth.failed.http_calls'
 
 --- Increments the number of calls to the Oauth provider
 --  @param metric - metric to be identified in the Dogstatsd dashboard
@@ -62,10 +60,9 @@ function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token
 
     local logLevel = ngx.INFO
     if res.status ~= 200 then
-        self:increment(failedHttpCalls)
         logLevel = ngx.WARN
     end
-    self:increment(successfulHttpCalls)
+    self:increment(httpCalls .. '.makeValidateTokenCall.status.' .. res.status)
     ngx.log(logLevel, "validateToken Host=", oauth_host, " responded with status=", res.status, " and x-debug-id=",
         tostring(res.header["X-DEBUG-ID"]), " body=", res.body)
 
@@ -87,10 +84,9 @@ function OauthClient:makeProfileCall(internalPath, oauth_host)
 
     local logLevel = ngx.INFO
     if res.status ~= 200 then
-        self:increment(failedHttpCalls)
         logLevel = ngx.WARN
     end
-    self:increment(successfulHttpCalls)
+    self:increment(httpCalls .. '.makeProfileCall.status.' .. res.status)
     ngx.log(logLevel, "profileCall Host=", oauth_host, " responded with status=", res.status, " and x-debug-id=",
         tostring(res.header["X-DEBUG-ID"]), " body=", res.body)
 
