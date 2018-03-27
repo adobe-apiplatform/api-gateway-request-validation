@@ -19,7 +19,7 @@ end
 local function loadrequire(module)
     ngx.log(ngx.DEBUG, "Loading module [" .. tostring(module) .. "]")
     local function requiref(module)
-        require(module)
+        return require(module)
     end
 
     local res, cls = pcall(requiref, module)
