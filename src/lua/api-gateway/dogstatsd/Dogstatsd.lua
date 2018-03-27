@@ -17,18 +17,16 @@ end
 -- @return The loaded module, or nil if the module cannot be loaded
 --
 local function loadrequire(module)
-    ngx.log(ngx.DEBUG, "Loading module [" .. tostring(module) .. "]")
     local function requiref(module)
         require(module)
     end
 
-    local res, cls = pcall(requiref, module)
+    local res = pcall(requiref, module)
     if not (res) then
-        ngx.log(ngx.WARN, "Could not load module [", module, "].")
+        ngx.log(ngx.WARN, "Module ", module, " was not found.")
         return nil
     end
-
-    return cls
+    return require(module)
 end
 
 local dogstatsd
