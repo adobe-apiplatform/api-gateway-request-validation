@@ -55,7 +55,7 @@ function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token
     self:increment(OauthClient.oauthHttpCallsMetric)
 
     local elapsedTime = os.difftime(endTime,startTime) * 1000
-    local elapsedTimeMetric = OauthClient.oauthHttpCallsMetric .. 'makeValidateTokenCall.duration'
+    local elapsedTimeMetric = OauthClient.oauthHttpCallsMetric .. '.makeValidateTokenCall.duration'
     self:time(elapsedTimeMetric, elapsedTime)
 
     local logLevel = ngx.INFO
