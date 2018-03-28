@@ -20,7 +20,7 @@ local dogstats = require "api-gateway.dogstatsd.Dogstatsd"
 local dogstatsInstance = dogstats:new()
 
 --- metrics for Dogstatsd
-local httpCalls = 'oauth.http_calls'
+OauthClient.oauthHttpCallsMetric = 'oauth.http_calls'
 
 --- Increments the number of calls to the Oauth provider
 --  @param metric - metric to be identified in the Dogstatsd dashboard
@@ -52,17 +52,17 @@ function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token
         args = { authtoken = oauth_token }
     })
     local endTime = os.time()
-    self:increment(httpCalls)
+    self:increment(OauthClient.oauthHttpCallsMetric)
 
     local elapsedTime = os.difftime(endTime,startTime) * 1000
-    local elapsedTimeMetric = httpCalls .. 'makeValidateTokenCall.duration'
+    local elapsedTimeMetric = OauthClient.oauthHttpCallsMetric .. 'makeValidateTokenCall.duration'
     self:time(elapsedTimeMetric, elapsedTime)
 
     local logLevel = ngx.INFO
     if res.status ~= 200 then
         logLevel = ngx.WARN
     end
-    local oauthMakeValidateTokenCallStatusMetric = httpCalls .. '.makeValidateTokenCall.status.' .. res.status
+    local oauthMakeValidateTokenCallStatusMetric = OauthClient.oauthHttpCallsMetric .. '.makeValidateTokenCall.status.' .. res.status
     self:increment(oauthMakeValidateTokenCallStatusMetric)
     ngx.log(logLevel, "validateToken Host=", oauth_host, " responded with status=", res.status, " and x-debug-id=",
         tostring(res.header["X-DEBUG-ID"]), " body=", res.body)
@@ -77,17 +77,17 @@ function OauthClient:makeProfileCall(internalPath, oauth_host)
     local startTime = os.time()
     local res = ngx.location.capture(internalPath, { share_all_vars = true })
     local endTime = os.time()
-    self:increment(httpCalls)
+    self:increment(OauthClient.oauthHttpCallsMetric)
 
     local elapsedTime = os.difftime(endTime,startTime) * 1000
-    local elapsedTimeMetric = httpCalls '.makeProfileCall.duration'
+    local elapsedTimeMetric = OauthClient.oauthHttpCallsMetric '.makeProfileCall.duration'
     self:time(elapsedTimeMetric, elapsedTime)
 
     local logLevel = ngx.INFO
     if res.status ~= 200 then
         logLevel = ngx.WARN
     end
-    local oauthMakeProfileCallStatusMetric = httpCalls .. '.makeValidateTokenCall.status.' .. res.status
+    local oauthMakeProfileCallStatusMetric = OauthClient.oauthHttpCallsMetric .. '.makeValidateTokenCall.status.' .. res.status
     self:increment(oauthMakeProfileCallStatusMetric)
     ngx.log(logLevel, "profileCall Host=", oauth_host, " responded with status=", res.status, " and x-debug-id=",
         tostring(res.header["X-DEBUG-ID"]), " body=", res.body)
