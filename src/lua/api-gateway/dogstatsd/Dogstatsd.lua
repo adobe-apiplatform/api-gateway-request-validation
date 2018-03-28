@@ -89,7 +89,7 @@ function Dogstatsd:time(metric, ms)
     dogstatsd = getDogstatsd()
 
     if dogstatsd ~= nil then
-        ngx.log(ngx.DEBUG, "[Dogstatsd] Computing elapsed time for " .. metric)
+        ngx.log(ngx.DEBUG, "[Dogstatsd] Computing elapsed time for " .. metric .. ".Request duration " .. ms)
         dogstatsd:timer(metric, ms)
     end
 end
