@@ -46,12 +46,12 @@ function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token
 
     ngx.log(ngx.INFO, "validateToken request to host=", oauth_host)
 
-    local startTime = os.clock()
+    local startTime = os.time()
     local res = ngx.location.capture(internalPath, {
         share_all_vars = true,
         args = { authtoken = oauth_token }
     })
-    local endTime = os.clock()
+    local endTime = os.time()
     self:increment(OauthClient.oauthHttpCallsMetric)
 
     local elapsedTime = os.difftime(endTime,startTime) * 1000
@@ -74,9 +74,9 @@ function OauthClient:makeProfileCall(internalPath, oauth_host)
 
     oauth_host = oauth_host or ngx.var.oauth_host
     ngx.log(ngx.INFO, "profileCall request to host=", oauth_host)
-    local startTime = os.clock()
+    local startTime = os.time()
     local res = ngx.location.capture(internalPath, { share_all_vars = true })
-    local endTime = os.clock()
+    local endTime = os.time()
     self:increment(OauthClient.oauthHttpCallsMetric)
 
     local elapsedTime = os.difftime(endTime,startTime) * 1000
