@@ -22,13 +22,13 @@ local function loadrequire(module)
         return require(module)
     end
 
-    local res, cls = pcall(requiref, module)
-    if not (res) then
-        ngx.log(ngx.WARN, "Could not load module [", module, "].")
+    local status, result = pcall(requiref, module)
+    if not (status) then
+        ngx.log(ngx.WARN, "Could not load module [", module, "]. Error ", result)
         return nil
     end
 
-    return cls
+    return result
 end
 
 local dogstatsd
@@ -50,14 +50,13 @@ local function getDogstatsd()
     local restyDogstatsd = loadrequire('resty_dogstatsd')
 
     if restyDogstatsd == nil then
-        ngx.log(ngx.WARN, "Could not loadrequire resty_dogstatsd.")
         return nil
     end
 
     dogstatsd = restyDogstatsd.new({
         statsd = {
-            host = "datadog.docker",
-            port = 8125,
+            host = ngx.var.dogstatsHost or "datadog.docker",
+            port = ngx.var.dogstatsPort or 8125,
             namespace = "api_gateway",
         },
         tags = {
@@ -76,7 +75,7 @@ function Dogstatsd:increment(metric)
     dogstatsd = getDogstatsd()
 
     if dogstatsd ~= nil then
-        ngx.log(ngx.DEBUG, "[Dogstatsd] Incrementing " .. metric)
+        ngx.log(ngx.DEBUG, "[Dogstatsd] Incrementing metric " .. metric)
         dogstatsd:increment(metric, 1)
     end
 end
