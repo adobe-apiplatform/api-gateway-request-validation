@@ -22,23 +22,18 @@ local dogstatsInstance = dogstats:new()
 --- metrics for Dogstatsd
 OauthClient.oauthHttpCallsMetric = 'oauth.http_calls'
 
---- Increments the number of calls to the Oauth provider
---  @param metric - metric to be identified in the Dogstatsd dashboard
--- @return - void method
---
-function OauthClient:increment(metric)
-    dogstatsInstance:increment(metric, 1)
-end
 
---- Measures the number of milliseconds elapsed
+--- Computes the total number of oauth http calls, divide them by their status code and outputs the total elapsed time
 -- @param metric - metric to be identified in the Dogstatsd dashboard
--- @param ms - the time it took a call to finish in milliseconds
+-- @param methodName - The name of the method for which we are measuring http calls
+-- @param startTime - The time the call was initiated
+-- @param endTime - The time the call returned
+-- @param statusCode - The status code returned by the call
 -- @return - void method
 --
-function OauthClient:time(metric, ms)
-    dogstatsInstance:time(metric, ms)
+function OauthClient:computeMetrics(metric, methodName, startTime, endTime, statusCode)
+    dogstatsInstance:computeMetrics(metric, 1, methodName, startTime, endTime, statusCode)
 end
-
 
 function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token)
     oauth_host = oauth_host or ngx.var.oauth_host
@@ -52,13 +47,8 @@ function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token
         args = { authtoken = oauth_token }
     })
     local endTime = os.clock()
-    self:increment(self.oauthHttpCallsMetric)
 
-    local elapsedTime = os.difftime(endTime,startTime) * 1000
-    local elapsedTimeMetric = self.oauthHttpCallsMetric .. '.makeValidateTokenCall.duration'
-    self:time(elapsedTimeMetric, elapsedTime)
-    local oauthMakeValidateTokenCallStatusMetric = self.oauthHttpCallsMetric .. '.makeValidateTokenCall.status.' .. res.status
-    self:increment(oauthMakeValidateTokenCallStatusMetric)
+    self:computeMetrics(self.oauthHttpCallsMetric, 'makeValidateTokenCall', startTime, endTime, res.status)
 
     local logLevel = ngx.INFO
     if res.status ~= 200 then
@@ -78,13 +68,8 @@ function OauthClient:makeProfileCall(internalPath, oauth_host)
     local startTime = os.clock()
     local res = ngx.location.capture(internalPath, { share_all_vars = true })
     local endTime = os.clock()
-    self:increment(self.oauthHttpCallsMetric)
 
-    local elapsedTime = os.difftime(endTime,startTime) * 1000
-    local elapsedTimeMetric = self.oauthHttpCallsMetric '.makeProfileCall.duration'
-    self:time(elapsedTimeMetric, elapsedTime)
-    local oauthMakeProfileCallStatusMetric = self.oauthHttpCallsMetric .. '.makeValidateTokenCall.status.' .. res.status
-    self:increment(oauthMakeProfileCallStatusMetric)
+    self:computeMetrics(self.oauthHttpCallsMetric, 'makeProfileCall', startTime, endTime, res.status)
 
     local logLevel = ngx.INFO
     if res.status ~= 200 then
