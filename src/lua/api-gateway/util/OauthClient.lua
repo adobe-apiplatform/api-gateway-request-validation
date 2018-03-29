@@ -51,7 +51,7 @@ end
 --
 function OauthClient:pushMetrics(oauthHttpCallsNamespace, methodName, startTime, endTime, statusCode)
     local noOfOauthHttpCallsMetric = oauthHttpCallsNamespace
-    local elapsedTimeMetric = oauthHttpCallsNamespace .. methodName .. '.duration'
+    local elapsedTimeMetric = oauthHttpCallsNamespace .. '.' .. methodName .. '.duration'
     local oauthStatusMetric = oauthHttpCallsNamespace .. '.' .. methodName .. '.status.' .. statusCode
 
     local elapsedTime = os.difftime(endTime,startTime) * 1000
