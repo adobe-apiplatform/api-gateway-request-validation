@@ -19,20 +19,46 @@ end
 local dogstats = require "api-gateway.dogstatsd.Dogstatsd"
 local dogstatsInstance = dogstats:new()
 
---- metrics for Dogstatsd
-OauthClient.oauthHttpCallsMetric = 'oauth.http_calls'
+--- Namespace used for computing metrics for Dogstatsd
+OauthClient.oauthHttpCallsNamespace = 'oauth.http_calls'
 
+--- Increments the number of calls to the Oauth provider
+--  @param metric - metric to be identified in the Dogstatsd dashboard
+-- @return - void method
+--
+function OauthClient:increment(metric)
+    dogstatsInstance:increment(metric, 1)
+end
 
---- Computes the total number of oauth http calls, divide them by their status code and outputs the total elapsed time
+--- Measures the number of milliseconds elapsed
 -- @param metric - metric to be identified in the Dogstatsd dashboard
+-- @param ms - the time it took a call to finish in milliseconds
+-- @return - void method
+--
+function OauthClient:time(metric, ms)
+    dogstatsInstance:time(metric, ms)
+end
+
+--- Pushes metrics about the total number of https calls to oauth provider,
+--- the elapsed time for a http call to the oauth provider and the status code.
+---
+-- @param oauthHttpCallsNamespace - Namespace used for computing metrics for Dogstatsd
 -- @param methodName - The name of the method for which we are measuring http calls
 -- @param startTime - The time the call was initiated
 -- @param endTime - The time the call returned
 -- @param statusCode - The status code returned by the call
 -- @return - void method
 --
-function OauthClient:computeMetrics(metric, methodName, startTime, endTime, statusCode)
-    dogstatsInstance:computeMetrics(metric, 1, methodName, startTime, endTime, statusCode)
+function OauthClient:pushMetrics(oauthHttpCallsNamespace, methodName, startTime, endTime, statusCode)
+    local noOfOauthHttpCallsMetric = oauthHttpCallsNamespace
+    local elapsedTimeMetric = oauthHttpCallsNamespace .. methodName .. '.duration'
+    local oauthStatusMetric = oauthHttpCallsNamespace .. '.' .. methodName .. '.status.' .. statusCode
+
+    local elapsedTime = os.difftime(endTime,startTime) * 1000
+
+    self:increment(noOfOauthHttpCallsMetric)
+    self:time(elapsedTimeMetric, elapsedTime)
+    self:increment(oauthStatusMetric)
 end
 
 function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token)
@@ -48,7 +74,7 @@ function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token
     })
     local endTime = os.clock()
 
-    self:computeMetrics(self.oauthHttpCallsMetric, 'makeValidateTokenCall', startTime, endTime, res.status)
+    self:pushMetrics(self.oauthHttpCallsNamespace, 'makeValidateTokenCall', startTime, endTime, res.status)
 
     local logLevel = ngx.INFO
     if res.status ~= 200 then
@@ -69,7 +95,7 @@ function OauthClient:makeProfileCall(internalPath, oauth_host)
     local res = ngx.location.capture(internalPath, { share_all_vars = true })
     local endTime = os.clock()
 
-    self:computeMetrics(self.oauthHttpCallsMetric, 'makeProfileCall', startTime, endTime, res.status)
+    self:pushMetrics(self.oauthHttpCallsNamespace, 'makeProfileCall', startTime, endTime, res.status)
 
     local logLevel = ngx.INFO
     if res.status ~= 200 then

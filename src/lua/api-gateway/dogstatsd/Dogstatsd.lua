@@ -103,24 +103,6 @@ function Dogstatsd:time(metric, ms)
     end
 end
 
---- Computes the total number of oauth http calls, divide them by their status code and outputs the total elapsed time
--- @param metric - metric to be identified in the Dogstatsd dashboard
--- @param counter - the number of times we would like to have the metric incremented
--- @param methodName - The name of the method for which we are measuring http calls
--- @param startTime - The time the call was initiated
--- @param endTime - The time the call returned
--- @param statusCode - The status code returned by the call
--- @return - void method
---
-function Dogstatsd:computeMetrics(metric, counter, methodName, startTime, endTime, statusCode)
-    self:increment(metric, counter)
-    local elapsedTime = os.difftime(endTime,startTime) * 1000
-    local elapsedTimeMetric = 'oauth.' .. methodName .. '.duration'
-    self:time(elapsedTimeMetric, elapsedTime)
-    local oauthStatusMetric = metric .. '.' .. methodName .. '.status.' .. statusCode
-    self:increment(oauthStatusMetric, counter)
-end
-
 return Dogstatsd
 
 
