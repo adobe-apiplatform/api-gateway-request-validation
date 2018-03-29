@@ -19,7 +19,7 @@ end
 local dogstats = require "api-gateway.dogstatsd.Dogstatsd"
 local dogstatsInstance = dogstats:new()
 
---- Namespace used for computing metrics for Dogstatsd
+--- Namespace used for computing metric names for Dogstatsd
 OauthClient.oauthHttpCallsNamespace = 'oauth.http_calls'
 
 --- Increments the number of calls to the Oauth provider
@@ -39,10 +39,10 @@ function OauthClient:time(metric, ms)
     dogstatsInstance:time(metric, ms)
 end
 
---- Pushes metrics about the total number of https calls to oauth provider,
---- the elapsed time for a http call to the oauth provider and the status code.
+--- Pushes metrics about the total number of https calls to the oauth provider,
+--- the time it took for a http call to finish and the response status code.
 ---
--- @param oauthHttpCallsNamespace - Namespace used for computing metrics for Dogstatsd
+-- @param oauthHttpCallsNamespace - Namespace used for computing metric names for Dogstatsd
 -- @param methodName - The name of the method for which we are measuring http calls
 -- @param startTime - The time the call was initiated
 -- @param endTime - The time the call returned
