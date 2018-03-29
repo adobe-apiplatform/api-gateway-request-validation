@@ -54,7 +54,7 @@ function OauthClient:pushMetrics(oauthHttpCallsNamespace, methodName, startTime,
     local elapsedTimeMetric = oauthHttpCallsNamespace .. methodName .. '.duration'
     local oauthStatusMetric = oauthHttpCallsNamespace .. '.' .. methodName .. '.status.' .. statusCode
 
-    local elapsedTime = os.difftime(endTime,startTime) * 1000
+    local elapsedTime = string.format("%.3f", os.difftime(endTime,startTime))
 
     self:increment(noOfOauthHttpCallsMetric)
     self:time(elapsedTimeMetric, elapsedTime)
@@ -67,12 +67,12 @@ function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token
 
     ngx.log(ngx.INFO, "validateToken request to host=", oauth_host)
 
-    local startTime = os.clock()
+    local startTime = ngx.now()
     local res = ngx.location.capture(internalPath, {
         share_all_vars = true,
         args = { authtoken = oauth_token }
     })
-    local endTime = os.clock()
+    local endTime = ngx.now()
 
     self:pushMetrics(self.oauthHttpCallsNamespace, 'makeValidateTokenCall', startTime, endTime, res.status)
 
@@ -91,9 +91,9 @@ function OauthClient:makeProfileCall(internalPath, oauth_host)
 
     oauth_host = oauth_host or ngx.var.oauth_host
     ngx.log(ngx.INFO, "profileCall request to host=", oauth_host)
-    local startTime = os.clock()
+    local startTime = ngx.now()
     local res = ngx.location.capture(internalPath, { share_all_vars = true })
-    local endTime = os.clock()
+    local endTime = ngx.now()
 
     self:pushMetrics(self.oauthHttpCallsNamespace, 'makeProfileCall', startTime, endTime, res.status)
 
