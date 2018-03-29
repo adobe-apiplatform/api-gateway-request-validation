@@ -98,6 +98,7 @@ function ApiKeyValidator:getLegacyKeyFromRedis(redis_key)
             return api_key_obj;
         else
             ngx.log(ngx.ERR, "Failed to get key ", tostring(redis_key), " error: ", selecterror)
+            return ngx.HTTP_SERVICE_UNAVAILABLE;
         end
     else
         return ngx.HTTP_SERVICE_UNAVAILABLE;
