@@ -38,14 +38,16 @@ local dogstatsd
 -- @return An instance of dogstatsd or nil if the class cannot be instantiated
 --
 local function getDogstatsd()
-    local dogstatsHost = ngx.var.dogstatsHost
-    if ngx.var.isDogstatsEnabled == nil or ngx.var.isDogstatsEnabled == "false" then
+
+    local isDogstatsEnabled = ngx.var.isDogstatsEnabled
+    if isDogstatsEnabled == nil or isDogstatsEnabled == "false" then
         ngx.log(ngx.INFO, "dogstats module is disabled")
         return nil
     end
 
+    local dogstatsHost = ngx.var.dogstatsHost
     if dogstatsHost == nil or dogstatsHost == '' then
-        ngx.log(ngx.INFO, "dogstats host was not defined")
+        ngx.log(ngx.ERR, "dogstats host was not defined")
         return nil
     end
 
@@ -82,7 +84,7 @@ function Dogstatsd:increment(metric, counter)
     dogstatsd = getDogstatsd()
 
     if dogstatsd ~= nil then
-        ngx.log(ngx.DEBUG, "[Dogstatsd] Incrementing metric " .. metric)
+        ngx.log(ngx.DEBUG, "[Dogstatsd] Incrementing metric ", metric)
         dogstatsd:increment(metric, counter)
     end
 end
@@ -96,7 +98,7 @@ function Dogstatsd:time(metric, ms)
     dogstatsd = getDogstatsd()
 
     if dogstatsd ~= nil then
-        ngx.log(ngx.DEBUG, "[Dogstatsd] Computing elapsed time for " .. metric .. ".Request duration " .. ms)
+        ngx.log(ngx.DEBUG, "[Dogstatsd] Computing elapsed time for ", metric, ".Request duration ", ms)
         dogstatsd:timer(metric, ms)
     end
 end
