@@ -19,12 +19,14 @@ install: all
 	$(INSTALL) -d $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/validation/key/
 	$(INSTALL) -d $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/validation/oauth2/
 	$(INSTALL) -d $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/validation/signing/
+	$(INSTALL) -d $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/dogstatsd/
 	$(INSTALL) -d $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/redis/
 	$(INSTALL) -d $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/util/
 	$(INSTALL) src/lua/api-gateway/validation/*.lua $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/validation/
 	$(INSTALL) src/lua/api-gateway/validation/key/*.lua $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/validation/key/
 	$(INSTALL) src/lua/api-gateway/validation/oauth2/*.lua $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/validation/oauth2/
 	$(INSTALL) src/lua/api-gateway/validation/signing/*.lua $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/validation/signing/
+	$(INSTALL) src/lua/api-gateway/dogstatsd/*.lua $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/dogstatsd/
 	$(INSTALL) src/lua/api-gateway/redis/*.lua $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/redis/
 	$(INSTALL) src/lua/api-gateway/util/*.lua $(DESTDIR)/$(LUA_LIB_DIR)/api-gateway/util/
 

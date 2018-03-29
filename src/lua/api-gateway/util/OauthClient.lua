@@ -16,22 +16,71 @@ function OauthClient:new(o)
     return o
 end
 
+local dogstats = require "api-gateway.dogstatsd.Dogstatsd"
+local dogstatsInstance = dogstats:new()
+
+--- Namespace used for computing metric names for Dogstatsd
+OauthClient.oauthHttpCallsNamespace = 'oauth.http_calls'
+
+--- Increments the number of calls to the Oauth provider
+--  @param metric - metric to be identified in the Dogstatsd dashboard
+-- @return - void method
+--
+function OauthClient:increment(metric)
+    dogstatsInstance:increment(metric, 1)
+end
+
+--- Measures the number of milliseconds elapsed
+-- @param metric - metric to be identified in the Dogstatsd dashboard
+-- @param ms - the time it took a call to finish in milliseconds
+-- @return - void method
+--
+function OauthClient:time(metric, ms)
+    dogstatsInstance:time(metric, ms)
+end
+
+--- Pushes metrics about the total number of https calls to the oauth provider,
+--- the time it took for a http call to finish and the response status code.
+---
+-- @param oauthHttpCallsNamespace - Namespace used for computing metric names for Dogstatsd
+-- @param methodName - The name of the method for which we are measuring http calls
+-- @param startTime - The time the call was initiated
+-- @param endTime - The time the call returned
+-- @param statusCode - The status code returned by the call
+-- @return - void method
+--
+function OauthClient:pushMetrics(oauthHttpCallsNamespace, methodName, startTime, endTime, statusCode)
+    local noOfOauthHttpCallsMetric = oauthHttpCallsNamespace
+    local elapsedTimeMetric = oauthHttpCallsNamespace .. '.' .. methodName .. '.duration'
+    local oauthStatusMetric = oauthHttpCallsNamespace .. '.' .. methodName .. '.status.' .. statusCode
+
+    local elapsedTime = string.format("%.3f", endTime - startTime)
+
+    self:increment(noOfOauthHttpCallsMetric)
+    self:time(elapsedTimeMetric, elapsedTime)
+    self:increment(oauthStatusMetric)
+end
+
 function OauthClient:makeValidateTokenCall(internalPath, oauth_host, oauth_token)
     oauth_host = oauth_host or ngx.var.oauth_host
     oauth_token = oauth_token or ngx.var.authtoken
 
     ngx.log(ngx.INFO, "validateToken request to host=", oauth_host)
 
-
+    local startTime = os.clock()
     local res = ngx.location.capture(internalPath, {
         share_all_vars = true,
         args = { authtoken = oauth_token }
     })
+    local endTime = os.clock()
+
+    self:pushMetrics(self.oauthHttpCallsNamespace, 'makeValidateTokenCall', startTime, endTime, res.status)
 
     local logLevel = ngx.INFO
     if res.status ~= 200 then
         logLevel = ngx.WARN
     end
+
     ngx.log(logLevel, "validateToken Host=", oauth_host, " responded with status=", res.status, " and x-debug-id=",
         tostring(res.header["X-DEBUG-ID"]), " body=", res.body)
 
@@ -42,12 +91,17 @@ function OauthClient:makeProfileCall(internalPath, oauth_host)
 
     oauth_host = oauth_host or ngx.var.oauth_host
     ngx.log(ngx.INFO, "profileCall request to host=", oauth_host)
+    local startTime = os.clock()
     local res = ngx.location.capture(internalPath, { share_all_vars = true })
+    local endTime = os.clock()
+
+    self:pushMetrics(self.oauthHttpCallsNamespace, 'makeProfileCall', startTime, endTime, res.status)
 
     local logLevel = ngx.INFO
     if res.status ~= 200 then
         logLevel = ngx.WARN
     end
+
     ngx.log(logLevel, "profileCall Host=", oauth_host, " responded with status=", res.status, " and x-debug-id=",
         tostring(res.header["X-DEBUG-ID"]), " body=", res.body)
 
