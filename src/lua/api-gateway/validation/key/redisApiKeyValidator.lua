@@ -78,7 +78,7 @@ function ApiKeyValidator:getLegacyKeyFromRedis(redis_key)
         local fields = { "key", "realm", "service_id", "service_name", "consumer_org_name", "app_name", "plan_name", "key_secret" }
         local selectresult, selecterror = redis:hmget(redis_key, "key", "realm", "service-id", "service-name", "consumer-org-name", "app-name", "plan-name", "key_secret")
         redisConnectionProvider:closeConnection(redis)
-        if selectresult then
+        if not selecterror then
             local api_key_obj = {}
             if selectresult and type(selectresult) == "table" then
                 local found = 0
@@ -168,5 +168,3 @@ function ApiKeyValidator:validateRequest(obj)
 end
 
 return ApiKeyValidator
-
-
