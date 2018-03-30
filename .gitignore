@@ -1,3 +1,8 @@
 .idea/
 target/**
 dump.rdb
+*.stats.out
+coverage*.xml
+test*.xml
+luacov*.out
+.DS_Store

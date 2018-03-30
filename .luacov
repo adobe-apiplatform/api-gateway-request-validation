@@ -1,0 +1,7 @@
+modules = {
+    ["redisApiKeyValidator"] = "src/lua/api-gateway/validation/key/redisApiKeyValidator.lua"
+}
+
+exclude = {
+    "./test/.*$"
+}
