@@ -24,7 +24,7 @@ OauthClient.oauthHttpCallsNamespace = 'oauth.http_calls'
 
 --- Increments the number of calls to the Oauth provider
 --  @param metric - metric to be identified in the Dogstatsd dashboard
--- @return - void method
+--  @return - void method
 --
 function OauthClient:increment(metric)
     dogstatsInstance:increment(metric, 1)

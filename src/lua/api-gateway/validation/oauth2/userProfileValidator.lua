@@ -113,7 +113,7 @@ end
 function _M:getProfileFromCache(cacheLookupKey)
     local localCacheValue = self:getKeyFromLocalCache(cacheLookupKey, "cachedUserProfiles")
     if ( localCacheValue ~= nil ) then
-        -- ngx.log(ngx.WARN, "Found profile in local cache")
+        -- ngx.log(ngx.INFO, "Found profile in local cache")
         return localCacheValue
     end
 
@@ -206,7 +206,7 @@ function _M:validateUserProfile()
 
     end
 
-    ngx.log(ngx.WARN, "Failed to get profile from cache falling back to oauth provider")
+    ngx.log(ngx.INFO, "Failed to get profile from cache falling back to oauth provider")
     -- 2. get the user profile from the oauth profile
     local res = OauthClient:makeProfileCall("/validate-user")
 
