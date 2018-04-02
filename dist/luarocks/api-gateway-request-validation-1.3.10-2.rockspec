@@ -1,7 +1,8 @@
 package="api-gateway-request-validation"
-version="1.3.6-1"
+version="1.3.10-2"
 local function make_plat(plat)
     return { modules = {
+        ["api-gateway.dogstatsd.Dogstatsd"] = "src/lua/api-gateway/dogstatsd/Dogstatsd.lua",
         ["api-gateway.redis.redisConnectionConfiguration"] = "src/lua/api-gateway/redis/redisConnectionConfiguration.lua",
         ["api-gateway.redis.redisConnectionProvider"] = "src/lua/api-gateway/redis/redisConnectionProvider.lua",
         ["api-gateway.redis.redisHealthCheck"] = "src/lua/api-gateway/redis/redisHealthCheck.lua",
@@ -20,7 +21,7 @@ local function make_plat(plat)
 end
 source = {
     url = "https://github.com/adobe-apiplatform/api-gateway-request-validation.git",
-    tag = "api-gateway-request-validation-1.3.6"
+    tag = "api-gateway-request-validation-1.3.10"
 }
 description = {
     summary = "Lua Module providing a request validation framework in the API Gateway.",
