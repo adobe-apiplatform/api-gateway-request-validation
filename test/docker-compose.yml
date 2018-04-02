@@ -6,6 +6,7 @@ gateway:
     - ~/tmp/apiplatform/api-gateway-request-validation/src/lua/api-gateway/util:/usr/local/api-gateway/lualib/api-gateway/util
     - ~/tmp/apiplatform/api-gateway-request-validation/src/lua/api-gateway/validation:/usr/local/api-gateway/lualib/api-gateway/validation
     - ~/tmp/apiplatform/api-gateway-request-validation/src/lua/api-gateway/redis:/usr/local/api-gateway/lualib/api-gateway/redis
+    - ~/tmp/apiplatform/api-gateway-request-validation/src/lua/api-gateway/dogstatsd:/usr/local/api-gateway/lualib/api-gateway/dogstatsd
     - ~/tmp/apiplatform/api-gateway-request-validation/test/perl:/tmp/perl
     - ../target/:/t
   entrypoint: ["prove", "-I/usr/local/test-nginx-0.24/lib", "-I/usr/local/test-nginx-0.24/inc", "-r", "/tmp/perl/"]
