@@ -6,6 +6,7 @@ end
 
 local function getLogFormat(level, debugInfo, ...)
     local status, result = pcall(is_in_init_phase)
+    --- testing for init phase
     if status then
         return level, "[", debugInfo.short_src,
         ":", debugInfo.currentline,
@@ -13,7 +14,7 @@ local function getLogFormat(level, debugInfo, ...)
         "() req_id=", tostring(result),
         "] ", ...
     end
-    return 'NOTICE', "[", debugInfo.short_src,
+    return level, "[", debugInfo.short_src,
     ":", debugInfo.currentline,
     ":", debugInfo.name,
     "() req_id=",
