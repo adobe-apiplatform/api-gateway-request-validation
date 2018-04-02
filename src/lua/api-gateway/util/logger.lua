@@ -24,7 +24,7 @@ local function _decorateLogger()
     if not set then
         local oldNgx = ngx.log
         ngx.log = function(level, ...)
-            local debugInfo =  debug.getinfo(2)
+            local debugInfo =  debug.getinfo(2, "nSl")
             pcall(function(...)
                 oldNgx(getLogFormat(level, debugInfo, ...))
             end, ...)
