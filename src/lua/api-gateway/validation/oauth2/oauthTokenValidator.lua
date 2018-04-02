@@ -196,7 +196,7 @@ function _M:validateOAuthToken()
     local cachedToken = self:getTokenFromCache(cacheLookupKey)
 
     if (cachedToken ~= nil) then
-        -- ngx.log(ngx.WARN, "Cached token=" .. cachedToken)
+        -- ngx.log(ngx.INFO, "Cached token=" .. cachedToken)
         local obj = cjson.decode(cachedToken)
         local tokenValidity, error = self:isCachedTokenValid(obj)
         if tokenValidity > 0 then
@@ -207,7 +207,7 @@ function _M:validateOAuthToken()
             return ngx.HTTP_OK
         end
         -- at this point the cached token is not valid
-        ngx.log(ngx.WARN, "Invalid OAuth Token found in cache. OAuth host=" .. tostring(oauth_host))
+        ngx.log(ngx.INFO, "Invalid OAuth Token found in cache. OAuth host=" .. tostring(oauth_host))
         if (error == nil) then
             error = self.RESPONSES.INVALID_TOKEN
         end
@@ -215,9 +215,9 @@ function _M:validateOAuthToken()
         return error.error_code, cjson.encode(error)
     end
 
-    ngx.log(ngx.WARN, "Failed to get oauth token from cache falling back to oauth provider")
-    -- 2. validate the token with the OAuth endpoint
+    ngx.log(ngx.INFO, "Failed to get oauth token from cache falling back to oauth provider")
 
+    -- 2. validate the token with the OAuth endpoint
     local res = OauthClient:makeValidateTokenCall("/validate-token", oauth_host, oauth_token)
     if res.status == ngx.HTTP_OK then
         local tokenValidity, error = self:checkResponseFromAuth(res, cacheLookupKey)
