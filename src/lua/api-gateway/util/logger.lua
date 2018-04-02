@@ -12,13 +12,12 @@ local function getLogFormat(level, debugInfo, ...)
         ":", debugInfo.name,
         "() req_id=", tostring(result),
         "] ", ...
-    else
-        return 'NOTICE', "[", debugInfo.short_src,
-        ":", debugInfo.currentline,
-        ":", debugInfo.name,
-        "() req_id=",
-        "] ", ...
     end
+    return 'NOTICE', "[", debugInfo.short_src,
+    ":", debugInfo.currentline,
+    ":", debugInfo.name,
+    "() req_id=",
+    "] ", ...
 end
 
 local function _decorateLogger()
