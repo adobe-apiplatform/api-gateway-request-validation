@@ -42,6 +42,7 @@ local BaseValidator = require "api-gateway.validation.validator"
 local redisConfigurationProvider = require "api-gateway.redis.redisConnectionConfiguration"
 local OauthClient = require "api-gateway.util.OauthClient":new()
 local cjson = require "cjson"
+local sha256Hasher = require "api-gateway.util.sha256Hasher"
 
 local _M = BaseValidator:new({
     RESPONSES = {
@@ -190,8 +191,11 @@ function _M:validateOAuthToken()
         return self.RESPONSES.MISSING_TOKEN.error_code, cjson.encode(self.RESPONSES.MISSING_TOKEN)
     end
 
+    local seed = "AKeyForAES-256-CBC"
+
     --1. try to get token info from the cache first ( local or redis cache )
-    local oauth_token_hash = ngx.md5(oauth_token)
+    local sha256HasherInstance = sha256Hasher:new()
+    local oauth_token_hash = sha256HasherInstance:encryptText(oauth_token, seed)
     local cacheLookupKey = self:getOauthTokenForCaching(oauth_token_hash, oauth_host)
     local cachedToken = self:getTokenFromCache(cacheLookupKey)
 

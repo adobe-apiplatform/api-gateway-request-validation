@@ -22,6 +22,8 @@
 # */
 # vim:set ft= ts=4 sw=4 et fdm=marker:
 use lib 'lib';
+use strict;
+use warnings;
 use Test::Nginx::Socket::Lua;
 use Cwd qw(cwd);
 
@@ -130,21 +132,28 @@ env REDIS_PASS_OAUTH;
             set $authtoken $http_authorization;
             set_if_empty $authtoken $arg_user_token;
             set_by_lua $authtoken 'return ngx.re.gsub(ngx.arg[1], "bearer ", "","ijo") ' $authtoken;
-            set_md5 $authtoken_hash $authtoken;
 
-            set $key 'cachedoauth:$authtoken_hash';
             content_by_lua '
+                local sha256Hasher = require "api-gateway.util.sha256Hasher"
+                local seed = "AKeyForAES-256-CBC"
+                local sha256HasherInstance = sha256Hasher:new()
+                local oauthTokenHash = ngx.var.authtoken_hash
+                local key = ngx.var.key
+
+                oauthTokenHash = sha256HasherInstance:encryptText(ngx.var.authtoken, seed)
+                key = "cachedoauth:" .. oauthTokenHash
+
                 local BaseValidator = require "api-gateway.validation.validator"
                 local TestValidator = BaseValidator:new()
                 TestValidator["redis_RO_upstream"] = "oauth-redis-ro-upstream"
                 TestValidator["redis_RW_upstream"] = "oauth-redis-rw-upstream"
                 TestValidator["redis_pass_env"] = "REDIS_PASS_OAUTH"
                 local validator = TestValidator:new()
-                local res = validator:getKeyFromRedis(ngx.var.key, "token_json")
+                local res = validator:getKeyFromRedis(key, "token_json")
                 if ( res ~= nil) then
                     validator:exitFn(200, res)
                 else
-                    validator:exitFn(200, "OAuth " .. ngx.var.key .. " not found in local cache")
+                    validator:exitFn(200, "OAuth " .. key .. " not found in local cache")
                 end
             ';
         }
@@ -153,14 +162,21 @@ env REDIS_PASS_OAUTH;
             set $authtoken $http_authorization;
             set_if_empty $authtoken $arg_user_token;
             set_by_lua $authtoken 'return ngx.re.gsub(ngx.arg[1], "bearer ", "","ijo") ' $authtoken;
-            set_md5 $authtoken_hash $authtoken;
-            # set $redis_ttl_cmd 'TTL cachedoauth:$authtoken_hash';
-            set $key 'cachedoauth:$authtoken_hash';
+
             content_by_lua '
+                local sha256Hasher = require "api-gateway.util.sha256Hasher"
+                local seed = "AKeyForAES-256-CBC"
+                local sha256HasherInstance = sha256Hasher:new()
+                local oauthTokenHash = ngx.var.authtoken_hash
+                local key = ngx.var.key
+
+                oauthTokenHash = sha256HasherInstance:encryptText(ngx.var.authtoken, seed)
+                key = "cachedoauth:" .. oauthTokenHash
+
                 local BaseValidator = require "api-gateway.validation.validator"
                 local TestValidator = BaseValidator:new()
                 local validator = TestValidator:new()
-                local res = validator:executeTtl(ngx.var.key)
+                local res = validator:executeTtl(key)
                 if ( res ~= nil) then
                     validator:exitFn(200, res)
                 end
@@ -197,7 +213,7 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_2_X_0
 '.*"expires_at":\d+,.*',
 '[1-4]', # the cached token expiry time is in seconds, and it can only be between 1s to 4s, but not less. -1 response indicated the key is not cached or it has expired
 'OK\n',
-'OAuth cachedoauth\:bd9fdbb91a974d1c94e65dc6a0ce31a4 not found in local cache',
+'OAuth cachedoauth\:d9c2f17770b6dd471a26bbc8ca020a843762eff1fa49f32dc7cfc8bed2ea089a not found in local cache',
 '-2' # redis should have expired the oauth token by now
 ]
 --- timeout: 10s
@@ -321,21 +337,20 @@ env REDIS_PASS_OAUTH;
         }
         location /l2_cache/api_key {
             set $local_key $arg_key;
-            content_by_lua "
+            content_by_lua_block {
                 local localCachedKeys = ngx.shared.cachedOauthTokens;
                 if ( nil ~= localCachedKeys ) then
                     local k = localCachedKeys:get(ngx.var.local_key);
                     ngx.say('Local cache:' .. tostring(k) );
-                    -- ngx.say('Local cache:' .. ngx.var.local_key);
                 end
-            ";
+            }
         }
 
         location /query-for-key {
            set $service_id s-123;
+           set $authtoken $http_authorization;
            set_if_empty $authtoken $arg_user_token;
            set_by_lua $authtoken 'return ngx.re.gsub(ngx.arg[1], "bearer ", "","ijo") ' $authtoken;
-           set $authtoken $http_authorization;
            set_unescape_uri $query $query_string;
            content_by_lua '
                 ngx.log(ngx.DEBUG,"The query value is : "..ngx.var.query)
@@ -352,9 +367,9 @@ env REDIS_PASS_OAUTH;
 Authorization: Bearer SOME_OAUTH_TOKEN_TEST4
 --- pipelined_requests eval
 ["GET /test-oauth-validation",
-"GET /query-for-key?cachedoauth:1eb30b79089ce83d1b18a89501b41998",
+"GET /query-for-key?cachedoauth:d9c2f17770b6dd471a26bbc8ca020a84fefa8e78a1976528a5a5026f8f134392",
 "GET /test-oauth-validation-again",
-"GET /l2_cache/api_key?key=cachedoauth:1eb30b79089ce83d1b18a89501b41998"
+"GET /l2_cache/api_key?key=cachedoauth:d9c2f17770b6dd471a26bbc8ca020a84fefa8e78a1976528a5a5026f8f134392"
 ]
 --- response_body_like eval
 ["oauth token is valid.\n",

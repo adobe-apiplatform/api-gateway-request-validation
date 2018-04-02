@@ -46,6 +46,7 @@ local BaseValidator = require "api-gateway.validation.validator"
 local redisConfigurationProvider = require "api-gateway.redis.redisConnectionConfiguration"
 local OauthClient = require "api-gateway.util.OauthClient":new()
 local cjson = require "cjson"
+local sha256Hasher = require "api-gateway.util.sha256Hasher"
 
 local _M = BaseValidator:new()
 
@@ -180,7 +181,9 @@ end
 
 function _M:getCacheLookupKey()
     local oauth_token = ngx.var.authtoken
-    local oauth_token_hash = ngx.md5(oauth_token)
+    local seed = "AKeyForAES-256-CBC"
+    local sha256HasherInstance = sha256Hasher:new()
+    local oauth_token_hash = sha256HasherInstance:encryptText(oauth_token, seed)
     return self:getCacheToken(oauth_token_hash)
 end
 

@@ -22,6 +22,8 @@
 # */
 # vim:set ft= ts=4 sw=4 et fdm=marker:
 use lib 'lib';
+use strict;
+use warnings;
 use Test::Nginx::Socket::Lua;
 use Cwd qw(cwd);
 
@@ -91,16 +93,24 @@ env REDIS_PASS_OAUTH;
             set $authtoken $http_authorization;
             set_if_empty $authtoken $arg_user_token;
             set_by_lua $authtoken 'return ngx.re.gsub(ngx.arg[1], "bearer ", "","ijo") ' $authtoken;
-            set_md5 $authtoken_hash $authtoken;
-            set $key 'cachedoauth:$authtoken_hash';
+
             content_by_lua '
+                local sha256Hasher = require "api-gateway.util.sha256Hasher"
+                local seed = "AKeyForAES-256-CBC"
+                local sha256HasherInstance = sha256Hasher:new()
+                local oauthTokenHash = ngx.var.authtoken_hash
+                local key = ngx.var.key
+
+                oauthTokenHash = sha256HasherInstance:encryptText(ngx.var.authtoken, seed)
+                key = "cachedoauth:" .. oauthTokenHash
+
                 local BaseValidator = require "api-gateway.validation.validator"
                 local v = BaseValidator:new()
                 v["redis_RO_upstream"] = "oauth-redis-ro-upstream"
                 v["redis_RW_upstream"] = "oauth-redis-rw-upstream"
                 v["redis_pass_env"] = "REDIS_PASS_OAUTH"
-                local k = v:getKeyFromLocalCache(ngx.var.key,"cachedUserProfiles")
-                v:exitFn(200,"Local: " .. tostring(k))
+                local k = v:getKeyFromLocalCache(key,"cachedUserProfiles")
+                v:exitFn(200, "Local: " .. tostring(k))
             ';
         }
 
@@ -108,15 +118,23 @@ env REDIS_PASS_OAUTH;
             set $authtoken $http_authorization;
             set_if_empty $authtoken $arg_user_token;
             set_by_lua $authtoken 'return ngx.re.gsub(ngx.arg[1], "bearer ", "","ijo") ' $authtoken;
-            set_md5 $authtoken_hash $authtoken;
-            set $key 'cachedoauth:$authtoken_hash';
+
             content_by_lua '
+                local sha256Hasher = require "api-gateway.util.sha256Hasher"
+                local seed = "AKeyForAES-256-CBC"
+                local sha256HasherInstance = sha256Hasher:new()
+                local oauthTokenHash = ngx.var.authtoken_hash
+                local key = ngx.var.key
+
+                oauthTokenHash = sha256HasherInstance:encryptText(ngx.var.authtoken, seed)
+                key = "cachedoauth:" .. oauthTokenHash
+
                 local BaseValidator = require "api-gateway.validation.validator"
                 local v = BaseValidator:new()
                 v["redis_RO_upstream"] = "oauth-redis-ro-upstream"
                 v["redis_RW_upstream"] = "oauth-redis-rw-upstream"
                 v["redis_pass_env"] = "REDIS_PASS_OAUTH"
-                local k = v:getKeyFromRedis(ngx.var.key,"user_json")
+                local k = v:getKeyFromRedis(key,"user_json")
                 v:exitFn(200,"Redis: " .. tostring(k))
             ';
         }
@@ -167,26 +185,54 @@ env REDIS_PASS_OAUTH;
         }
 
         location /local-cache {
+            # get OAuth token either from header or from the user_token query string
+            set $authtoken $http_authorization;
+            set_if_empty $authtoken $arg_user_token;
+            set_by_lua $authtoken 'return ngx.re.gsub(ngx.arg[1], "bearer ", "","ijo") ' $authtoken;
+
             content_by_lua '
+                local sha256Hasher = require "api-gateway.util.sha256Hasher"
+                local seed = "AKeyForAES-256-CBC"
+                local sha256HasherInstance = sha256Hasher:new()
+                local oauthTokenHash = ngx.var.authtoken_hash
+                local key = ngx.var.key
+
+                oauthTokenHash = sha256HasherInstance:encryptText(ngx.var.authtoken, seed)
+                key = "cachedoauth:" .. oauthTokenHash
+
                 local BaseValidator = require "api-gateway.validation.validator"
                 local v = BaseValidator:new()
                 v["redis_RO_upstream"] = "oauth-redis-ro-upstream"
                 v["redis_RW_upstream"] = "oauth-redis-rw-upstream"
                 v["redis_pass_env"] = "REDIS_PASS_OAUTH"
-                local k = v:getKeyFromLocalCache("cachedoauth:8cd12eadb5032aa2153c8f830d01e0be","cachedUserProfiles")
-                v:exitFn(200,k)
+                local k = v:getKeyFromLocalCache(key,"cachedUserProfiles")
+                v:exitFn(200,tostring(k))
             ';
         }
 
         location /redis-cache {
+            # get OAuth token either from header or from the user_token query string
+            set $authtoken $http_authorization;
+            set_if_empty $authtoken $arg_user_token;
+            set_by_lua $authtoken 'return ngx.re.gsub(ngx.arg[1], "bearer ", "","ijo") ' $authtoken;
+
             content_by_lua '
+                local sha256Hasher = require "api-gateway.util.sha256Hasher"
+                local seed = "AKeyForAES-256-CBC"
+                local sha256HasherInstance = sha256Hasher:new()
+                local oauthTokenHash = ngx.var.authtoken_hash
+                local key = ngx.var.key
+
+                oauthTokenHash = sha256HasherInstance:encryptText(ngx.var.authtoken, seed)
+                key = "cachedoauth:" .. oauthTokenHash
+
                 local BaseValidator = require "api-gateway.validation.validator"
                 local v = BaseValidator:new()
                 v["redis_RO_upstream"] = "oauth-redis-ro-upstream"
                 v["redis_RW_upstream"] = "oauth-redis-rw-upstream"
                 v["redis_pass_env"] = "REDIS_PASS_OAUTH"
-                local k = v:getKeyFromRedis("cachedoauth:8cd12eadb5032aa2153c8f830d01e0be","user_json")
-                v:exitFn(200,k)
+                local k = v:getKeyFromRedis(key,"user_json")
+                v:exitFn(200,tostring(k))
             ';
         }
 
