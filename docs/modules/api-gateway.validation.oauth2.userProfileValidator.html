@@ -1,0 +1,187 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Reference</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>ldoc</h1>
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+<li><a href="#Fields">Fields</a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="nowrap">
+  <li><a href="../modules/api-gateway.dogstatsd.Dogstatsd.html">api-gateway.dogstatsd.Dogstatsd</a></li>
+  <li><a href="../modules/api-gateway.util.OauthClient.html">api-gateway.util.OauthClient</a></li>
+  <li><a href="../modules/api-gateway.validation.factory.html">api-gateway.validation.factory</a></li>
+  <li><a href="../modules/api-gateway.validation.key.redisApiKeyValidator.html">api-gateway.validation.key.redisApiKeyValidator</a></li>
+  <li><a href="../modules/api-gateway.validation.oauth2.oauthTokenValidator.html">api-gateway.validation.oauth2.oauthTokenValidator</a></li>
+  <li><strong>api-gateway.validation.oauth2.userProfileValidator</strong></li>
+  <li><a href="../modules/api-gateway.validation.validator.html">api-gateway.validation.validator</a></li>
+  <li><a href="../modules/api-gateway.validation.validatorsHandler.html">api-gateway.validation.validatorsHandler</a></li>
+  <li><a href="../modules/api-gateway.validation.validatorsHandlerErrorDecorator.html">api-gateway.validation.validatorsHandlerErrorDecorator</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>api-gateway.validation.oauth2.userProfileValidator</code></h1>
+<p>Maximum time in seconds specifying how long to cache a valid token in GW's memory</p>
+<p></p>
+
+
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#getExpiresIn">getExpiresIn (expire_at)</a></td>
+	<td class="summary">Converts the expire_at into expire_in in seconds</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#isProfileValid">isProfileValid (cachedProfile)</a></td>
+	<td class="summary">Returns true if the profile is valid for the request context.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#extractContextVars">extractContextVars (profile)</a></td>
+	<td class="summary">Returns an object with a set of variables to be saved in the request's context and later in the request's vars
+  IMPORTANT: This method is only called when fetching a new profile, otherwise the information from the cache
+             is read and automatically added to the context based on the object returned by this method</td>
+	</tr>
+</table>
+<h2><a href="#Fields">Fields</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#REDIS_CACHE_TTL">REDIS_CACHE_TTL</a></td>
+	<td class="summary">Maximum time in milliseconds specifying how long to cache a valid token in Redis</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2 class="section-header "><a name="Functions"></a>Functions</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "getExpiresIn"></a>
+    <strong>getExpiresIn (expire_at)</strong>
+    </dt>
+    <dd>
+    Converts the expire_at into expire_in in seconds
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">expire_at</span>
+         UTC expiration time in seconds
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "isProfileValid"></a>
+    <strong>isProfileValid (cachedProfile)</strong>
+    </dt>
+    <dd>
+    Returns true if the profile is valid for the request context.  If profile is not valid then it returns the failure
+ status code and message.
+ This method is to be overritten when this class is extended.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cachedProfile</span>
+         The information about the user profile that gets cached
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "extractContextVars"></a>
+    <strong>extractContextVars (profile)</strong>
+    </dt>
+    <dd>
+    Returns an object with a set of variables to be saved in the request's context and later in the request's vars
+  IMPORTANT: This method is only called when fetching a new profile, otherwise the information from the cache
+             is read and automatically added to the context based on the object returned by this method
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">profile</span>
+         User Profile
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header "><a name="Fields"></a>Fields</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "REDIS_CACHE_TTL"></a>
+    <strong>REDIS_CACHE_TTL</strong>
+    </dt>
+    <dd>
+    Maximum time in milliseconds specifying how long to cache a valid token in Redis
+
+
+
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
+<i style="float:right;">Last updated 2018-03-30 13:43:11 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

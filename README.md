@@ -392,15 +392,22 @@ git submodule update --init --recursive
 ```
 
 ## Running the tests
+To run unit tests and integration tests, use `./run_tests.sh`
 
-### With docker
+### Unit tests
+
+In order to run the unit tests, the command is `./run_unit_tests.sh`
+
+### Integration tests
+
+#### With docker
 
 ```
 make test-docker
 ```
 This command spins up 2 containers ( Redis and API Gateway ) and executes the tests in `test/perl`
 
-### With native binary
+#### With native binary
 ```
 make test
 ```
