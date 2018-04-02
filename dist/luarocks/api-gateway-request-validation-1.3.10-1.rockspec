@@ -1,5 +1,5 @@
 package="api-gateway-request-validation"
-version="1.3.10-2"
+version="1.3.10-1"
 local function make_plat(plat)
     return { modules = {
         ["api-gateway.dogstatsd.Dogstatsd"] = "src/lua/api-gateway/dogstatsd/Dogstatsd.lua",
