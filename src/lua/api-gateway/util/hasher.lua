@@ -21,21 +21,12 @@
 local resty_sha256 = require "resty.sha256"
 local str = require "resty.string"
 
-local Hasher = {}
-
-function Hasher:new(o)
-    o = o or {}
-    setmetatable(o, self)
-    self.__index = self
-    return o
-end
-
 ---
 -- Encrypts the plain_text with a specific salt using the SHA256 algorithm.
 -- @param plain_text The Text to encode
 -- @return - the encrypted text
 --
-function Hasher:hash(plain_text)
+function _hash(plain_text)
     local sha256 = resty_sha256:new()
     sha256:update(plain_text)
     local digest = sha256:final()
@@ -43,4 +34,6 @@ function Hasher:hash(plain_text)
     return str.to_hex(digest)
 end
 
-return Hasher
+return {
+    hash = _hash
+}

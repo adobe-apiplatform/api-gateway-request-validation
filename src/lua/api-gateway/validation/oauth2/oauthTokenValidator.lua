@@ -192,8 +192,7 @@ function _M:validateOAuthToken()
     end
 
     --1. try to get token info from the cache first ( local or redis cache )
-    local hasherInstance = hasher:new()
-    local oauth_token_hash = hasherInstance:hash(oauth_token)
+    local oauth_token_hash = hasher.hash(oauth_token)
     local cacheLookupKey = self:getOauthTokenForCaching(oauth_token_hash, oauth_host)
     local cachedToken = self:getTokenFromCache(cacheLookupKey)
 

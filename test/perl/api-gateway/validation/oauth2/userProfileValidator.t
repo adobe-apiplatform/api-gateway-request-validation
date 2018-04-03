@@ -96,11 +96,10 @@ env REDIS_PASS_OAUTH;
 
             content_by_lua '
                 local hasher = require "api-gateway.util.hasher"
-                local hasherInstance = hasher:new()
                 local oauthTokenHash = ngx.var.authtoken_hash
                 local key = ngx.var.key
 
-                oauthTokenHash = hasherInstance:hash(ngx.var.authtoken)
+                oauthTokenHash = hasher.hash(ngx.var.authtoken)
                 key = "cachedoauth:" .. oauthTokenHash
 
                 local BaseValidator = require "api-gateway.validation.validator"
@@ -120,11 +119,10 @@ env REDIS_PASS_OAUTH;
 
             content_by_lua '
                 local hasher = require "api-gateway.util.hasher"
-                local hasherInstance = hasher:new()
                 local oauthTokenHash = ngx.var.authtoken_hash
                 local key = ngx.var.key
 
-                oauthTokenHash = hasherInstance:hash(ngx.var.authtoken)
+                oauthTokenHash = hasher.hash(ngx.var.authtoken)
                 key = "cachedoauth:" .. oauthTokenHash
 
                 local BaseValidator = require "api-gateway.validation.validator"
@@ -190,11 +188,10 @@ env REDIS_PASS_OAUTH;
 
             content_by_lua '
                 local hasher = require "api-gateway.util.hasher"
-                local hasherInstance = hasher:new()
                 local oauthTokenHash = ngx.var.authtoken_hash
                 local key = ngx.var.key
 
-                oauthTokenHash = hasherInstance:hash(ngx.var.authtoken)
+                oauthTokenHash = hasher.hash(ngx.var.authtoken)
                 key = "cachedoauth:" .. oauthTokenHash
 
                 local BaseValidator = require "api-gateway.validation.validator"
@@ -215,11 +212,10 @@ env REDIS_PASS_OAUTH;
 
             content_by_lua '
                 local hasher = require "api-gateway.util.hasher"
-                local hasherInstance = hasher:new()
                 local oauthTokenHash = ngx.var.authtoken_hash
                 local key = ngx.var.key
 
-                oauthTokenHash = hasherInstance:hash(ngx.var.authtoken)
+                oauthTokenHash = hasher.hash(ngx.var.authtoken)
                 key = "cachedoauth:" .. oauthTokenHash
 
                 local BaseValidator = require "api-gateway.validation.validator"
