@@ -5,19 +5,16 @@ local function is_in_init_phase()
 end
 
 local function getLogFormat(level, debugInfo, ...)
-    local status, result = pcall(is_in_init_phase)
+    local status, request_id = pcall(is_in_init_phase)
     --- testing for init phase
-    if status then
-        return level, "[", debugInfo.short_src,
-        ":", debugInfo.currentline,
-        ":", debugInfo.name,
-        "() req_id=", tostring(result),
-        "] ", ...
+    if not status then
+       request_id = "N/A"
     end
+
     return level, "[", debugInfo.short_src,
     ":", debugInfo.currentline,
     ":", debugInfo.name,
-    "() req_id=",
+    "() req_id=", tostring(request_id),
     "] ", ...
 end
 
