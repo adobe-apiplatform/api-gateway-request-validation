@@ -18,7 +18,7 @@
 --   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 --   DEALINGS IN THE SOFTWARE.
 
-local aes = require"resty.aes"
+local resty_sha256 = require "resty.sha256"
 local str = require "resty.string"
 
 local Hasher = {}
@@ -30,26 +30,17 @@ function Hasher:new(o)
     return o
 end
 
-local salt = "API-Gateway-Salt!"
-
 ---
 -- Encrypts the plain_text with a specific salt using the SHA256 algorithm.
 -- @param plain_text The Text to encode
--- @param seed_text A starting point for the encryption algorithm
 -- @return - the encrypted text
 --
-function Hasher:hash(plain_text, seed_text)
-    local aes_256_cbc_sha512x5 = aes:new(seed_text,
-        salt,
-        aes.cipher(256, "cbc"),
-        aes.hash.sha512, 5)
-    -- AES 256 CBC with 5 rounds of SHA-512 for the key
-    -- and a salt of "API-Gateway-Salt!"
-    local encrypted = aes_256_cbc_sha512x5:encrypt(plain_text)
-    return str.to_hex(encrypted)
+function Hasher:hash(plain_text)
+    local sha256 = resty_sha256:new()
+    sha256:update(plain_text)
+    local digest = sha256:final()
+    ngx.log(ngx.DEBUG, "Hashed ", plain_text, " - ", digest)
+    return str.to_hex(digest)
 end
 
 return Hasher
-
-
-

@@ -191,11 +191,9 @@ function _M:validateOAuthToken()
         return self.RESPONSES.MISSING_TOKEN.error_code, cjson.encode(self.RESPONSES.MISSING_TOKEN)
     end
 
-    local seed = "AKeyForAES-256-CBC"
-
     --1. try to get token info from the cache first ( local or redis cache )
     local hasherInstance = hasher:new()
-    local oauth_token_hash = hasherInstance:hash(oauth_token, seed)
+    local oauth_token_hash = hasherInstance:hash(oauth_token)
     local cacheLookupKey = self:getOauthTokenForCaching(oauth_token_hash, oauth_host)
     local cachedToken = self:getTokenFromCache(cacheLookupKey)
 

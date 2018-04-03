@@ -181,9 +181,8 @@ end
 
 function _M:getCacheLookupKey()
     local oauth_token = ngx.var.authtoken
-    local seed = "AKeyForAES-256-CBC"
     local hasherInstance = hasher:new()
-    local oauth_token_hash = hasherInstance:hash(oauth_token, seed)
+    local oauth_token_hash = hasherInstance:hash(oauth_token)
     return self:getCacheToken(oauth_token_hash)
 end
 

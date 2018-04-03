@@ -135,12 +135,11 @@ env REDIS_PASS_OAUTH;
 
             content_by_lua '
                 local hasher = require "api-gateway.util.hasher"
-                local seed = "AKeyForAES-256-CBC"
                 local hasherInstance = hasher:new()
                 local oauthTokenHash = ngx.var.authtoken_hash
                 local key = ngx.var.key
 
-                oauthTokenHash = hasherInstance:hash(ngx.var.authtoken, seed)
+                oauthTokenHash = hasherInstance:hash(ngx.var.authtoken)
                 key = "cachedoauth:" .. oauthTokenHash
 
                 local BaseValidator = require "api-gateway.validation.validator"
@@ -165,12 +164,11 @@ env REDIS_PASS_OAUTH;
 
             content_by_lua '
                 local hasher = require "api-gateway.util.hasher"
-                local seed = "AKeyForAES-256-CBC"
                 local hasherInstance = hasher:new()
                 local oauthTokenHash = ngx.var.authtoken_hash
                 local key = ngx.var.key
 
-                oauthTokenHash = hasherInstance:hash(ngx.var.authtoken, seed)
+                oauthTokenHash = hasherInstance:hash(ngx.var.authtoken)
                 key = "cachedoauth:" .. oauthTokenHash
 
                 local BaseValidator = require "api-gateway.validation.validator"
@@ -213,7 +211,7 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_2_X_0
 '.*"expires_at":\d+,.*',
 '[1-4]', # the cached token expiry time is in seconds, and it can only be between 1s to 4s, but not less. -1 response indicated the key is not cached or it has expired
 'OK\n',
-'OAuth cachedoauth\:d9c2f17770b6dd471a26bbc8ca020a843762eff1fa49f32dc7cfc8bed2ea089a not found in local cache',
+'OAuth cachedoauth\:5a6e9de38155078dd80f66330a013c9a3383a87b4879c5ec7ac7b42689330b21 not found in local cache',
 '-2' # redis should have expired the oauth token by now
 ]
 --- timeout: 10s
@@ -367,9 +365,9 @@ env REDIS_PASS_OAUTH;
 Authorization: Bearer SOME_OAUTH_TOKEN_TEST4
 --- pipelined_requests eval
 ["GET /test-oauth-validation",
-"GET /query-for-key?cachedoauth:d9c2f17770b6dd471a26bbc8ca020a84fefa8e78a1976528a5a5026f8f134392",
+"GET /query-for-key?cachedoauth:46223d289c67faf405c4d20f1c93d518e112d052752eedc58575a04e1e455922",
 "GET /test-oauth-validation-again",
-"GET /l2_cache/api_key?key=cachedoauth:d9c2f17770b6dd471a26bbc8ca020a84fefa8e78a1976528a5a5026f8f134392"
+"GET /l2_cache/api_key?key=cachedoauth:46223d289c67faf405c4d20f1c93d518e112d052752eedc58575a04e1e455922"
 ]
 --- response_body_like eval
 ["oauth token is valid.\n",
