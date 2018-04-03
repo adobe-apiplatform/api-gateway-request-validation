@@ -134,13 +134,13 @@ env REDIS_PASS_OAUTH;
             set_by_lua $authtoken 'return ngx.re.gsub(ngx.arg[1], "bearer ", "","ijo") ' $authtoken;
 
             content_by_lua '
-                local sha256Hasher = require "api-gateway.util.sha256Hasher"
+                local hasher = require "api-gateway.util.hasher"
                 local seed = "AKeyForAES-256-CBC"
-                local sha256HasherInstance = sha256Hasher:new()
+                local hasherInstance = hasher:new()
                 local oauthTokenHash = ngx.var.authtoken_hash
                 local key = ngx.var.key
 
-                oauthTokenHash = sha256HasherInstance:encryptText(ngx.var.authtoken, seed)
+                oauthTokenHash = hasherInstance:hash(ngx.var.authtoken, seed)
                 key = "cachedoauth:" .. oauthTokenHash
 
                 local BaseValidator = require "api-gateway.validation.validator"
@@ -164,13 +164,13 @@ env REDIS_PASS_OAUTH;
             set_by_lua $authtoken 'return ngx.re.gsub(ngx.arg[1], "bearer ", "","ijo") ' $authtoken;
 
             content_by_lua '
-                local sha256Hasher = require "api-gateway.util.sha256Hasher"
+                local hasher = require "api-gateway.util.hasher"
                 local seed = "AKeyForAES-256-CBC"
-                local sha256HasherInstance = sha256Hasher:new()
+                local hasherInstance = hasher:new()
                 local oauthTokenHash = ngx.var.authtoken_hash
                 local key = ngx.var.key
 
-                oauthTokenHash = sha256HasherInstance:encryptText(ngx.var.authtoken, seed)
+                oauthTokenHash = hasherInstance:hash(ngx.var.authtoken, seed)
                 key = "cachedoauth:" .. oauthTokenHash
 
                 local BaseValidator = require "api-gateway.validation.validator"

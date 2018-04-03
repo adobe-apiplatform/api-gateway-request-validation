@@ -38,7 +38,7 @@ local salt = "API-Gateway-Salt!"
 -- @param seed_text A starting point for the encryption algorithm
 -- @return - the encrypted text
 --
-function Hasher:encryptText(plain_text, seed_text)
+function Hasher:hash(plain_text, seed_text)
     local aes_256_cbc_sha512x5 = aes:new(seed_text,
         salt,
         aes.cipher(256, "cbc"),
@@ -47,21 +47,6 @@ function Hasher:encryptText(plain_text, seed_text)
     -- and a salt of "API-Gateway-Salt!"
     local encrypted = aes_256_cbc_sha512x5:encrypt(plain_text)
     return str.to_hex(encrypted)
-end
-
----
--- Decrypts the cipher_text with a specific salt using the SHA256 algorithm.
--- @param cypher_text The Text to encode
--- @param seed_text A starting point for the encryption algorithm - The same seed used in the encyption phase
--- @return - the decrypted text
---
-function Hasher:decryptText(cipher_text, seed_text)
-    local aes_256_cbc_sha512x5 = aes:new(seed_text,
-        salt,
-        aes.cipher(256, "cbc"),
-        aes.hash.sha512, 5)
-    local decrypted = aes_256_cbc_sha512x5:decrypt(cipher_text)
-    return str.to_hex(decrypted)
 end
 
 return Hasher
