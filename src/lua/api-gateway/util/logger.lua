@@ -37,6 +37,7 @@ local function _decorateLogger()
         local oldNgx = ngx.log
         ngx.log = function(level, ...)
             -- gets the level 2 because level 1 is this function and I need my caller
+            -- nSl means line, name, source
             local debugInfo =  debug.getinfo(2, "nSl")
             pcall(function(...)
                 oldNgx(getLogFormat(level, debugInfo, ...))
