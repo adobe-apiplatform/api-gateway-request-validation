@@ -26,11 +26,10 @@ local str = require "resty.string"
 -- @param plain_text The Text to encode
 -- @return - the encrypted text
 --
-function _hash(plain_text)
+local function _hash(plain_text)
     local sha256 = resty_sha256:new()
     sha256:update(plain_text)
     local digest = sha256:final()
-    ngx.log(ngx.DEBUG, "Hashed ", plain_text, " - ", digest)
     return str.to_hex(digest)
 end
 
