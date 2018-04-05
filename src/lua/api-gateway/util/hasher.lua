@@ -29,11 +29,11 @@ local str = require "resty.string"
 local function _hash(plain_text)
     local algorithm = ngx.var.hashing_algorithm
     if (algorithm == nil or algorithm == '') then
-        ngx.log(ngx.INFO, "No hashing algorithm has been passed. Dafualting to SHA256")
+        ngx.log(ngx.INFO, "No hashing algorithm has been passed. Defaulting to SHA256")
         algorithm = "sha256"
     end
     if (algorithm ~= "sha256" or algorithm ~= "sha224" or algorithm ~= "sha512" or algorithm ~= "sha384") then
-        ngx.log(ngx.INFO, "The hashing algorithm passed is invalid. Dafualting to SHA256")
+        ngx.log(ngx.INFO, "The hashing algorithm passed is invalid. Defaulting to SHA256")
         algorithm = "sha256"
     end
 
