@@ -18,18 +18,29 @@
 --   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 --   DEALINGS IN THE SOFTWARE.
 
-local resty_sha256 = require "resty.sha256"
 local str = require "resty.string"
 
 ---
--- Encrypts the plain_text with a specific salt using the SHA256 algorithm.
+-- Encrypts the plain_text using an algoithm specified via a Chef env variable - SHA256 is the default.
+-- Possible values: sha256, sha224, sha512, sha384
 -- @param plain_text The Text to encode
 -- @return - the encrypted text
 --
 local function _hash(plain_text)
-    local sha256 = resty_sha256:new()
-    sha256:update(plain_text)
-    local digest = sha256:final()
+    local algorithm = ngx.var.hashing_algorithm
+    if (algorithm == nil or algorithm == '') then
+        ngx.log(ngx.INFO, "No hashing algorithm has been passed. Dafualting to SHA256")
+        algorithm = "sha256"
+    end
+    if (algorithm ~= "sha256" or algorithm ~= "sha224" or algorithm ~= "sha512" or algorithm ~= "sha384") then
+        ngx.log(ngx.INFO, "The hashing algorithm passed is invalid. Dafualting to SHA256")
+        algorithm = "sha256"
+    end
+
+    local restySha =  require ("resty." .. algorithm)
+    local sha = restySha:new()
+    sha:update(plain_text)
+    local digest = sha:final()
     return str.to_hex(digest)
 end
 
