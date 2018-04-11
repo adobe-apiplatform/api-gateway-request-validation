@@ -28,16 +28,19 @@ local str = require "resty.string"
 --
 local function _hash(plain_text)
     local algorithm = ngx.var.hashing_algorithm
+    ngx.log(ngx.ERR, "SHAAAAAAA initial ", algorithm)
     if (algorithm == nil or algorithm == '') then
         ngx.log(ngx.INFO, "No hashing algorithm has been passed. Defaulting to SHA256")
         algorithm = "sha256"
     end
-    if (algorithm ~= "sha256" or algorithm ~= "sha224" or algorithm ~= "sha512" or algorithm ~= "sha384") then
+    if (algorithm ~= "sha256" and algorithm ~= "sha224" and algorithm ~= "sha512" and algorithm ~= "sha384") then
         ngx.log(ngx.INFO, "The hashing algorithm passed is invalid. Defaulting to SHA256")
+        ngx.log(ngx.ERR, "SHAAAAAAA gresit ", algorithm)
         algorithm = "sha256"
     end
 
     local restySha =  require ("resty." .. algorithm)
+    ngx.log(ngx.ERR, "SHAAAAAAA ", algorithm)
     local sha = restySha:new()
     sha:update(plain_text)
     local digest = sha:final()
