@@ -40,9 +40,9 @@
 <ul class="nowrap">
   <li><a href="../modules/api-gateway.dogstatsd.Dogstatsd.html">api-gateway.dogstatsd.Dogstatsd</a></li>
   <li><a href="../modules/api-gateway.util.OauthClient.html">api-gateway.util.OauthClient</a></li>
-  <li><a href="../modules/api-gateway.util.hasher.html">api-gateway.util.hasher</a></li>
+  <li><strong>api-gateway.util.hasher</strong></li>
   <li><a href="../modules/api-gateway.util.logger.html">api-gateway.util.logger</a></li>
-  <li><strong>api-gateway.validation.factory</strong></li>
+  <li><a href="../modules/api-gateway.validation.factory.html">api-gateway.validation.factory</a></li>
   <li><a href="../modules/api-gateway.validation.key.redisApiKeyValidator.html">api-gateway.validation.key.redisApiKeyValidator</a></li>
   <li><a href="../modules/api-gateway.validation.oauth2.oauthTokenValidator.html">api-gateway.validation.oauth2.oauthTokenValidator</a></li>
   <li><a href="../modules/api-gateway.validation.oauth2.userProfileValidator.html">api-gateway.validation.oauth2.userProfileValidator</a></li>
@@ -55,21 +55,16 @@
 
 <div id="content">
 
-<h1>Module <code>api-gateway.validation.factory</code></h1>
-<p>Function designed to be called from access_by_lua
- It calls an internal /validate-request path which can provide any custom implementation for request validation</p>
+<h1>Module <code>api-gateway.util.hasher</code></h1>
+<p>Verifies whether a table contains a given value</p>
 <p></p>
 
 
 <h2><a href="#Local_Functions">Local Functions</a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" nowrap><a href="#_defaultValidateRequestImpl">_defaultValidateRequestImpl ()</a></td>
-	<td class="summary">Default request validation implementation</td>
-	</tr>
-	<tr>
-	<td class="name" nowrap><a href="#_validateApiKey">_validateApiKey ()</a></td>
-	<td class="summary">Basic impl extending redisApiKey validator.</td>
+	<td class="name" nowrap><a href="#_hash">_hash (plain_text)</a></td>
+	<td class="summary">Encrypts the plain_text using an algoithm specified via a Chef env variable - SHA256 is the default.</td>
 	</tr>
 </table>
 
@@ -81,28 +76,26 @@
 
     <dl class="function">
     <dt>
-    <a name = "_defaultValidateRequestImpl"></a>
-    <strong>_defaultValidateRequestImpl ()</strong>
+    <a name = "_hash"></a>
+    <strong>_hash (plain_text)</strong>
     </dt>
     <dd>
-    Default request validation implementation
+    Encrypts the plain_text using an algoithm specified via a Chef env variable - SHA256 is the default.
+ Possible values: sha256, sha224, sha512, sha384
 
 
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">plain_text</span>
+         The Text to encode
+        </li>
+    </ul>
 
+    <h3>Returns:</h3>
+    <ol>
 
-
-
-
-</dd>
-    <dt>
-    <a name = "_validateApiKey"></a>
-    <strong>_validateApiKey ()</strong>
-    </dt>
-    <dd>
-    Basic impl extending redisApiKey validator.
-
-
-
+        - the encrypted text
+    </ol>
 
 
 
