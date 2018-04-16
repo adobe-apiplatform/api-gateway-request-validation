@@ -48,11 +48,7 @@ local function _hash(plain_text)
         algorithm = "sha256"
     end
 
-    local hashing_algorithm = {}
-    hashing_algorithm[1] = "sha256"
-    hashing_algorithm[2] = "sha224"
-    hashing_algorithm[3] = "sha512"
-    hashing_algorithm[4] = "sha384"
+    local hashing_algorithm = {"sha256", "sha224", "sha512", "sha384"}
 
     if not contains(hashing_algorithm, algorithm) then
         ngx.log(ngx.INFO, "The hashing algorithm passed is invalid. Defaulting to SHA256")
