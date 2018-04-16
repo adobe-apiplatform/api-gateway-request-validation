@@ -55,7 +55,6 @@ local function _hash(plain_text)
         algorithm = "sha256"
     end
 
-
     local restySha =  require ("resty." .. algorithm)
     local sha = restySha:new()
     sha:update(plain_text)
