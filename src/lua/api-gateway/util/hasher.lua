@@ -21,6 +21,21 @@
 local str = require "resty.string"
 
 ---
+-- Verifies whether a table contains a given value
+-- @param table the table to verify
+-- @param value the to search for
+-- @return - true if the value is in the table or false otherwise
+--
+local function contains(table, val)
+    for i=1,#table do
+        if table[i] == val then
+            return true
+        end
+    end
+    return false
+end
+
+---
 -- Encrypts the plain_text using an algoithm specified via a Chef env variable - SHA256 is the default.
 -- Possible values: sha256, sha224, sha512, sha384
 -- @param plain_text The Text to encode
@@ -32,10 +47,18 @@ local function _hash(plain_text)
         ngx.log(ngx.INFO, "No hashing algorithm has been passed. Defaulting to SHA256")
         algorithm = "sha256"
     end
-    if (algorithm ~= "sha256" and algorithm ~= "sha224" and algorithm ~= "sha512" and algorithm ~= "sha384") then
+
+    local hashing_algorithm = {}
+    hashing_algorithm[1] = "sha256"
+    hashing_algorithm[2] = "sha224"
+    hashing_algorithm[3] = "sha512"
+    hashing_algorithm[4] = "sha384"
+
+    if not contains(hashing_algorithm, algorithm) then
         ngx.log(ngx.INFO, "The hashing algorithm passed is invalid. Defaulting to SHA256")
         algorithm = "sha256"
     end
+
 
     local restySha =  require ("resty." .. algorithm)
     local sha = restySha:new()
