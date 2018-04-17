@@ -31,7 +31,7 @@
     <scm>
         <connection>scm:git:${git.repo}</connection>
         <developerConnection>scm:git:${git.repo}</developerConnection>
-        <tag>api-gateway-request-validation-1.2.4</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <build>
