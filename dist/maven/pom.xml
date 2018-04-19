@@ -24,7 +24,7 @@
     <name>API Gateway Request Validation</name>
 
     <properties>
-        <git.repo>git@github.com:adobe-apiplatform/api-gateway-request-validation.git</git.repo>
+        <git.repo>https://github.com/adobe-apiplatform/api-gateway-request-validation.git</git.repo>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
