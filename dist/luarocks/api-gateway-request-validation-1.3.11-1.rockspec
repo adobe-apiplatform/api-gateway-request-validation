@@ -1,7 +1,7 @@
 package = "api-gateway-request-validation"
 version = "1.3.11-1"
 source = {
-   url = "git+https://github.com/adobe-apiplatform/api-gateway-request-validation.git",
+   url = "git://github.com/adobe-apiplatform/api-gateway-request-validation.git",
    tag = "api-gateway-request-validation-1.3.11"
 }
 description = {
@@ -9,7 +9,8 @@ description = {
    license = "MIT"
 }
 dependencies = {
-   "lua >= 5.1"
+   "lua >= 5.1",
+   "lua-api-gateway-hmac >= 1.0.0"
 }
 build = {
    type = "builtin",
