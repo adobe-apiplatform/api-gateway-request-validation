@@ -1,4 +1,4 @@
--- Copyright (c) 2015 Adobe Systems Incorporated. All rights reserved.
+-- Copyright (c) 2018 Adobe Systems Incorporated. All rights reserved.
 --
 --   Permission is hereby granted, free of charge, to any person obtaining a
 --   copy of this software and associated documentation files (the "Software"),
@@ -79,6 +79,9 @@ end
 -- @param json Token info object
 --
 function _M:isCachedTokenValid(json)
+    if (json == nil) then
+        return -1
+    end
     local expires_in_s = self:getExpiresIn(json.oauth_token_expires_at)
     return expires_in_s
 end
@@ -144,26 +147,10 @@ function _M:extractContextVars(tokenInfo)
     return cachingObj
 end
 
---- Safe decodes the given string. Returns nil if decoding fails.
---
--- @param str the string to be decoded
--- @return the decoded lua structure
---
-function _M:safeDecode(str)
-    local result, err = safeCjson.decode(str)
-
-    if err then
-        ngx.log(ngx.WARN, "Could not deserialize [", str, "] to lua structure")
-        return nil
-    end
-
-    return result
-end
-
 -- TODO: cache invalid tokens too for a short while
 -- Check in the response if the token is valid --
 function _M:checkResponseFromAuth(res, cacheLookupKey)
-    local json = self:safeDecode(res.body)
+    local json = safeCjson.decode(res.body)
     if json ~= nil then
 
         local tokenValidity, error = self:isTokenValid(json)
@@ -215,7 +202,7 @@ function _M:validateOAuthToken()
 
     if (cachedToken ~= nil) then
         -- ngx.log(ngx.INFO, "Cached token=" .. cachedToken)
-        local obj =  self:safeDecode(cachedToken)
+        local obj =  safeCjson.decode(cachedToken)
         local tokenValidity, error = self:isCachedTokenValid(obj)
         if tokenValidity > 0 then
             local local_expire_in = math.min(tokenValidity, LOCAL_CACHE_TTL)
