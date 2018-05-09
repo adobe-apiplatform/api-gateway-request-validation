@@ -43,6 +43,7 @@ local redisConfigurationProvider = require "api-gateway.redis.redisConnectionCon
 local OauthClient = require "api-gateway.util.OauthClient":new()
 local cjson = require "cjson"
 local hasher = require "api-gateway.util.hasher"
+local utils = require "api-gateway.adobe.utils.Utils"
 
 local _M = BaseValidator:new({
     RESPONSES = {
@@ -146,7 +147,7 @@ end
 -- TODO: cache invalid tokens too for a short while
 -- Check in the response if the token is valid --
 function _M:checkResponseFromAuth(res, cacheLookupKey)
-    local json = cjson.decode(res.body)
+    local json = utils:safeDecode(res.body)
     if json ~= nil then
 
         local tokenValidity, error = self:isTokenValid(json)
