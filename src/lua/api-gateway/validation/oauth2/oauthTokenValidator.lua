@@ -80,7 +80,7 @@ end
 --
 function _M:isCachedTokenValid(json)
     if (json == nil) then
-        return -1
+        return nil, self.RESPONSES.INVALID_TOKEN
     end
     local expires_in_s = self:getExpiresIn(json.oauth_token_expires_at)
     return expires_in_s
