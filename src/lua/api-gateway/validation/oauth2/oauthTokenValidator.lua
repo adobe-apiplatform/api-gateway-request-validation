@@ -80,7 +80,7 @@ end
 --
 function _M:isCachedTokenValid(json)
     if (json == nil) then
-        return nil, self.RESPONSES.INVALID_TOKEN
+        return -1
     end
     local expires_in_s = self:getExpiresIn(json.oauth_token_expires_at)
     return expires_in_s
@@ -204,7 +204,7 @@ function _M:validateOAuthToken()
         -- ngx.log(ngx.INFO, "Cached token=" .. cachedToken)
         local obj =  safeCjson.decode(cachedToken)
         local tokenValidity, error = self:isCachedTokenValid(obj)
-        if tokenValidity > 0 then
+        if (tokenValidity > 0) then
             local local_expire_in = math.min(tokenValidity, LOCAL_CACHE_TTL)
             ngx.log(ngx.DEBUG, "Caching locally a new token for " .. tostring(local_expire_in) .. " s, out of a total validity of " .. tostring(tokenValidity) .. " s.")
             self:setKeyInLocalCache(cacheLookupKey, cachedToken, local_expire_in, "cachedOauthTokens")
