@@ -1,4 +1,4 @@
--- Copyright (c) 2015 Adobe Systems Incorporated. All rights reserved.
+-- Copyright (c) 2018 Adobe Systems Incorporated. All rights reserved.
 --
 --   Permission is hereby granted, free of charge, to any person obtaining a
 --   copy of this software and associated documentation files (the "Software"),
@@ -43,6 +43,7 @@ local redisConfigurationProvider = require "api-gateway.redis.redisConnectionCon
 local OauthClient = require "api-gateway.util.OauthClient":new()
 local cjson = require "cjson"
 local hasher = require "api-gateway.util.hasher"
+local safeCjson = require "cjson.safe"
 
 local _M = BaseValidator:new({
     RESPONSES = {
@@ -78,6 +79,9 @@ end
 -- @param json Token info object
 --
 function _M:isCachedTokenValid(json)
+    if (json == nil) then
+        return -1
+    end
     local expires_in_s = self:getExpiresIn(json.oauth_token_expires_at)
     return expires_in_s
 end
@@ -146,7 +150,7 @@ end
 -- TODO: cache invalid tokens too for a short while
 -- Check in the response if the token is valid --
 function _M:checkResponseFromAuth(res, cacheLookupKey)
-    local json = cjson.decode(res.body)
+    local json = safeCjson.decode(res.body)
     if json ~= nil then
 
         local tokenValidity, error = self:isTokenValid(json)
@@ -198,9 +202,9 @@ function _M:validateOAuthToken()
 
     if (cachedToken ~= nil) then
         -- ngx.log(ngx.INFO, "Cached token=" .. cachedToken)
-        local obj = cjson.decode(cachedToken)
+        local obj =  safeCjson.decode(cachedToken)
         local tokenValidity, error = self:isCachedTokenValid(obj)
-        if tokenValidity > 0 then
+        if (tokenValidity > 0) then
             local local_expire_in = math.min(tokenValidity, LOCAL_CACHE_TTL)
             ngx.log(ngx.DEBUG, "Caching locally a new token for " .. tostring(local_expire_in) .. " s, out of a total validity of " .. tostring(tokenValidity) .. " s.")
             self:setKeyInLocalCache(cacheLookupKey, cachedToken, local_expire_in, "cachedOauthTokens")
