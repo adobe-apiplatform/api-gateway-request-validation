@@ -46,6 +46,7 @@ local function isNotEmpty(s)
 end
 
 --- Searches and returns a Redis upstream pair (host:port) based on the name provided
+--- @param upstream_name The Redis upstream name, as defined in the Nginx conf file
 --- @return Redis host
 --- @return Redis port
 function RedisConnectionProvider:getRedisUpstream(upstream_name)
@@ -83,6 +84,8 @@ function RedisConnectionProvider:getConnection(connection_options)
     local status, redisInstance = self:connectToRedis(redisHost, redisPort, redisPassword, redisTimeout)
     if not status then
         -- retry
+        ngx.log(ngx.WARN, "Connection to Redis failed. Retrieving new Redis host and retrying")
+        redisHost, redisPort = self:getRedisUpstream(redisUpstream)
         status, redisInstance = self:connectToRedis(redisHost, redisPort, redisPassword, redisTimeout)
     end
     return status, redisInstance
