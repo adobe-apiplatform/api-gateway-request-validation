@@ -45,17 +45,58 @@ function HealthCheck:new(o)
     return o
 end
 
--- Reused from the "resty.upstream.healthcheck" module to get the
--- status of the upstream nodes
+local function split(inputStr, separator)
+    if separator == nil then
+        separator = "%s"
+    end
+
+    local table = {}
+    local index = 1
+    for str in string.gmatch(inputStr, "([^%s" .. separator .. "]+)") do
+        table[index] = str
+        index = index + 1
+    end
+    return table
+end
+
+local function isPeerHealthy(peerName)
+
+    local peerAddress = split(peerName, ":")
+    
+    -- for now, we should only validate host:port
+    if #peerAddress ~= 2 then
+        return false
+    end
+
+    local peerHost = peerAddress[1]
+    local peerPort = peerAddress[2]
+
+    ngx.log(ngx.DEBUG, "Checking health for: " .. tostring(peerHost) .. ":" .. tostring(peerPort))
+    local socket = ngx.socket.tcp
+    local tcp = socket()
+    local ok, err = tcp:connect(peerHost, peerPort)
+    if not ok then
+        tcp:close()
+        return false
+    end
+    tcp:settimeout(2000)
+    tcp:send("PING\r\n")
+    local message, status, partial = tcp:receive()
+    tcp:close()
+    return message and string.match(message, "PONG")
+end
+
 local function gen_peers_status_info(peers, bits, idx)
     local npeers = #peers
     for i = 1, npeers do
         local peer = peers[i]
-        bits[idx] = peer.name
-        if peer.down then
-            bits[idx + 1] = " DOWN\n"
-        else
+        local peerName = peer.name
+        bits[idx] = peerName
+
+        if isPeerHealthy(peerName) then
             bits[idx + 1] = " up\n"
+        else
+            bits[idx + 1] = " DOWN\n"
         end
         idx = idx + 2
     end
@@ -75,28 +116,30 @@ local function getHealthCheckForUpstream(upstreamName)
 
     local ok, new_tab = pcall(require, "table.new")
     if not ok or type(new_tab) ~= "function" then
-        new_tab = function (narr, nrec) return {} end
+        new_tab = function(narr, nrec)
+            return {}
+        end
     end
 
     local n = 1
     local bits = new_tab(n * 20, 0)
     local idx = 1
 
-        local peers, err = get_primary_peers(upstreamName)
-        if not peers then
-            return "failed to get primary peers in upstream " .. upstreamName .. ": "
-                    .. err
-        end
+    local peers, err = get_primary_peers(upstreamName)
+    if not peers then
+        return "failed to get primary peers in upstream " .. upstreamName .. ": "
+                .. err
+    end
 
-        idx = gen_peers_status_info(peers, bits, idx)
+    idx = gen_peers_status_info(peers, bits, idx)
 
-        peers, err = get_backup_peers(upstreamName)
-        if not peers then
-            return "failed to get backup peers in upstream " .. upstreamName .. ": "
-                    .. err
-        end
+    peers, err = get_backup_peers(upstreamName)
+    if not peers then
+        return "failed to get backup peers in upstream " .. upstreamName .. ": "
+                .. err
+    end
 
-        idx = gen_peers_status_info(peers, bits, idx)
+    idx = gen_peers_status_info(peers, bits, idx)
 
     return bits
 end
@@ -119,7 +162,7 @@ local function updateHealthyRedisNodeInCache(dict_name, upstream_name, healthy_r
         return
     end
 
-    ngx.log(ngx.WARN, "Dictionary ", dict_name,  " doesn't seem to be set. Did you define one ? ")
+    ngx.log(ngx.WARN, "Dictionary ", dict_name, " doesn't seem to be set. Did you define one ? ")
 end
 
 local function getHostAndPortInUpstream(upstreamRedis)
@@ -150,22 +193,22 @@ function HealthCheck:getHealthyRedisNode(upstream_name)
     -- if the Redis host is not in the local cache get it from the upstream configuration
     local redisUpstreamHealthResult = getHealthCheckForUpstream(upstream_name)
 
-    if(redisUpstreamHealthResult == nil) then
+    if (redisUpstreamHealthResult == nil) then
         ngx.log(ngx.ERR, "\n No upstream results found for redis!!! ")
         return nil
     end
 
-    for key,value in ipairs(redisUpstreamHealthResult) do
+    for key, value in ipairs(redisUpstreamHealthResult) do
         -- return the first node found to be up.
         -- TODO: save all the nodes that are up and return them using round-robin alg
-        if(value == " up\n") then
-            healthy_redis_host = redisUpstreamHealthResult[key-1]
+        if (value == " up\n") then
+            healthy_redis_host = redisUpstreamHealthResult[key - 1]
             updateHealthyRedisNodeInCache(self.shared_dict, upstream_name, healthy_redis_host)
             local host, port = getHostAndPortInUpstream(healthy_redis_host)
             return healthy_redis_host, host, port
         end
-        if(value == " DOWN\n" and redisUpstreamHealthResult[key-1] ~= nil ) then
-            ngx.log(ngx.WARN, "\n Redis node " .. tostring(redisUpstreamHealthResult[key-1]) .. " is down! Checking for backup nodes. ")
+        if (value == " DOWN\n" and redisUpstreamHealthResult[key - 1] ~= nil ) then
+            ngx.log(ngx.WARN, "\n Redis node " .. tostring(redisUpstreamHealthResult[key - 1]) .. " is down! Checking for backup nodes. ")
         end
     end
 

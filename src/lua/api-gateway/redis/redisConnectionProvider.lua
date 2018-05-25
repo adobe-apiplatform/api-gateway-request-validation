@@ -81,11 +81,13 @@ function RedisConnectionProvider:getConnection(connection_options)
     end
 
     local redisHost, redisPort = self:getRedisUpstream(redisUpstream)
+    ngx.log(ngx.WARN, "Trying with: " .. tostring(redisHost) .. " and " .. tostring(redisPort))
     local status, redisInstance = self:connectToRedis(redisHost, redisPort, redisPassword, redisTimeout)
     if not status then
         -- retry
         ngx.log(ngx.WARN, "Connection to Redis failed. Retrieving new Redis host and retrying")
         redisHost, redisPort = self:getRedisUpstream(redisUpstream)
+        ngx.log(ngx.WARN, "Got new upstream: " .. tostring(redisHost) .. " and " .. tostring(redisPort))
         status, redisInstance = self:connectToRedis(redisHost, redisPort, redisPassword, redisTimeout)
     end
     return status, redisInstance
