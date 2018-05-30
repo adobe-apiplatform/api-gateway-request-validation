@@ -18,12 +18,11 @@
 --   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 --   DEALINGS IN THE SOFTWARE.
 
--- redis endpoints are assumed to be global per GW node and therefore are read here
+--- Redis connection provider module with retry and keepalive functionalities
 
 local restyRedis = require "resty.redis"
 local RedisHealthCheck = require "api-gateway.redis.redisHealthCheck"
 local apiGatewayRedisReadReplica = "api-gateway-redis-replica"
-local redisConfiguration = require "api-gateway.redis.redisConnectionConfiguration"
 
 local redisHealthCheck = RedisHealthCheck:new({
     shared_dict = "cachedkeys"
@@ -42,15 +41,18 @@ function RedisConnectionProvider:new(o)
     return o
 end
 
-function RedisConnectionProvider:isNotEmpty(s)
+local function isNotEmpty(s)
     return s ~= nil and s ~= ''
 end
 
-
+--- Searches and returns a Redis upstream pair (host:port) based on the name provided
+--- @param upstream_name The Redis upstream name, as defined in the Nginx conf file
+--- @return Redis host
+--- @return Redis port
 function RedisConnectionProvider:getRedisUpstream(upstream_name)
-    local upstream_name = upstream_name or apiGatewayRedisReadReplica
-    local _, host, port = redisHealthCheck:getHealthyRedisNode(upstream_name)
-    ngx.log(ngx.DEBUG, "Obtained Redis Host:" .. tostring(host) .. ":" .. tostring(port), " from upstream:", upstream_name)
+    local upstreamName = upstream_name or apiGatewayRedisReadReplica
+    local _, host, port = redisHealthCheck:getHealthyRedisNode(upstreamName)
+    ngx.log(ngx.DEBUG, "Obtained Redis Host:" .. tostring(host) .. ":" .. tostring(port), " from upstream:", upstreamName)
     if (nil ~= host and nil ~= port) then
         return host, port
     end
@@ -59,12 +61,15 @@ function RedisConnectionProvider:getRedisUpstream(upstream_name)
     return nil, nil
 end
 
-
--- Redis authentication
+--- Obtains a connection to a provided upstream using an optionally provided password and timeout
+--- If no password is provided, it is searched in the REDIS_PASS and REDIS_PASSWORD env variables
+--- If the first connection attempt fails, a second retry is automatically performed with the same connection options
+--- @param connection_options If this is a table, it should have upstream, password and redis_timeout.
+--- Otherwise, the connection_options is considered the upstream name
 function RedisConnectionProvider:getConnection(connection_options)
     local redisUpstream,
-        redisPassword,
-        redisTimeout;
+    redisPassword,
+    redisTimeout;
 
     if (type(connection_options) == 'table') then
         redisUpstream = connection_options["upstream"]
@@ -76,9 +81,17 @@ function RedisConnectionProvider:getConnection(connection_options)
     end
 
     local redisHost, redisPort = self:getRedisUpstream(redisUpstream)
-    return self:connectToRedis(redisHost, redisPort, redisPassword, redisTimeout)
+    ngx.log(ngx.DEBUG, "Trying with: " .. tostring(redisHost) .. " and " .. tostring(redisPort))
+    local status, redisInstance = self:connectToRedis(redisHost, redisPort, redisPassword, redisTimeout)
+    if not status then
+        -- retry
+        ngx.log(ngx.WARN, "Connection to Redis failed. Retrieving new Redis host and retrying")
+        redisHost, redisPort = self:getRedisUpstream(redisUpstream)
+        ngx.log(ngx.DEBUG, "Got new upstream: " .. tostring(redisHost) .. " and " .. tostring(redisPort))
+        status, redisInstance = self:connectToRedis(redisHost, redisPort, redisPassword, redisTimeout)
+    end
+    return status, redisInstance
 end
-
 
 function RedisConnectionProvider:connectToRedis(host, port, password, redisTimeout)
     local redis = restyRedis:new()
@@ -94,9 +107,9 @@ function RedisConnectionProvider:connectToRedis(host, port, password, redisTimeo
         return false, nil
     end
 
-    if self:isNotEmpty(password) then
+    if isNotEmpty(password) then
         -- Authenticate
-        local ok, err = redis:auth(password)
+        ok, err = redis:auth(password)
         if not ok then
             ngx.log(ngx.ERR, "Redis authentication failed for server: " .. host .. ":" .. port .. ". Error: ", err)
             return false, nil
@@ -108,7 +121,6 @@ function RedisConnectionProvider:connectToRedis(host, port, password, redisTimeo
         return true, redis
     end
 end
-
 
 function RedisConnectionProvider:closeConnection(redis_instance)
     redis_instance:set_keepalive(max_idle_timeout, pool_size)
