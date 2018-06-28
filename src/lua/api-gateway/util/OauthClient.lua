@@ -63,16 +63,16 @@ end
 --- the time it took for a http call to finish and the response status code.
 ---
 -- @param oauthHttpCallsNamespace - Namespace used for computing metric names for Dogstatsd
--- @param methodName - The name of the method for which we are measuring http calls
+-- @param metricsIdentifier - metric identifier
 -- @param startTime - The time the call was initiated
 -- @param endTime - The time the call returned
 -- @param statusCode - The status code returned by the call
 -- @return - void method
 --
-function OauthClient:pushMetrics(oauthHttpCallsNamespace, methodName, startTime, endTime, statusCode)
+function OauthClient:pushMetrics(oauthHttpCallsNamespace, metricsIdentifier, startTime, endTime, statusCode)
     local noOfOauthHttpCallsMetric = oauthHttpCallsNamespace
-    local elapsedTimeMetric = oauthHttpCallsNamespace .. '.' .. methodName .. '.duration'
-    local oauthStatusMetric = oauthHttpCallsNamespace .. '.' .. methodName .. '.status.' .. statusCode
+    local elapsedTimeMetric = oauthHttpCallsNamespace .. '.' .. metricsIdentifier .. '.duration'
+    local oauthStatusMetric = oauthHttpCallsNamespace .. '.' .. metricsIdentifier .. '.status.' .. statusCode
 
     local elapsedTime = string.format("%.3f", endTime - startTime)
 
@@ -115,7 +115,8 @@ function OauthClient:makeProfileCall(internalPath, oauth_host)
     local res = ngx.location.capture(internalPath, { share_all_vars = true })
     local endTime = os.clock()
 
-    self:pushMetrics(self.oauthHttpCallsNamespace, 'makeProfileCall', startTime, endTime, res.status)
+    local metricIdentifier = 'makeProfileCall.' .. internalPath
+    self:pushMetrics(self.oauthHttpCallsNamespace, metricIdentifier, startTime, endTime, res.status)
 
     local logLevel = ngx.INFO
     if res.status ~= 200 then
