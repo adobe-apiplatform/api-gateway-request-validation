@@ -53,6 +53,7 @@ local _M = BaseValidator:new()
 _M["redis_RO_upstream"] = redisConfigurationProvider["oauth"]["ro_upstream_name"]
 _M["redis_RW_upstream"] = redisConfigurationProvider["oauth"]["rw_upstream_name"]
 _M["redis_pass_env"] = redisConfigurationProvider["oauth"]["env_password_variable"]
+_M.PROFILE_VALIDATION_LOCATION = "/validate-user"
 
 local RESPONSES = {
     P_MISSING_TOKEN   = { error_code = "403020", message = "Oauth token is missing"         },
@@ -209,7 +210,7 @@ function _M:validateUserProfile()
 
     ngx.log(ngx.INFO, "Failed to get profile from cache falling back to oauth provider")
     -- 2. get the user profile from the oauth profile
-    local res = OauthClient:makeProfileCall("/validate-user")
+    local res = OauthClient:makeProfileCall(self.PROFILE_VALIDATION_LOCATION)
 
     if res.status == ngx.HTTP_OK then
         local json = cjson.decode(res.body)
