@@ -34,12 +34,13 @@ local base = require "api-gateway.validation.base"
 
 local HealthCheck = {}
 local DEFAULT_SHARED_DICT = "cachedkeys"
+local HEALTHY_REDIS_UPSTREAM_KEY_PREFIX = "healthy_redis_upstream:"
 
 function HealthCheck:new(o)
     o = o or {}
     setmetatable(o, self)
     self.__index = self
-    if ( o ~= nil ) then
+    if (o ~= nil) then
         self.shared_dict = o.shared_dict or DEFAULT_SHARED_DICT
     end
     return o
@@ -59,10 +60,10 @@ local function split(inputStr, separator)
     return table
 end
 
-local function isPeerHealthy(peerName)
+local function isPeerHealthy(peerName, upstream_password)
 
     local peerAddress = split(peerName, ":")
-    
+
     -- for now, we should only validate host:port
     if #peerAddress ~= 2 then
         return false
@@ -79,21 +80,34 @@ local function isPeerHealthy(peerName)
         tcp:close()
         return false
     end
+
     tcp:settimeout(2000)
+
+    ngx.log(ngx.ERR, "Connected, checking for auth")
+    -- First auth using provided password
+    if upstream_password and upstream_password ~= nil and type(upstream_password) == 'string' then
+        tcp:send("AUTH " .. upstream_password .. '\r\n')
+        local message, status, partial = tcp:receive()
+        if not message or not string.match(message, "OK") then
+            tcp:close()
+            return false
+        end
+    end
+
     tcp:send("PING\r\n")
     local message, status, partial = tcp:receive()
     tcp:close()
     return message and string.match(message, "PONG")
 end
 
-local function gen_peers_status_info(peers, bits, idx)
+local function gen_peers_status_info(peers, bits, idx, upstream_password)
     local npeers = #peers
     for i = 1, npeers do
         local peer = peers[i]
         local peerName = peer.name
         bits[idx] = peerName
 
-        if isPeerHealthy(peerName) then
+        if isPeerHealthy(peerName, upstream_password) then
             bits[idx + 1] = " up\n"
         else
             bits[idx + 1] = " DOWN\n"
@@ -105,7 +119,7 @@ end
 
 -- Pass the name of any upstream for which the health check is performed by the
 -- "resty.upstream.healthcheck" module. This is only to get the results of the healthcheck
-local function getHealthCheckForUpstream(upstreamName)
+local function getHealthCheckForUpstream(upstreamName, upstream_password)
     local ok, upstream = pcall(require, "ngx.upstream")
     if not ok then
         error("ngx_upstream_lua module required")
@@ -131,7 +145,7 @@ local function getHealthCheckForUpstream(upstreamName)
                 .. err
     end
 
-    idx = gen_peers_status_info(peers, bits, idx)
+    idx = gen_peers_status_info(peers, bits, idx, upstream_password)
 
     peers, err = get_backup_peers(upstreamName)
     if not peers then
@@ -139,7 +153,7 @@ local function getHealthCheckForUpstream(upstreamName)
                 .. err
     end
 
-    idx = gen_peers_status_info(peers, bits, idx)
+    idx = gen_peers_status_info(peers, bits, idx, upstream_password)
 
     return bits
 end
@@ -147,18 +161,18 @@ end
 local function getHealthyRedisNodeFromCache(dict_name, upstream_name)
     local dict = ngx.shared[dict_name];
     local upstreamRedis
-    if ( nil ~= dict ) then
-        upstreamRedis = dict:get("healthy_redis_upstream:" .. tostring(upstream_name) )
+    if (nil ~= dict) then
+        upstreamRedis = dict:get(HEALTHY_REDIS_UPSTREAM_KEY_PREFIX .. tostring(upstream_name))
     end
     return upstreamRedis
 end
 
 local function updateHealthyRedisNodeInCache(dict_name, upstream_name, healthy_redis_host)
     local dict = ngx.shared[dict_name];
-    if ( nil ~= dict ) then
+    if (nil ~= dict) then
         ngx.log(ngx.DEBUG, "Saving a healthy redis host:", healthy_redis_host, " in cache:", dict_name, " for upstream:", upstream_name)
         local exp_time_in_seconds = 5
-        dict:set("healthy_redis_upstream:" .. tostring(upstream_name), healthy_redis_host, exp_time_in_seconds)
+        dict:set(HEALTHY_REDIS_UPSTREAM_KEY_PREFIX .. tostring(upstream_name), healthy_redis_host, exp_time_in_seconds)
         return
     end
 
@@ -180,18 +194,18 @@ end
 -- Get the redis node to use for read.
 -- Returns 3 values: <upstreamName , host, port >
 -- The difference between upstream and <host,port> is that the upstream may be just a string containing host:port
-function HealthCheck:getHealthyRedisNode(upstream_name)
+function HealthCheck:getHealthyRedisNode(upstream_name, upstream_password)
 
     -- get the Redis host and port from the local cache first
     local healthy_redis_host = getHealthyRedisNodeFromCache(self.shared_dict, upstream_name)
-    if ( nil ~= healthy_redis_host) then
+    if (nil ~= healthy_redis_host) then
         local host, port = getHostAndPortInUpstream(healthy_redis_host)
         return healthy_redis_host, host, port
     end
 
     ngx.log(ngx.DEBUG, "Looking up for a healthy redis node in upstream:", upstream_name)
     -- if the Redis host is not in the local cache get it from the upstream configuration
-    local redisUpstreamHealthResult = getHealthCheckForUpstream(upstream_name)
+    local redisUpstreamHealthResult = getHealthCheckForUpstream(upstream_name, upstream_password)
 
     if (redisUpstreamHealthResult == nil) then
         ngx.log(ngx.ERR, "\n No upstream results found for redis!!! ")
@@ -207,7 +221,7 @@ function HealthCheck:getHealthyRedisNode(upstream_name)
             local host, port = getHostAndPortInUpstream(healthy_redis_host)
             return healthy_redis_host, host, port
         end
-        if (value == " DOWN\n" and redisUpstreamHealthResult[key - 1] ~= nil ) then
+        if (value == " DOWN\n" and redisUpstreamHealthResult[key - 1] ~= nil) then
             ngx.log(ngx.WARN, "\n Redis node " .. tostring(redisUpstreamHealthResult[key - 1]) .. " is down! Checking for backup nodes. ")
         end
     end

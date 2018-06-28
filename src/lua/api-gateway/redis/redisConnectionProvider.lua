@@ -49,9 +49,10 @@ end
 --- @param upstream_name The Redis upstream name, as defined in the Nginx conf file
 --- @return Redis host
 --- @return Redis port
-function RedisConnectionProvider:getRedisUpstream(upstream_name)
+function RedisConnectionProvider:getRedisUpstream(upstream_name, upstream_password)
+    ngx.log(ngx.ERR, "Upstream name: " .. tostring(upstream_name) .. " and password: " .. tostring(upstream_password))
     local upstreamName = upstream_name or apiGatewayRedisReadReplica
-    local _, host, port = redisHealthCheck:getHealthyRedisNode(upstreamName)
+    local _, host, port = redisHealthCheck:getHealthyRedisNode(upstreamName, upstream_password)
     ngx.log(ngx.DEBUG, "Obtained Redis Host:" .. tostring(host) .. ":" .. tostring(port), " from upstream:", upstreamName)
     if (nil ~= host and nil ~= port) then
         return host, port
@@ -80,13 +81,13 @@ function RedisConnectionProvider:getConnection(connection_options)
         redisPassword = os.getenv('REDIS_PASS') or os.getenv('REDIS_PASSWORD') or ''
     end
 
-    local redisHost, redisPort = self:getRedisUpstream(redisUpstream)
+    local redisHost, redisPort = self:getRedisUpstream(redisUpstream, redisPassword)
     ngx.log(ngx.DEBUG, "Trying with: " .. tostring(redisHost) .. " and " .. tostring(redisPort))
     local status, redisInstance = self:connectToRedis(redisHost, redisPort, redisPassword, redisTimeout)
     if not status then
         -- retry
         ngx.log(ngx.WARN, "Connection to Redis failed. Retrieving new Redis host and retrying")
-        redisHost, redisPort = self:getRedisUpstream(redisUpstream)
+        redisHost, redisPort = self:getRedisUpstream(redisUpstream, redisPassword)
         ngx.log(ngx.DEBUG, "Got new upstream: " .. tostring(redisHost) .. " and " .. tostring(redisPort))
         status, redisInstance = self:connectToRedis(redisHost, redisPort, redisPassword, redisTimeout)
     end
@@ -101,10 +102,18 @@ function RedisConnectionProvider:connectToRedis(host, port, password, redisTimeo
     redis:set_timeout(redis_timeout)
 
     local ok, err = redis:connect(host, port)
-
     if not ok then
         ngx.log(ngx.ERR, "Failed to connect to Redis instance: " .. host .. ", port: " .. port .. ". Error: ", err)
         return false, nil
+    end
+
+    -- Check for existing connection
+    local times, error = redis:get_reused_times()
+    ngx.log(ngx.ERR, "Reused times: " .. tostring(times) .. " and err: " .. tostring(err))
+
+    if times and times > 0 then
+        ngx.log(ngx.ERR, "Reusing redis connection")
+        return true, redis
     end
 
     if isNotEmpty(password) then

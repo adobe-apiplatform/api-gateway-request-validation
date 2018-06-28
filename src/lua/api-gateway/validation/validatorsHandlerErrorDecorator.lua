@@ -127,6 +127,10 @@ function ValidatorHandlerErrorDecorator:decorateResponse(response_status, respon
                     end
                 end
                 ngx.header[k] = val
+
+                -- If cors enabled set cors headers
+                -- if ngx.var['cors_enabled'] then header_names = ngx.var['cors_response_header_names']
+                -- foreach names -> ngx.header[name] ->  ngx.var[header_name]
             end
         end
         -- initialize an nginx variable with the error_code in order to print it in the logging file
