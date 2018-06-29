@@ -230,11 +230,11 @@ function _M:validateUserProfile()
                 return RESPONSES.INVALID_PROFILE.error_code, cjson.encode(RESPONSES.INVALID_PROFILE)
             end
         else
-            ngx.log(ngx.WARN, "Could not decode /validate-user response:" .. tostring(res.body) )
+            ngx.log(ngx.WARN, "Could not decode " .. self.PROFILE_VALIDATION_LOCATION .. " response:" .. tostring(res.body) )
         end
     else
         -- ngx.log(ngx.WARN, "Could not read /oauth-profile. status=" .. res.status .. ".body=" .. res.body .. ". token=" .. ngx.var.authtoken)
-        ngx.log(ngx.WARN, "Could not read /validate-user. status=" .. res.status .. ".body=" .. res.body )
+        ngx.log(ngx.WARN, "Could not read " .. self.PROFILE_VALIDATION_LOCATION .. ". status=" .. res.status .. ".body=" .. res.body )
         if ( res.status == ngx.HTTP_UNAUTHORIZED or res.status == ngx.HTTP_BAD_REQUEST ) then
             return RESPONSES.NOT_ALLOWED.error_code, cjson.encode(RESPONSES.NOT_ALLOWED)
         end
