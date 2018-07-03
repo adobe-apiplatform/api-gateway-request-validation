@@ -9,8 +9,7 @@ description = {
    license = "MIT"
 }
 dependencies = {
-   "lua >= 5.1", "lua-api-gateway-hmac >= 1.0.0",
-   "api-gateway-request-validation >= 1.3.11"
+   "lua >= 5.1", "lua-api-gateway-hmac >= 1.0.0"
 }
 build = {
    type = "builtin",
