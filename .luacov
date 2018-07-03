@@ -1,5 +1,8 @@
 modules = {
-    ["redisApiKeyValidator"] = "src/lua/api-gateway/validation/key/redisApiKeyValidator.lua"
+    ["redisApiKeyValidator"] = "src/lua/api-gateway/validation/key/redisApiKeyValidator.lua",
+    ["userProfileValidator"] = "src/lua/api-gateway/validation/oauth2/userProfileValidator.lua",
+    ["oauthTokenValidator"] = "src/lua/api-gateway/validation/oauth2/oauthTokenValidator.lua",
+    ["hasher"] = "src/lua/api-gateway/util/hasher.lua"
 }
 
 exclude = {
