@@ -1,4 +1,4 @@
-api-gateway-request-validation [![Build Status](https://travis-ci.org/adobe-apiplatform/api-gateway-request-validation.svg?branch=master)](https://travis-ci.org/adobe-apiplatform/api-gateway-request-validation) [![Coverage Status](https://coveralls.io/repos/github/adobe-apiplatform/api-gateway-request-validation/badge.svg)](https://coveralls.io/github/adobe-apiplatform/api-gateway-request-validation)
+api-gateway-request-validation [![Build Status](https://travis-ci.org/adobe-apiplatform/api-gateway-request-validation.svg?branch=master)](https://travis-ci.org/adobe-apiplatform/api-gateway-request-validation) [![Coverage Status](https://coveralls.io/repos/github/adobe-apiplatform/api-gateway-request-validation/badge.svg?branch=HEAD)](https://coveralls.io/github/adobe-apiplatform/api-gateway-request-validation?branch=HEAD)
 ==============================
 
 Lua Module providing a request validation framework in the API Gateway.
