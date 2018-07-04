@@ -50,7 +50,6 @@ end
 --- @return Redis host
 --- @return Redis port
 function RedisConnectionProvider:getRedisUpstream(upstream_name, upstream_password)
-    ngx.log(ngx.ERR, "Upstream name: " .. tostring(upstream_name) .. " and password: " .. tostring(upstream_password))
     local upstreamName = upstream_name or apiGatewayRedisReadReplica
     local _, host, port = redisHealthCheck:getHealthyRedisNode(upstreamName, upstream_password)
     ngx.log(ngx.DEBUG, "Obtained Redis Host:" .. tostring(host) .. ":" .. tostring(port), " from upstream:", upstreamName)
@@ -109,10 +108,9 @@ function RedisConnectionProvider:connectToRedis(host, port, password, redisTimeo
 
     -- Check for existing connection
     local times, error = redis:get_reused_times()
-    ngx.log(ngx.ERR, "Reused times: " .. tostring(times) .. " and err: " .. tostring(err))
 
     if times and times > 0 then
-        ngx.log(ngx.ERR, "Reusing redis connection")
+        ngx.log(ngx.DEBUG, "Reusing Redis connection")
         return true, redis
     end
 

@@ -96,20 +96,6 @@ function BaseValidator:deleteKeyInLocalCache(key, dict_name)
     end
 end
 
--- TODO: remove this if no more usage
-function BaseValidator:getRedisUpstream(upstream_name)
-    local n = upstream_name or self.redis_RO_upstream
-    local upstream, host, port = redisHealthCheck:getHealthyRedisNode(n)
-    ngx.log(ngx.DEBUG, "Obtained Redis Host:" .. tostring(host) .. ":" .. tostring(port), " from upstream:", n)
-    if (nil ~= host and nil ~= port) then
-        return host, port
-    end
-
-    ngx.log(ngx.ERR, "Could not find a Redis upstream.")
-    return nil, nil
-end
-
-
 -- retrieves a saved information from the Redis cache --
 -- the method uses GET redis command --
 -- it returns the value of the key, when found in the cache, nil otherwise --

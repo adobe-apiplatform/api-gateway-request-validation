@@ -6,8 +6,6 @@
 -- To change this template use File | Settings | File Templates.
 --
 
-local RedisConnectionConfiguration = {}
-
 local redisConf = {
     ["oauth"] = {
         env_password_variable = "REDIS_PASS_OAUTH",
@@ -21,12 +19,4 @@ local redisConf = {
     }
 }
 
-function RedisConnectionConfiguration:getApiKeyConfiguration()
-    return redisConf.apiKey
-end
-
-function RedisConnectionConfiguration:getOauthConfiguration()
-    return redisConf.oauth
-end
-
-return RedisConnectionConfiguration
+return redisConf

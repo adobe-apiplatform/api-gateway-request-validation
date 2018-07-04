@@ -39,7 +39,7 @@ local function getLogFormat(level, debugInfo, ...)
     local status, request_id = pcall(is_in_init_phase)
     --- testing for init phase
     if not status then
-       request_id = "N/A"
+        request_id = "N/A"
     end
 
     return level, "[", debugInfo.short_src,
@@ -58,13 +58,30 @@ local function _decorateLogger()
         ngx.log = function(level, ...)
             -- gets the level 2 because level 1 is this function and I need my caller
             -- nSl means line, name, source
-            local debugInfo =  debug.getinfo(2, "nSl")
+            local debugInfo = debug.getinfo(2, "nSl")
             pcall(function(...)
                 oldNgx(getLogFormat(level, debugInfo, ...))
             end, ...)
         end
         set = true
     end
+end
+
+logger = {}
+
+function logger.error(...)
+    _decorateLogger()
+    ngx.log(ngx.ERR, ...)
+end
+
+function logger.debug(...)
+    _decorateLogger()
+    ngx.log(ngx.DEBUG, ...)
+end
+
+function logger.info(...)
+    _decorateLogger()
+    ngx.log(ngx.INFO, ...)
 end
 
 return {
