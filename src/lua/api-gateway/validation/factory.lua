@@ -39,7 +39,7 @@ local ApiKeyValidatorCls = require "api-gateway.validation.key.redisApiKeyValida
 local HmacSignatureValidator = require "api-gateway.validation.signing.hmacGenericSignatureValidator"
 local OAuthTokenValidator = require "api-gateway.validation.oauth2.oauthTokenValidator"
 local UserProfileValidator = require "api-gateway.validation.oauth2.userProfileValidator"
-local logger = require "api-gateway.util.logger"
+logger = require "api-gateway.util.logger"
 
 local function debug(...)
     if debug_mode then
@@ -64,8 +64,8 @@ local function _validateRequest()
     end
 
     if res.status == ngx.HTTP_OK then
-        if ( ngx.var.is_access_phase_tracking_enabled == "true" ) then
-            if ( ngx.apiGateway.tracking ~= nil ) then
+        if (ngx.var.is_access_phase_tracking_enabled == "true") then
+            if (ngx.apiGateway.tracking ~= nil) then
                 ngx.log(ngx.DEBUG, "Request tracking done on access phase.");
                 ngx.apiGateway.tracking.track()
             end
@@ -116,7 +116,6 @@ local function _validateUserProfile()
     local userProfileValidator = UserProfileValidator:new()
     return userProfileValidator:validateRequest()
 end
-
 
 return {
     validateApiKey = _validateApiKey,

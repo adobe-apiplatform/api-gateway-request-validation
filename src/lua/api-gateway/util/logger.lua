@@ -67,23 +67,21 @@ local function _decorateLogger()
     end
 end
 
-logger = {}
-
-function logger.error(...)
-    _decorateLogger()
+local function error(...)
     ngx.log(ngx.ERR, ...)
 end
 
-function logger.debug(...)
-    _decorateLogger()
+local function debug(...)
     ngx.log(ngx.DEBUG, ...)
 end
 
-function logger.info(...)
-    _decorateLogger()
+local function info(...)
     ngx.log(ngx.INFO, ...)
 end
 
 return {
-    decorateLogger = _decorateLogger
+    decorateLogger = _decorateLogger,
+    error = error,
+    debug = debug,
+    info = info
 }
