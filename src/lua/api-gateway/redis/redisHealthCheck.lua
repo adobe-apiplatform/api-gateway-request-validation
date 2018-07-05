@@ -156,13 +156,13 @@ local function getHealthCheckForUpstream(upstream, upstreamPassword)
     local primaryPeers, err = get_primary_peers(upstream)
     if err or not primaryPeers then
         ngx.log(ngx.ERR, "Failed to get primary peers in upstream " .. tostring(upstream) .. ":" .. err)
-    end
+    else
+        local primaryPeersStatus = generatePeersStatus(primaryPeers, upstreamPassword)
 
-    local primaryPeersStatus = generatePeersStatus(primaryPeers, upstreamPassword)
-
-    if primaryPeersStatus ~= nil then
-        for k, v in pairs(primaryPeersStatus) do
-            peersStatus[k] = v
+        if primaryPeersStatus ~= nil then
+            for k, v in pairs(primaryPeersStatus) do
+                peersStatus[k] = v
+            end
         end
     end
 
@@ -170,13 +170,14 @@ local function getHealthCheckForUpstream(upstream, upstreamPassword)
 
     if err or not backupPeers then
         ngx.log(ngx.ERR, "Failed to get backup peers in upstream " .. tostring(upstream) .. ":" .. err)
-    end
-
-    local backupPeersStatus = generatePeersStatus(backupPeers, upstreamPassword)
-    if backupPeersStatus ~= nil then
-        for k, v in pairs(backupPeersStatus) do
-            peersStatus[k] = v
+    else
+        local backupPeersStatus = generatePeersStatus(backupPeers, upstreamPassword)
+        if backupPeersStatus ~= nil then
+            for k, v in pairs(backupPeersStatus) do
+                peersStatus[k] = v
+            end
         end
+
     end
 
     return peersStatus

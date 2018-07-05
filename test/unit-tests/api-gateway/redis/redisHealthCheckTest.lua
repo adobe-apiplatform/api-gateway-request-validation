@@ -248,4 +248,97 @@ test('Multiple peers successful flow with password, should return first healthy 
     assertEquals('7000', tostring(port))
 end)
 
+test('No tcp connection should fail', function()
+    local classUnderTest = require(CLASS_UNDER_TEST):new()
+
+    local primaryPeers = {
+        {
+            name = "127.0.0.2:7000"
+        },
+        {
+            name = "127.0.0.1.6379"
+        }
+    }
+    ngxUpstreamMock.__get_primary_peers.doReturn = function()
+
+        return primaryPeers, nil
+    end
+
+    ngxUpstreamMock.__get_backup_peers.doReturn = function()
+        return {}, nil
+    end
+
+    ngxSocketMock.__connect.doReturn = function()
+        return false, {}
+    end
+
+    ngxSocketMock.__settimeout.doReturn = function()
+        return true
+    end
+
+    ngxSocketMock.__send.doReturn = function(self, message)
+
+        if string.match(message, 'AUTH') then
+            ngxSocketMock.__receive.doReturn = function()
+                return 'OK', nil, nil
+            end
+        end
+
+        if string.match(message, 'PING') then
+            ngxSocketMock.__receive.doReturn = function()
+                return 'PONG', nil, nil
+            end
+        end
+
+        return 0, nil
+    end
+
+    local healthyHost, host, port = classUnderTest:getHealthyRedisNode('api-gateway-read-replica', 'password')
+    assertNil(healthyHost)
+    assertNil(host)
+    assertNil(port)
+end)
+
+test('Primary and backup peers error should fail', function()
+    local classUnderTest = require(CLASS_UNDER_TEST):new()
+
+    ngxUpstreamMock.__get_primary_peers.doReturn = function()
+
+        return nil, 'ERROR'
+    end
+
+    ngxUpstreamMock.__get_backup_peers.doReturn = function()
+        return nil, 'ERROR'
+    end
+
+    ngxSocketMock.__connect.doReturn = function()
+        return false, {}
+    end
+
+    ngxSocketMock.__settimeout.doReturn = function()
+        return true
+    end
+
+    ngxSocketMock.__send.doReturn = function(self, message)
+
+        if string.match(message, 'AUTH') then
+            ngxSocketMock.__receive.doReturn = function()
+                return 'OK', nil, nil
+            end
+        end
+
+        if string.match(message, 'PING') then
+            ngxSocketMock.__receive.doReturn = function()
+                return 'PONG', nil, nil
+            end
+        end
+
+        return 0, nil
+    end
+
+    local healthyHost, host, port = classUnderTest:getHealthyRedisNode('api-gateway-read-replica', 'password')
+    assertNil(healthyHost)
+    assertNil(host)
+    assertNil(port)
+end)
 
