@@ -96,8 +96,11 @@ local function isPeerHealthy(upstream, upstreamPassword)
 
     tcpSocket:settimeout(2000)
 
+    -- Remove spaces to eliminate false lengths
+    upstreamPassword = string.gsub(upstreamPassword, "%s+", "")
+
     -- First auth using provided password
-    if upstreamPassword and upstreamPassword ~= nil and type(upstreamPassword) == 'string' then
+    if upstreamPassword and upstreamPassword ~= nil and upstreamPassword ~= '' and type(upstreamPassword) == 'string' then
         tcpSocket:send(authMessage .. upstreamPassword .. '\r\n')
         local message, err, _ = tcpSocket:receive()
         if err then

@@ -39,7 +39,6 @@ local ApiKeyValidatorCls = require "api-gateway.validation.key.redisApiKeyValida
 local HmacSignatureValidator = require "api-gateway.validation.signing.hmacGenericSignatureValidator"
 local OAuthTokenValidator = require "api-gateway.validation.oauth2.oauthTokenValidator"
 local UserProfileValidator = require "api-gateway.validation.oauth2.userProfileValidator"
-logger = require "api-gateway.util.logger"
 
 local function debug(...)
     if debug_mode then
@@ -127,4 +126,3 @@ return {
     defaultValidateRequestImpl = _defaultValidateRequestImpl,
 }
 
---return _M
