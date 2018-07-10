@@ -19,13 +19,8 @@
 --   DEALINGS IN THE SOFTWARE.
 
 
---
--- Created by IntelliJ IDEA.
--- User: nramaswa
--- Date: 4/17/14
--- Time: 7:38 PM
--- To change this template use File | Settings | File Templates.
---
+--- Redis healthcheck module, which checks for both primary and backup upstreams health,
+-- required by the RedisConnectionProvider module
 
 local RedisHealthCheck = {}
 local DEFAULT_SHARED_DICT = "cachedkeys"
@@ -122,7 +117,6 @@ local function isPeerHealthy(upstream, upstreamPassword)
         ngx.log(ngx.ERR, "Error while health checking Redis: ", err)
         return false
     end
-
     return message and string.match(message, pongResponse)
 end
 
