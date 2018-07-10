@@ -23,14 +23,14 @@
     <name>API Gateway Request Validation</name>
 
     <properties>
-        <git.repo>git@github.com:adobe-apiplatform/api-gateway-request-validation.git</git.repo>
+        <git.repo>https://github.com/adobe-apiplatform/api-gateway-request-validation.git</git.repo>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <scm>
         <connection>scm:git:${git.repo}</connection>
         <developerConnection>scm:git:${git.repo}</developerConnection>
-        <tag>api-gateway-request-validation-1.2.4</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <build>
