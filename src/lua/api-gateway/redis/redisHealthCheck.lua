@@ -54,6 +54,24 @@ local function split(inputStr, separator)
     return table
 end
 
+--- Splits the host:port upstream format into corresponding fields
+-- @param upstreamRedis Upstream address as host:port
+-- @return Upstream host
+-- @return Upstream port
+local function getHostAndPortInUpstream(upstreamRedis)
+    local host, port
+    local upstreamNameSeparator = ":"
+    local splitUpstreamAddress = split(upstreamRedis, upstreamNameSeparator)
+    -- For the moment, validate the address is host:port
+    if #splitUpstreamAddress == 2 then
+        host = splitUpstreamAddress[1]
+        port = splitUpstreamAddress[2]
+    else
+        return nil, nil
+    end
+    return host, port
+end
+
 
 --- Checks if a Redis peer is healthy by opening a TCP connection and sending a PING message. If upstream_password
 --- is present, authentication is performed prior to pinging the machine
@@ -67,17 +85,13 @@ local function isPeerHealthy(upstream, upstreamPassword)
     local successfulAuthResponse = "OK"
     local pingMessage = "PING\r\n"
     local pongResponse = "PONG"
-    local upstreamNameSeparator = ":"
 
-    local peerAddress = split(upstream, upstreamNameSeparator)
+    local peerHost, peerPort = getHostAndPortInUpstream(upstream)
 
     -- for now, we should only validate host:port
-    if #peerAddress ~= 2 then
+    if peerHost == nil or peerPort == nil then
         return false
     end
-
-    local peerHost = peerAddress[1]
-    local peerPort = peerAddress[2]
 
     ngx.log(ngx.DEBUG, "Checking health for: " .. tostring(peerHost) .. ":" .. tostring(peerPort))
     local socket = ngx.socket.tcp
@@ -208,21 +222,6 @@ local function updateHealthyRedisNodeInCache(dictionaryName, upstreamName, healt
         return
     end
     ngx.log(ngx.WARN, "Dictionary ", dictionaryName, " doesn't seem to be set. Did you define one ? ")
-end
-
---- Splits the host:port upstream format into corresponding fields
--- @param upstreamRedis Upstream address as host:port
--- @return Upstream host
--- @return Upstream port
-local function getHostAndPortInUpstream(upstreamRedis)
-    local upstreamAddress = {}
-    upstreamAddress.host = upstreamRedis
-    local idx = string.find(upstreamRedis, ":", 1, true)
-    if idx then
-        upstreamAddress.host = string.sub(upstreamRedis, 1, idx - 1)
-        upstreamAddress.port = tonumber(string.sub(upstreamRedis, idx + 1))
-    end
-    return upstreamAddress.host, upstreamAddress.port
 end
 
 --- Checks for healthy Redis nodes and returns the first correct value
