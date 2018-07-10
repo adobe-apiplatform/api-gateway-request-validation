@@ -6,19 +6,17 @@
 -- To change this template use File | Settings | File Templates.
 --
 
-
-local redisConf = {}
-
-redisConf["oauth"] = {
-    env_password_variable = "REDIS_PASS_OAUTH",
-    ro_upstream_name = "oauth-redis-ro-upstream",
-    rw_upstream_name = "oauth-redis-rw-upstream"
-}
-
-redisConf["apiKey"] = {
-    env_password_variable = "REDIS_PASS_API_KEY",
-    ro_upstream_name = "api-gateway-redis-replica",
-    rw_upstream_name = "api-gateway-redis"
+local redisConf = {
+    ["oauth"] = {
+        env_password_variable = "REDIS_PASS_OAUTH",
+        ro_upstream_name = "oauth-redis-ro-upstream",
+        rw_upstream_name = "oauth-redis-rw-upstream"
+    },
+    ["apiKey"] = {
+        env_password_variable = "REDIS_PASS_API_KEY",
+        ro_upstream_name = "api-gateway-redis-replica",
+        rw_upstream_name = "api-gateway-redis"
+    }
 }
 
 return redisConf

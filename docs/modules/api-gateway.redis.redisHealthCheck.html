@@ -1,0 +1,322 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Reference</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>ldoc</h1>
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+<li><a href="#Local_Functions">Local Functions</a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="nowrap">
+  <li><a href="../modules/api-gateway.dogstatsd.Dogstatsd.html">api-gateway.dogstatsd.Dogstatsd</a></li>
+  <li><a href="../modules/api-gateway.redis.redisConnectionProvider.html">api-gateway.redis.redisConnectionProvider</a></li>
+  <li><strong>api-gateway.redis.redisHealthCheck</strong></li>
+  <li><a href="../modules/api-gateway.util.OauthClient.html">api-gateway.util.OauthClient</a></li>
+  <li><a href="../modules/api-gateway.util.hasher.html">api-gateway.util.hasher</a></li>
+  <li><a href="../modules/api-gateway.util.logger.html">api-gateway.util.logger</a></li>
+  <li><a href="../modules/api-gateway.validation.factory.html">api-gateway.validation.factory</a></li>
+  <li><a href="../modules/api-gateway.validation.key.redisApiKeyValidator.html">api-gateway.validation.key.redisApiKeyValidator</a></li>
+  <li><a href="../modules/api-gateway.validation.oauth2.oauthTokenValidator.html">api-gateway.validation.oauth2.oauthTokenValidator</a></li>
+  <li><a href="../modules/api-gateway.validation.oauth2.userProfileValidator.html">api-gateway.validation.oauth2.userProfileValidator</a></li>
+  <li><a href="../modules/api-gateway.validation.validator.html">api-gateway.validation.validator</a></li>
+  <li><a href="../modules/api-gateway.validation.validatorsHandler.html">api-gateway.validation.validatorsHandler</a></li>
+  <li><a href="../modules/api-gateway.validation.validatorsHandlerErrorDecorator.html">api-gateway.validation.validatorsHandlerErrorDecorator</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>api-gateway.redis.redisHealthCheck</code></h1>
+<p>Splits a string by a given separator</p>
+<p></p>
+
+
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#RedisHealthCheck:getHealthyRedisNode">RedisHealthCheck:getHealthyRedisNode (upstream, upstreamPassword)</a></td>
+	<td class="summary">Checks for healthy Redis nodes and returns the first correct value</td>
+	</tr>
+</table>
+<h2><a href="#Local_Functions">Local Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#isPeerHealthy">isPeerHealthy (peerName, upstreamPassword)</a></td>
+	<td class="summary">Checks if a Redis peer is healthy by opening a TCP connection and sending a PING message.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#generatePeersStatus">generatePeersStatus (peers, upstreamPassword)</a></td>
+	<td class="summary">Generates peers health status</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#getHealthCheckForUpstream">getHealthCheckForUpstream (upstream, upstreamPassword)</a></td>
+	<td class="summary">Checks for healthy upstreams using the ngx_upstream_lua module.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#getHealthyRedisNodeFromCache">getHealthyRedisNodeFromCache (dictionaryName, upstreamName)</a></td>
+	<td class="summary">Returns the upstream address from the shared cache</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#updateHealthyRedisNodeInCache">updateHealthyRedisNodeInCache (dictionaryName, upstreamName, healthyRedisHost)</a></td>
+	<td class="summary">Sets the healthy upstream address in the shared cache</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#getHostAndPortInUpstream">getHostAndPortInUpstream (upstreamRedis)</a></td>
+	<td class="summary">Splits the host:port upstream format into corresponding fields</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2 class="section-header "><a name="Functions"></a>Functions</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "RedisHealthCheck:getHealthyRedisNode"></a>
+    <strong>RedisHealthCheck:getHealthyRedisNode (upstream, upstreamPassword)</strong>
+    </dt>
+    <dd>
+    Checks for healthy Redis nodes and returns the first correct value
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">upstream</span>
+         The name of the upstream for which a healthy address is to be found
+        </li>
+        <li><span class="parameter">upstreamPassword</span>
+         The password for the upstream, should this need authentication prior to health checking
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+        Full upstream address as host:port</li>
+        <li>
+        Upstream host</li>
+        <li>
+        Upstream port</li>
+    </ol>
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header "><a name="Local_Functions"></a>Local Functions</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "isPeerHealthy"></a>
+    <strong>isPeerHealthy (peerName, upstreamPassword)</strong>
+    </dt>
+    <dd>
+    Checks if a Redis peer is healthy by opening a TCP connection and sending a PING message.  If upstream_password
+ is present, authentication is performed prior to pinging the machine
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">peerName</span>
+         Redis upstream in host:port format
+        </li>
+        <li><span class="parameter">upstreamPassword</span>
+         upstream password used for authentication before pinging
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        true if the peer is considered healthy (PING response is PONG), false otherwise (password may be incorrect,
+ instance may be down)
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "generatePeersStatus"></a>
+    <strong>generatePeersStatus (peers, upstreamPassword)</strong>
+    </dt>
+    <dd>
+    Generates peers health status
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">peers</span>
+         Array of peers to be health checked
+        </li>
+        <li><span class="parameter">upstreamPassword</span>
+         Peer password used for authentication prior to health checking (one password for now)
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Upstream status array as peer -> 1 (healthy), 0(unhealthy)
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "getHealthCheckForUpstream"></a>
+    <strong>getHealthCheckForUpstream (upstream, upstreamPassword)</strong>
+    </dt>
+    <dd>
+    Checks for healthy upstreams using the ngx_upstream_lua module.  It checks for both primary and secondary peers
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">upstream</span>
+         The name of the upstream, as defined in the conf files
+        </li>
+        <li><span class="parameter">upstreamPassword</span>
+         The password for the upstream, needed to perform authentication prior to the actual healthcheck
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Upstream status as a table containing host:port -> 1(healthy) or 0(unhealthy)
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "getHealthyRedisNodeFromCache"></a>
+    <strong>getHealthyRedisNodeFromCache (dictionaryName, upstreamName)</strong>
+    </dt>
+    <dd>
+    Returns the upstream address from the shared cache
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">dictionaryName</span>
+         Shared dictionary containing the cached entries
+        </li>
+        <li><span class="parameter">upstreamName</span>
+         The name of the upstream, used in the caching key
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Upstream address as host:port
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "updateHealthyRedisNodeInCache"></a>
+    <strong>updateHealthyRedisNodeInCache (dictionaryName, upstreamName, healthyRedisHost)</strong>
+    </dt>
+    <dd>
+    Sets the healthy upstream address in the shared cache
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">dictionaryName</span>
+         Shared dictionary containing the cached entries
+        </li>
+        <li><span class="parameter">upstreamName</span>
+         The name of the upstream, used in the caching key
+        </li>
+        <li><span class="parameter">healthyRedisHost</span>
+         Upstream address as host:port
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "getHostAndPortInUpstream"></a>
+    <strong>getHostAndPortInUpstream (upstreamRedis)</strong>
+    </dt>
+    <dd>
+    Splits the host:port upstream format into corresponding fields
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">upstreamRedis</span>
+         Upstream address as host:port
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+        Upstream host</li>
+        <li>
+        Upstream port</li>
+    </ol>
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
+<i style="float:right;">Last updated 2018-07-05 13:03:22 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

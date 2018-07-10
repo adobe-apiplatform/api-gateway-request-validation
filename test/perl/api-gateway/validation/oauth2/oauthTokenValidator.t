@@ -67,6 +67,8 @@ __DATA__
 --- main_config
 env REDIS_PASS_API_KEY;
 env REDIS_PASS_OAUTH;
+env REDIS_PASSWORD;
+env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -107,6 +109,8 @@ GET /test-oauth-validation
 --- main_config
 env REDIS_PASS_API_KEY;
 env REDIS_PASS_OAUTH;
+env REDIS_PASSWORD;
+env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -205,7 +209,7 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_2_X_0
 ]
 --- response_body_like eval
 [ "oauth token is valid.\n" ,
-'.*{"oauth_token_client_id":"client_id_test_2","oauth_token_expires_at":\\d{13},"oauth_token_scope":"openid email profile","oauth_token_user_id":"21961FF44F97F8A10A490D36"}.*',
+'.*{"oauth_token_scope":"openid email profile","oauth_token_client_id":"client_id_test_2","oauth_token_user_id":"21961FF44F97F8A10A490D36","oauth_token_expires_at":\\d{13}}.*',
 '.*"expires_at":\d+,.*',
 '[1-4]', # the cached token expiry time is in seconds, and it can only be between 1s to 4s, but not less. -1 response indicated the key is not cached or it has expired
 'OK\n',
@@ -221,6 +225,9 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_2_X_0
 --- main_config
 env REDIS_PASS_API_KEY;
 env REDIS_PASS_OAUTH;
+env REDIS_PASSWORD;
+env REDIS_PASS;
+
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -285,6 +292,8 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST3
 --- main_config
 env REDIS_PASS_API_KEY;
 env REDIS_PASS_OAUTH;
+env REDIS_PASSWORD;
+env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -369,9 +378,9 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST4
 ]
 --- response_body_like eval
 ["oauth token is valid.\n",
-'.*{"oauth_token_client_id":"test_Client_ID","oauth_token_expires_at":\\d{13},"oauth_token_scope":"openid,AdobeID","oauth_token_user_id":"21961FF44F97F8A10A490D36"}.*',
+'.*{"oauth_token_scope":"openid,AdobeID","oauth_token_client_id":"test_Client_ID","oauth_token_user_id":"21961FF44F97F8A10A490D36","oauth_token_expires_at":\\d{13}}.*',
 "oauth token is also valid.\n",
-'Local cache:{"oauth_token_client_id":"test_Client_ID","oauth_token_expires_at":\\d{13},"oauth_token_scope":"openid,AdobeID","oauth_token_user_id":"21961FF44F97F8A10A490D36"}\n'
+'Local cache:{"oauth_token_scope":"openid,AdobeID","oauth_token_client_id":"test_Client_ID","oauth_token_user_id":"21961FF44F97F8A10A490D36","oauth_token_expires_at":\\d{13}}\n'
 ]
 --- no_error_log
 [error]
@@ -381,6 +390,8 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST4
 --- main_config
 env REDIS_PASS_API_KEY;
 env REDIS_PASS_OAUTH;
+env REDIS_PASSWORD;
+env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
@@ -422,6 +433,8 @@ GET /test-oauth-validation
 --- main_config
 env REDIS_PASS_API_KEY;
 env REDIS_PASS_OAUTH;
+env REDIS_PASSWORD;
+env REDIS_PASS;
 
 --- http_config eval: $::HttpConfig
 --- config
