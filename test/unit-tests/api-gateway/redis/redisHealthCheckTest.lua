@@ -6,14 +6,22 @@
 
 local CLASS_UNDER_TEST = 'api-gateway.redis.redisHealthCheck'
 
-local ngxUpstreamMock = mock('ngx.upstream', { 'get_primary_peers', 'get_backup_peers' })
-local ngxSocketMock = mock('ngx.socket.tcp', { 'connect', 'receive', 'send', 'close', 'settimeout' })
+local ngxUpstreamMock, ngxSocketMock, shared
 
-ngx.socket = {
-    tcp = function()
-        return ngxSocketMock
-    end
-}
+beforeEach(function()
+    ngxUpstreamMock = mock('ngx.upstream', { 'get_primary_peers', 'get_backup_peers' })
+    ngxSocketMock = mock('ngx.socket.tcp', { 'connect', 'receive', 'send', 'close', 'settimeout' })
+    ngx.socket = {
+        tcp = function()
+            return ngxSocketMock
+        end
+    }
+
+    shared = mock("ngx.shared", {"safe_set", "delete", "get"})
+    ngx.shared = {
+        cachedOauthTokens = shared
+    }
+end)
 
 test('Successful flow with no password, should return one healthy host', function()
     local classUnderTest = require(CLASS_UNDER_TEST):new()
