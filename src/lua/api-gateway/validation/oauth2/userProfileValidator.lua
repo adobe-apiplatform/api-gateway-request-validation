@@ -56,10 +56,11 @@ _M["redis_pass_env"] = redisConfigurationProvider["oauth"]["env_password_variabl
 _M.PROFILE_VALIDATION_LOCATION = "/validate-user"
 
 local RESPONSES = {
-    P_MISSING_TOKEN   = { error_code = "403020", message = "Oauth token is missing"         },
-    INVALID_PROFILE   = { error_code = "403023", message = "Profile is not valid"           },
-    NOT_ALLOWED       = { error_code = "403024", message = "Not allowed to read the profile"},
-    P_UNKNOWN_ERROR   = { error_code = "503020", message = "Could not read the profile"     }
+    P_MISSING_TOKEN            = { error_code = "403020", message = "Oauth token is missing"         },
+    P_MISSING_STORAGE_REGION   = { error_code = "403021", message = "Storage region is missing"      },
+    INVALID_PROFILE            = { error_code = "403023", message = "Profile is not valid"           },
+    NOT_ALLOWED                = { error_code = "403024", message = "Not allowed to read the profile"},
+    P_UNKNOWN_ERROR            = { error_code = "503020", message = "Could not read the profile"     }
 }
 
 ---
@@ -217,6 +218,10 @@ function _M:validateUserProfile()
         if json ~= nil then
 
             local cachingObj = self:extractContextVars(json)
+            if cachingObj.user_country_code == nil then
+                ngx.log(ngx.WARN, "The user's profile does not contain a country code - missing SAO or region")
+                return RESPONSES.P_MISSING_STORAGE_REGION.error_code, cjson.encode(RESPONSES.P_MISSING_STORAGE_REGION)
+            end
 
             self:setContextProperties(self:getContextPropertiesObject(cachingObj))
             self:storeProfileInCache(cacheLookupKey, cachingObj)
