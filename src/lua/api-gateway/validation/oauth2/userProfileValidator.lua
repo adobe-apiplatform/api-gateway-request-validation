@@ -219,10 +219,10 @@ function _M:validateUserProfile()
             local cachingObj = self:extractContextVars(json)
 
             self:setContextProperties(self:getContextPropertiesObject(cachingObj))
-            self:storeProfileInCache(cacheLookupKey, cachingObj)
 
             local isValid, failureErrorCode, failureMessage = self:isProfileValid(cachingObj)
             if isValid == true then
+                self:storeProfileInCache(cacheLookupKey, cachingObj)
                 return ngx.HTTP_OK
             elseif failureErrorCode ~= nil and failureMessage ~= nil then
                 return failureErrorCode, failureMessage
