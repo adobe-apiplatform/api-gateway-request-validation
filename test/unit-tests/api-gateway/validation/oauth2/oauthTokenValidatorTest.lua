@@ -18,14 +18,8 @@
 --   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 --   DEALINGS IN THE SOFTWARE.
 
-local safeCjson = require "cjson.safe"
-local redisMock = mock("resty.redis", {"new"})
-local shared = mock("ngx.shared", {"safe_set", "delete", "get"})
-local RedisConnectionProviderMock = mock("api-gateway.redis.redisConnectionProvider", {
-    "new", "getConnection", "closeConnection"
-})
-local sha256Mock = mock("resty.sha256", {"new", "update", "final"})
-local hasherMock = mock("api-gateway.util.hasher", {"hash"})
+local safeCjson, redisMock, shared, RedisConnectionProviderMock,
+    sha256Mock, hasherMock
 
 local RESPONSES = {
     INVALID_CLIENT_ID = { error_code = "403201", message = "Client ID not allowed to call this service" },
@@ -38,6 +32,15 @@ local RESPONSES = {
 }
 
 beforeEach(function()
+
+    safeCjson = require "cjson.safe"
+    redisMock = mock("resty.redis", {"new"})
+    shared = mock("ngx.shared", {"safe_set", "delete", "get"})
+    RedisConnectionProviderMock = mock("api-gateway.redis.redisConnectionProvider", {
+        "new", "getConnection", "closeConnection"
+    })
+    sha256Mock = mock("resty.sha256", {"new", "update", "final"})
+    hasherMock = mock("api-gateway.util.hasher", {"hash"})
 
     ngx.header = {}
 

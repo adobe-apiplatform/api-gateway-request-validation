@@ -3,13 +3,15 @@
 --- Created by trifan.
 --- DateTime: 11/04/2018 10:13
 ---
-local restyStringMock = mock("resty.string", {"to_hex"})
-local sha256Mock = mock("resty.sha256", {"new", "update", "final"})
-local sha224Mock = mock("resty.sha224", {"new", "update", "final"})
-local sha512Mock = mock("resty.sha512", {"new", "update", "final"})
-local sha384Mock = mock("resty.sha384", {"new", "update", "final"})
+local restyStringMock, sha256Mock, sha224Mock, sha512Mock, sha384Mock
 
 beforeEach(function()
+    restyStringMock = mock("resty.string", {"to_hex"})
+    sha256Mock = mock("resty.sha256", {"new", "update", "final"})
+    sha224Mock = mock("resty.sha224", {"new", "update", "final"})
+    sha512Mock = mock("resty.sha512", {"new", "update", "final"})
+    sha384Mock = mock("resty.sha384", {"new", "update", "final"})
+
     ngx.var.hashing_algorithm = nil
     when(sha256Mock).final.fake(function(self, str)
         return "sha256"

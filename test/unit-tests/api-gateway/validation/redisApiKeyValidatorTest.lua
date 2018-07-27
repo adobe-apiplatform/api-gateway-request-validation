@@ -5,14 +5,7 @@
 
 local cjson = require "cjson"
 
-local BaseValidatorMock = mock("api-gateway.validation.validator", {
-    "new", "exitFn", "getKeyFromLocalCache", "setContextProperties",
-    "getKeyFromRedis", "setKeyInLocalCache"
-})
-
-local RedisConnectionProviderMock = mock("api-gateway.redis.redisConnectionProvider", {
-    "new", "getConnection", "closeConnection"
-})
+local BaseValidatorMock, RedisConnectionProviderMock
 
 local EXPECTED_RESPONSES = {
     MISSING_KEY = { error_code = "403000", message = '{"message":"Api KEY is missing","error_code":"403000"}' },
@@ -21,6 +14,13 @@ local EXPECTED_RESPONSES = {
 }
 
 beforeEach(function()
+    BaseValidatorMock = mock("api-gateway.validation.validator", {
+        "new", "exitFn", "getKeyFromLocalCache", "setContextProperties",
+        "getKeyFromRedis", "setKeyInLocalCache"
+    })
+    RedisConnectionProviderMock = mock("api-gateway.redis.redisConnectionProvider", {
+        "new", "getConnection", "closeConnection"
+    })
     ngx.HTTP_SERVICE_UNAVAILABLE = 503
     ngx.HTTP_NOT_FOUND = 404
 

@@ -3,6 +3,12 @@
 --- Created by trifan.
 --- DateTime: 03/07/2018 15:18
 ---
+
+beforeEach(function()
+    ngx.config = {}
+    mock("resty.redis", {"new"})
+    mock("resty.string", {"new"})
+end)
 test('empty test', function()
     require "api-gateway.validation.oauth2.userProfileValidator"
 end)
