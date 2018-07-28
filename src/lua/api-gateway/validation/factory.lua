@@ -44,12 +44,6 @@ if not logger then
     logger = require "api-gateway.util.logger"
 end
 
-local function debug(...)
-    if debug_mode then
-        ngx.log(ngx.DEBUG, "validator: ", ...)
-    end
-end
-
 ---
 -- Function designed to be called from access_by_lua
 -- It calls an internal /validate-request path which can provide any custom implementation for request validation
@@ -60,7 +54,8 @@ local function _validateRequest()
         return ngx.OK;
     end
     local res = ngx.location.capture("/validate-request", { share_all_vars = true });
-    debug("Final validation result:" .. ngx.var.validate_request_response_body .. ", [" .. res.status .. "]")
+    logger.debug("Final validation result:" .. tostring(ngx.var.validate_request_response_body)
+            .. ", [" .. tostring(res.status) .. "]")
 
     if ngx.var.arg_debug == "true" then
         ngx.header["X-Debug-Validation-Response-Times"] = res.header["X-Debug-Validation-Response-Times"];
