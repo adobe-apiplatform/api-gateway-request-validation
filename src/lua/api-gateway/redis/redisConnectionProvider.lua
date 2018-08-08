@@ -28,9 +28,10 @@ local redisHealthCheck = RedisHealthCheck:new({
     shared_dict = "cachedkeys"
 })
 
-local max_idle_timeout = 30000
-local pool_size = 100
-local default_redis_timeout = 5000
+local MAX_IDLE_TIMEOUT = 30000
+local POOL_SIZE = 100
+local DEFAULT_REDIS_TIMEOUT = 5000
+local WRITE_ERROR_MESSAGE = "read only slave"
 
 local RedisConnectionProvider = {}
 
@@ -67,9 +68,7 @@ end
 --- @param connection_options If this is a table, it should have upstream, password and redis_timeout.
 --- Otherwise, the connection_options is considered the upstream name
 function RedisConnectionProvider:getConnection(connection_options)
-    local redisUpstream,
-    redisPassword,
-    redisTimeout;
+    local redisUpstream, redisPassword, redisTimeout
 
     if (type(connection_options) == 'table') then
         redisUpstream = connection_options["upstream"]
@@ -90,6 +89,11 @@ function RedisConnectionProvider:getConnection(connection_options)
         ngx.log(ngx.DEBUG, "Got new upstream: " .. tostring(redisHost) .. " and " .. tostring(redisPort))
         status, redisInstance = self:connectToRedis(redisHost, redisPort, redisPassword, redisTimeout)
     end
+
+    -- add upstream and password for future resolving retries
+    redisInstance["upstream"] = redisUpstream
+    redisInstance["password"] = redisPassword
+
     return status, redisInstance
 end
 
@@ -97,7 +101,7 @@ function RedisConnectionProvider:connectToRedis(host, port, password, redisTimeo
     local redis = restyRedis:new()
 
     -- sets general timeout - for all operations
-    local redis_timeout = redisTimeout or ngx.var.redis_timeout or default_redis_timeout
+    local redis_timeout = redisTimeout or ngx.var.redis_timeout or DEFAULT_REDIS_TIMEOUT
     redis:set_timeout(redis_timeout)
 
     local ok, err = redis:connect(host, port)
@@ -108,10 +112,11 @@ function RedisConnectionProvider:connectToRedis(host, port, password, redisTimeo
 
     -- Check for existing connection
     local times, error = redis:get_reused_times()
+    ngx.log(ngx.ERR, "Reused times: " .. tostring(times))
 
     if times and times ~= 0 then
         ngx.log(ngx.DEBUG, "Reusing Redis connection")
-        return true, redis
+        return true, self:decorateRedisInstance(redis)
     end
 
     if isNotEmpty(password) then
@@ -122,19 +127,46 @@ function RedisConnectionProvider:connectToRedis(host, port, password, redisTimeo
             return false, nil
         end
         ngx.log(ngx.DEBUG, "Redis authentication successful")
-        return ok, redis
+        return ok, self:decorateRedisInstance(redis)
     else
         ngx.log(ngx.DEBUG, "No password authentication for Redis")
-        return true, redis
+        return true, self:decorateRedisInstance(redis)
     end
 end
 
+function RedisConnectionProvider:decorateRedisInstance(redisInstance)
+    local writeFunctions = { "set", "hset", "hmset", "del", "expire", "pexpire", "hdel", "incr", "hdel" }
+    for _, functionName in ipairs(writeFunctions) do
+        local originalFunction = redisInstance[functionName]
+        local decoratedFunction = function(...)
+            local args = { ... }
+            for k, v in pairs(args) do
+                ngx.log(ngx.ERR, "Arg: " .. tostring(k) .. "->" .. tostring(v))
+            end
+            ngx.log(ngx.ERR, "DECORATED")
+            local result, err = originalFunction(...)
+            ngx.log(ngx.ERR, "Function status: " .. tostring(functionName) .. tostring(err))
+            ngx.log(ngx.ERR, "Function result: " .. tostring(result))
+            --if not status and string.match(result, WRITE_ERROR_MESSAGE) then
+            --    local currentUpstream = redisInstance["upstream"]
+            --    local currentPassword = redisInstance["password"]
+            --    ngx.log(ngx.WARN, "Error while performing command: " .. tostring(functionName) ..
+            --            ".Error: " .. tostring(result) .. ". Performing host resolve")
+            --    redisHealthCheck:resolveUpstream(currentUpstream, currentPassword)
+            --end
+            return result, err
+        end
+        redisInstance[functionName] = decoratedFunction
+    end
+    return redisInstance
+end
+
 function RedisConnectionProvider:closeConnection(redis_instance)
-    redis_instance:set_keepalive(max_idle_timeout, pool_size)
+    redis_instance:set_keepalive(MAX_IDLE_TIMEOUT, POOL_SIZE)
 end
 
 function RedisConnectionProvider:closeConnectionWithTimeout(redis_instance, max_idle_timeout)
-    redis_instance:set_keepalive(max_idle_timeout, pool_size)
+    redis_instance:set_keepalive(max_idle_timeout, POOL_SIZE)
 end
 
 return RedisConnectionProvider

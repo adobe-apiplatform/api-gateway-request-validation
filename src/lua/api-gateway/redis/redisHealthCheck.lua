@@ -25,6 +25,10 @@
 local RedisHealthCheck = {}
 local DEFAULT_SHARED_DICT = "cachedkeys"
 local HEALTHY_REDIS_UPSTREAM_KEY_PREFIX = "healthy_redis_upstream:"
+local client = require("resty.dns.client")
+client.init()
+local upstreamModule = require "ngx.upstream"
+local redisDnsDict = ngx.shared["redis_dns_dict"]
 
 function RedisHealthCheck:new(o)
     o = o or {}
@@ -190,23 +194,26 @@ local function getHealthCheckForUpstream(upstream, upstreamPassword)
                 peersStatus[k] = v
             end
         end
-
     end
 
     return peersStatus
 end
 
 --- Returns the upstream address from the shared cache
--- @param dictionaryName Shared dictionary containing the cached entries
 -- @param upstreamName The name of the upstream, used in the caching key
 -- @return Upstream address as host:port
-local function getHealthyRedisNodeFromCache(dictionaryName, upstreamName)
-    local dict = ngx.shared[dictionaryName];
-    local upstreamRedis
-    if (nil ~= dict) then
-        upstreamRedis = dict:get(HEALTHY_REDIS_UPSTREAM_KEY_PREFIX .. tostring(upstreamName))
+local function getHealthyRedisNodeFromCache(upstreamName)
+    local upstreamServers = upstreamModule.get_servers(upstreamName)
+    for _, server in ipairs(upstreamServers) do
+        local serverName = server.name
+        local peerHost, peerPort = getHostAndPortInUpstream(serverName)
+        local address = redisDnsDict:get(upstreamName .. ":" .. peerHost)
+        local addressStatus = redisDnsDict:get(address)
+        if address ~= nil and addressStatus == 1 then
+            ngx.log(ngx.ERR, "Address found in cache for: " .. tostring(upstreamName) .. ": " .. tostring(address))
+            return address
+        end
     end
-    return upstreamRedis
 end
 
 --- Sets the healthy upstream address in the shared cache
@@ -224,6 +231,30 @@ local function updateHealthyRedisNodeInCache(dictionaryName, upstreamName, healt
     ngx.log(ngx.WARN, "Dictionary ", dictionaryName, " doesn't seem to be set. Did you define one ? ")
 end
 
+function RedisHealthCheck:cacheUpstream(upstream, answerName, address, password)
+    redisDnsDict:set(upstream .. ":" .. answerName, address)
+    if isPeerHealthy(address, password) then
+        redisDnsDict:set(address, 1)
+    else
+        redisDnsDict:set(address, 0)
+    end
+end
+
+function RedisHealthCheck:resolveUpstream(upstream, password)
+    local upstreamServers = upstreamModule.get_servers(upstream)
+    for _, server in ipairs(upstreamServers) do
+        local serverName = server.name
+        local host, port = getHostAndPortInUpstream(serverName)
+
+        local dnsQueryAnswer = client.resolve(tostring(host))
+        local address = dnsQueryAnswer[1].address
+        local answerName = dnsQueryAnswer[1].name
+        local fullAddress = address .. ":" .. tostring(port)
+        self:cacheUpstream(upstream, answerName, fullAddress, password)
+    end
+end
+
+
 --- Checks for healthy Redis nodes and returns the first correct value
 -- @param upstream The name of the upstream for which a healthy address is to be found
 -- @param upstreamPassword The password for the upstream, should this need authentication prior to health checking
@@ -232,33 +263,44 @@ end
 -- @return Upstream port
 function RedisHealthCheck:getHealthyRedisNode(upstream, upstreamPassword)
 
+    local healthyRedisHost, host, port
+
     -- get the Redis host and port from the local cache first
-    local healthyRedisHost = getHealthyRedisNodeFromCache(self.sharedDictionary, upstream)
+    healthyRedisHost = getHealthyRedisNodeFromCache(upstream)
     if (nil ~= healthyRedisHost) then
-        local host, port = getHostAndPortInUpstream(healthyRedisHost)
+        host, port = getHostAndPortInUpstream(healthyRedisHost)
         return healthyRedisHost, host, port
-    end
-
-    ngx.log(ngx.DEBUG, "Looking up for a healthy redis node in upstream:", upstream)
-    -- if the Redis host is not in the local cache get it from the upstream configuration
-    local redisUpstreamHealthResult = getHealthCheckForUpstream(upstream, upstreamPassword)
-
-    if (redisUpstreamHealthResult == nil) then
-        ngx.log(ngx.ERR, "No upstream results found for Redis!!!")
-        return nil, nil, nil
-    end
-    for upstream, status in pairs(redisUpstreamHealthResult) do
-        -- return the first node found to be up.
-        if (status == 1) then
-            healthyRedisHost = upstream
-            updateHealthyRedisNodeInCache(self.sharedDictionary, upstream, healthyRedisHost)
-            local host, port = getHostAndPortInUpstream(healthyRedisHost)
-            return healthyRedisHost, host, port
+    else
+        ngx.log(ngx.DEBUG, "No entry found in cache for: " .. tostring(upstream) .. ". Resolving host")
+        self:resolveUpstream(upstream, upstreamPassword)
+        healthyRedisHost = getHealthyRedisNodeFromCache(upstream)
+        if healthyRedisHost == nil then
+            ngx.log(ngx.ERR, "Could not resolve: .. " .. tostring(upstream))
+            return nil, nil, nil
         end
+        return healthyRedisHost, getHostAndPortInUpstream(healthyRedisHost)
     end
 
-    ngx.log(ngx.ERR, "All Redis nodes are down!!!")
-    return nil, nil, nil
+    --ngx.log(ngx.DEBUG, "Looking up for a healthy redis node in upstream:", upstream)
+    ---- if the Redis host is not in the local cache get it from the upstream configuration
+    --local redisUpstreamHealthResult = getHealthCheckForUpstream(upstream, upstreamPassword)
+    --
+    --if (redisUpstreamHealthResult == nil) then
+    --    ngx.log(ngx.ERR, "No upstream results found for Redis!!!")
+    --    return nil, nil, nil
+    --end
+    --for upstream, status in pairs(redisUpstreamHealthResult) do
+    --    -- return the first node found to be up.
+    --    if (status == 1) then
+    --        healthyRedisHost = upstream
+    --        updateHealthyRedisNodeInCache(self.sharedDictionary, upstream, healthyRedisHost)
+    --        local host, port = getHostAndPortInUpstream(healthyRedisHost)
+    --        return healthyRedisHost, host, port
+    --    end
+    --end
+    --
+    --ngx.log(ngx.ERR, "All Redis nodes are down!!!")
+    --return nil, nil, nil
 end
 
 return RedisHealthCheck
