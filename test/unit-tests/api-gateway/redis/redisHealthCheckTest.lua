@@ -17,7 +17,7 @@ beforeEach(function()
         end
     }
 
-    shared = mock("ngx.shared", {"safe_set", "delete", "get"})
+    shared = mock("ngx.shared", { "safe_set", "delete", "get" })
     ngx.shared = {
         cachedOauthTokens = shared
     }
@@ -25,7 +25,6 @@ end)
 
 test('Successful flow with no password, should return one healthy host', function()
     local classUnderTest = require(CLASS_UNDER_TEST):new()
-
     ngxUpstreamMock.__get_primary_peers.doReturn = function()
         local primaryPeers = {}
         table.insert(primaryPeers, { name = "127.0.0.1:6379" })
@@ -115,6 +114,7 @@ test('Successful flow with password, should return one healthy host', function()
 end)
 
 test('Faulty flow with wrong password, should not return any host', function()
+    ngx.var["redis_advanced_healthcheck"] = "true"
     local classUnderTest = require(CLASS_UNDER_TEST):new()
     ngxUpstreamMock.__get_primary_peers.doReturn = function()
         local primaryPeers = {}
@@ -203,6 +203,7 @@ test('Backup peers successful flow with password, should return one healthy host
 end)
 
 test('Multiple peers successful flow with password, should return first healthy host', function()
+    ngx.var["redis_advanced_healthcheck"] = "true"
     local classUnderTest = require(CLASS_UNDER_TEST):new()
 
     local primaryPeers = {
@@ -257,6 +258,7 @@ test('Multiple peers successful flow with password, should return first healthy 
 end)
 
 test('No tcp connection should fail', function()
+    ngx.var["redis_advanced_healthcheck"] = "true"
     local classUnderTest = require(CLASS_UNDER_TEST):new()
 
     local primaryPeers = {
