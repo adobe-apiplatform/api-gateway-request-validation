@@ -82,7 +82,7 @@ end
 local function isPeerHealthy(upstream, upstreamPassword)
 
     local performRedisAdvancedHealthcheck = ngx.var.redis_advanced_healthcheck
-    if not performRedisAdvancedHealthcheck or performRedisAdvancedHealthcheck == "nil" or performRedisAdvancedHealthcheck == "false" then
+    if not performRedisAdvancedHealthcheck or performRedisAdvancedHealthcheck == "" or performRedisAdvancedHealthcheck == "false" then
         ngx.log(ngx.DEBUG, "No advanced healthcheck, assuming peer is healthy: " .. tostring(upstream))
         return true
     end
