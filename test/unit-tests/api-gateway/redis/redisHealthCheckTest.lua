@@ -114,7 +114,7 @@ test('Successful flow with password, should return one healthy host', function()
 end)
 
 test('Faulty flow with wrong password, should not return any host', function()
-    ngx.var["redis_advanced_healthcheck"] = "true"
+    ngx.var["enable_redis_advanced_healthcheck"] = "true"
     local classUnderTest = require(CLASS_UNDER_TEST):new()
     ngxUpstreamMock.__get_primary_peers.doReturn = function()
         local primaryPeers = {}
@@ -203,7 +203,7 @@ test('Backup peers successful flow with password, should return one healthy host
 end)
 
 test('Multiple peers successful flow with password, should return first healthy host', function()
-    ngx.var["redis_advanced_healthcheck"] = "true"
+    ngx.var["enable_redis_advanced_healthcheck"] = "true"
     local classUnderTest = require(CLASS_UNDER_TEST):new()
 
     local primaryPeers = {
@@ -258,7 +258,7 @@ test('Multiple peers successful flow with password, should return first healthy 
 end)
 
 test('No tcp connection should fail', function()
-    ngx.var["redis_advanced_healthcheck"] = "true"
+    ngx.var["enable_redis_advanced_healthcheck"] = "true"
     local classUnderTest = require(CLASS_UNDER_TEST):new()
 
     local primaryPeers = {
