@@ -81,6 +81,12 @@ end
 -- instance may be down)
 local function isPeerHealthy(upstream, upstreamPassword)
 
+    local enableRedisAdvancedHealthcheck = ngx.var.enable_redis_advanced_healthcheck
+    if enableRedisAdvancedHealthcheck ~= "true" then
+        ngx.log(ngx.DEBUG, "No advanced healthcheck, assuming peer is healthy: " .. tostring(upstream))
+        return true
+    end
+
     local authMessage = "AUTH "
     local successfulAuthResponse = "OK"
     local pingMessage = "PING\r\n"

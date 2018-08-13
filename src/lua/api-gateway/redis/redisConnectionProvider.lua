@@ -110,7 +110,7 @@ function RedisConnectionProvider:connectToRedis(host, port, password, redisTimeo
     local times, error = redis:get_reused_times()
 
     if times and times ~= 0 then
-        ngx.log(ngx.DEBUG, "Reusing Redis connection")
+        ngx.log(ngx.DEBUG, "Reusing Redis connection. Reused times: " .. tostring(times))
         return true, redis
     end
 
