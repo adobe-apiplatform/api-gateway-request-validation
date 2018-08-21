@@ -40,9 +40,7 @@ local HmacSignatureValidator = require "api-gateway.validation.signing.hmacGener
 local OAuthTokenValidator = require "api-gateway.validation.oauth2.oauthTokenValidator"
 local UserProfileValidator = require "api-gateway.validation.oauth2.userProfileValidator"
 --- needed to be run in isolation and for fallback purposes
-if not logger then
-    logger = require "api-gateway.util.logger"
-end
+local logger = require "api-gateway.util.logger"
 
 local function debug(...)
     if debug_mode then
