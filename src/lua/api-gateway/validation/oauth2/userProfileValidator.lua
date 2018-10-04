@@ -119,7 +119,8 @@ function _M:getProfileFromCache(cacheLookupKey)
         return localCacheValue
     end
 
-    local redisCacheValue = self:getKeyFromRedis(cacheLookupKey, "user_json")
+    local cacheLookupProfileKey = self:getCacheLookupProfileKey()
+    local redisCacheValue = self:getKeyFromRedis(cacheLookupKey, cacheLookupProfileKey)
     if ( redisCacheValue ~= nil ) then
         ngx.log(ngx.DEBUG, "Found User Profile in Redis cache")
         local oauthTokenExpiration = ngx.ctx.oauth_token_expires_at
@@ -151,8 +152,10 @@ function _M:storeProfileInCache(cacheLookupKey, cachingObj)
         default_ttl_expire = ngx.var.max_oauth_redis_cache_ttl
     end
     self:setKeyInLocalCache(cacheLookupKey, cachingObjString, localExpiresIn , "cachedUserProfiles")
+
     -- cache the use profile for 5 minutes
-    self:setKeyInRedis(cacheLookupKey, "user_json", math.min(oauthTokenExpiration, (ngx.time() + default_ttl_expire) * 1000), cachingObjString)
+    local cacheLookupProfileKey = self:getCacheLookupProfileKey()
+    self:setKeyInRedis(cacheLookupKey, cacheLookupProfileKey, math.min(oauthTokenExpiration, (ngx.time() + default_ttl_expire) * 1000), cachingObjString)
 end
 
 --- Returns true if the profile is valid for the request context. If profile is not valid then it returns the failure
@@ -184,6 +187,14 @@ function _M:getCacheLookupKey()
     local oauth_token = ngx.var.authtoken
     local oauth_token_hash = hasher.hash(oauth_token)
     return self:getCacheToken(oauth_token_hash)
+end
+
+function _M:getCacheLookupProfileKey()
+    if self.PROFILE_VALIDATOR_CODE ~= nil and self.PROFILE_VALIDATOR_CODE ~= "" then
+        return "user_json:" .. self.PROFILE_VALIDATOR_CODE;
+    else
+        return "user_json";
+    end
 end
 
 function _M:validateUserProfile()
