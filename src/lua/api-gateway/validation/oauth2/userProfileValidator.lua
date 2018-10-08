@@ -113,13 +113,13 @@ function _M:getContextPropertiesObject(obj)
 end
 
 function _M:getProfileFromCache(cacheLookupKey)
-    local localCacheValue = self:getKeyFromLocalCache(cacheLookupKey, "cachedUserProfiles")
+    local cacheLookupProfileKey = self:getCacheLookupProfileKey()
+    local localCacheValue = self:getKeyFromLocalCache(cacheLookupProfileKey, "cachedUserProfiles")
     if ( localCacheValue ~= nil ) then
         -- ngx.log(ngx.INFO, "Found profile in local cache")
         return localCacheValue
     end
 
-    local cacheLookupProfileKey = self:getCacheLookupProfileKey()
     local redisCacheValue = self:getKeyFromRedis(cacheLookupKey, cacheLookupProfileKey)
     if ( redisCacheValue ~= nil ) then
         ngx.log(ngx.DEBUG, "Found User Profile in Redis cache")
@@ -127,7 +127,7 @@ function _M:getProfileFromCache(cacheLookupKey)
         local expiresIn = self:getExpiresIn(oauthTokenExpiration)
         local localExpiresIn = math.min( expiresIn, LOCAL_CACHE_TTL )
         ngx.log(ngx.DEBUG, "Storing cached User Profile in the local cache for " .. tostring(localExpiresIn) .. " s out of a total validity of " .. tostring(expiresIn) .. " s.")
-        self:setKeyInLocalCache(cacheLookupKey, redisCacheValue, localExpiresIn, "cachedUserProfiles")
+        self:setKeyInLocalCache(cacheLookupProfileKey, redisCacheValue, localExpiresIn, "cachedUserProfiles")
         return redisCacheValue
     end
     return nil;
@@ -151,10 +151,11 @@ function _M:storeProfileInCache(cacheLookupKey, cachingObj)
     if ngx.var.max_oauth_redis_cache_ttl ~= nil and ngx.var.max_oauth_redis_cache_ttl ~= '' then
         default_ttl_expire = ngx.var.max_oauth_redis_cache_ttl
     end
-    self:setKeyInLocalCache(cacheLookupKey, cachingObjString, localExpiresIn , "cachedUserProfiles")
+
+    local cacheLookupProfileKey = self:getCacheLookupProfileKey()
+    self:setKeyInLocalCache(cacheLookupProfileKey, cachingObjString, localExpiresIn , "cachedUserProfiles")
 
     -- cache the use profile for 5 minutes
-    local cacheLookupProfileKey = self:getCacheLookupProfileKey()
     self:setKeyInRedis(cacheLookupKey, cacheLookupProfileKey, math.min(oauthTokenExpiration, (ngx.time() + default_ttl_expire) * 1000), cachingObjString)
 end
 
