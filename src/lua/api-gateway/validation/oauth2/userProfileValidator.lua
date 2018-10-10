@@ -81,7 +81,7 @@ function _M:getCacheToken(token)
     end
 end
 
-function _M:getTokenCacheLookupKey()
+function _M:getCacheTokenLookupKey()
     local oauth_token = ngx.var.authtoken
     local oauth_token_hash = hasher.hash(oauth_token)
     return self:getCacheToken(oauth_token_hash)
@@ -96,7 +96,7 @@ function _M:getRedisCacheLookupProfileKey()
 end
 
 function _M:getLocalCacheLookupProfileKey()
-    local cacheLookupKey = self:getTokenCacheLookupKey()
+    local cacheLookupKey = self:getCacheTokenLookupKey()
     if self.PROFILE_VALIDATOR_CODE ~= nil and self.PROFILE_VALIDATOR_CODE ~= "" then
         return cacheLookupKey .. ":" .. self.PROFILE_VALIDATOR_CODE;
     else
@@ -213,7 +213,7 @@ end
 
 function _M:validateUserProfile()
     --1. try to get user's profile from the cache first ( local or redis cache )
-    local cacheTokenLookupKey = self:getTokenCacheLookupKey()
+    local cacheTokenLookupKey = self:getCacheTokenLookupKey()
     local cachedUserProfile = self:getProfileFromCache(cacheTokenLookupKey)
 
     if ( cachedUserProfile ~= nil ) then
