@@ -189,6 +189,17 @@ function _M:storeProfileInCache(cacheTokenLookupKey, cachingObj)
     self:setKeyInRedis(cacheTokenLookupKey, redisCacheLookupProfileKey, math.min(oauthTokenExpiration, (ngx.time() + default_ttl_expire) * 1000), cachingObjString)
 end
 
+---
+-- Deletes user profile from redis and local cache.
+--
+function _M:deleteProfileFromCache()
+    local localCacheLookupProfileKey = self:getLocalCacheLookupProfileKey()
+    self:deleteKeyInLocalCache(localCacheLookupProfileKey, self.USER_PROFILE_DICTIONARY)
+
+    local cacheTokenLookupKey = self:getCacheTokenLookupKey()
+    self:deleteKeyFromRedis(cacheTokenLookupKey)
+end
+
 --- Returns true if the profile is valid for the request context. If profile is not valid then it returns the failure
 -- status code and message.
 -- This method is to be overritten when this class is extended.
