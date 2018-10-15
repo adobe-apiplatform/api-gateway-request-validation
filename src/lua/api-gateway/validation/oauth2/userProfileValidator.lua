@@ -55,6 +55,9 @@ _M["redis_RW_upstream"] = redisConfigurationProvider["oauth"]["rw_upstream_name"
 _M["redis_pass_env"] = redisConfigurationProvider["oauth"]["env_password_variable"]
 _M.PROFILE_VALIDATION_LOCATION = "/validate-user"
 
+--- Nginx shared dictionary for storing user profiles
+_M.USER_PROFILE_DICTIONARY = "cachedUserProfiles"
+
 local RESPONSES = {
     P_MISSING_TOKEN   = { error_code = "403020", message = "Oauth token is missing"         },
     INVALID_PROFILE   = { error_code = "403023", message = "Profile is not valid"           },
@@ -139,7 +142,7 @@ function _M:getProfileFromCache(cacheTokenLookupKey)
     local redisCacheLookupProfileKey = self:getRedisCacheLookupProfileKey()
     local localCacheLookupProfileKey = self:getLocalCacheLookupProfileKey()
 
-    local localCacheValue = self:getKeyFromLocalCache(localCacheLookupProfileKey, "cachedUserProfiles")
+    local localCacheValue = self:getKeyFromLocalCache(localCacheLookupProfileKey, self.USER_PROFILE_DICTIONARY)
     if ( localCacheValue ~= nil ) then
         -- ngx.log(ngx.INFO, "Found profile in local cache")
         return localCacheValue
@@ -152,7 +155,7 @@ function _M:getProfileFromCache(cacheTokenLookupKey)
         local expiresIn = self:getExpiresIn(oauthTokenExpiration)
         local localExpiresIn = math.min( expiresIn, LOCAL_CACHE_TTL )
         ngx.log(ngx.DEBUG, "Storing cached User Profile in the local cache for " .. tostring(localExpiresIn) .. " s out of a total validity of " .. tostring(expiresIn) .. " s.")
-        self:setKeyInLocalCache(localCacheLookupProfileKey, redisCacheValue, localExpiresIn, "cachedUserProfiles")
+        self:setKeyInLocalCache(localCacheLookupProfileKey, redisCacheValue, localExpiresIn, self.USER_PROFILE_DICTIONARY)
         return redisCacheValue
     end
     return nil;
@@ -180,7 +183,7 @@ function _M:storeProfileInCache(cacheTokenLookupKey, cachingObj)
     local redisCacheLookupProfileKey = self:getRedisCacheLookupProfileKey()
     local localCacheLookupProfileKey = self:getLocalCacheLookupProfileKey()
 
-    self:setKeyInLocalCache(localCacheLookupProfileKey, cachingObjString, localExpiresIn , "cachedUserProfiles")
+    self:setKeyInLocalCache(localCacheLookupProfileKey, cachingObjString, localExpiresIn , self.USER_PROFILE_DICTIONARY)
 
     -- cache the use profile for 5 minutes
     self:setKeyInRedis(cacheTokenLookupKey, redisCacheLookupProfileKey, math.min(oauthTokenExpiration, (ngx.time() + default_ttl_expire) * 1000), cachingObjString)
