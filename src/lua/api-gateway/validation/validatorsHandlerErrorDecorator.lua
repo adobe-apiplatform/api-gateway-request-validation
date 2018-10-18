@@ -194,6 +194,7 @@ end
 -- hook to overwrite the DEFAULT_RESPONSES by specifying a jsonString
 function ValidatorHandlerErrorDecorator:setUserDefinedResponsesFromJson(jsonString)
     if (jsonString == nil or #jsonString < 2) then
+        user_defined_responses = nil
         return
     end
     local r = assert(cjson.decode(jsonString), "Invalid user defined jsonString:" .. tostring(jsonString))
