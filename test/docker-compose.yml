@@ -9,7 +9,7 @@ gateway:
     - ~/tmp/apiplatform/api-gateway-request-validation/src/lua/api-gateway/dogstatsd:/usr/local/api-gateway/lualib/api-gateway/dogstatsd
     - ~/tmp/apiplatform/api-gateway-request-validation/test/perl:/tmp/perl
     - ../target/:/t
-  entrypoint: ["prove", "-I/usr/local/test-nginx-0.24/lib", "-I/usr/local/test-nginx-0.24/inc", "-r", "/tmp/perl/"]
+  entrypoint: ["prove", "-I/usr/local/test-nginx/lib", "-I/usr/local/test-nginx/inc", "-r", "/tmp/perl/"]
 redis:
   image: redis:2.8
   volumes:

@@ -149,8 +149,8 @@ Authorization: Bearer SOME_OAUTH_PROFILE_TEST_1
 ]
 --- response_body_like eval
 ['^user_email=johndoe_ĂÂă\@domain.com,user_country_code=AT,user_name=display_name%E2%80%94%E5%A4%A7%EF%BC%8D%E5%A5%B3.*',
-'Local: {"user_name":"display_name—大－女","user_email":"johndoe_ĂÂă@domain.com","user_country_code":"AT"}',
-'Redis: {"user_name":"display_name—大－女","user_email":"johndoe_ĂÂă@domain.com","user_country_code":"AT"}']
+'Local: \{"user_name":"display_name—大－女","user_email":"johndoe_ĂÂă@domain.com","user_country_code":"AT"\}',
+'Redis: \{"user_name":"display_name—大－女","user_email":"johndoe_ĂÂă@domain.com","user_country_code":"AT"\}']
 --- no_error_log
 [error]
 
@@ -486,7 +486,7 @@ Authorization: Bearer SOME_OAUTH_PROFILE_TEST_1
 ]
 --- response_body_like eval
 ['^user_email=johndoe_ĂÂă\@domain.com,user_country_code=AT,user_name=display_name%E2%80%94%E5%A4%A7%EF%BC%8D%E5%A5%B3.*',
-'Local: {"user_name":"display_name—大－女","user_email":"johndoe_ĂÂă@domain.com","user_country_code":"AT"}',
-'Redis: {"user_name":"display_name—大－女","user_email":"johndoe_ĂÂă@domain.com","user_country_code":"AT"}']
+'Local: \{"user_name":"display_name—大－女","user_email":"johndoe_ĂÂă@domain.com","user_country_code":"AT"\}',
+'Redis: \{"user_name":"display_name—大－女","user_email":"johndoe_ĂÂă@domain.com","user_country_code":"AT"\}']
 --- no_error_log
 [error]

@@ -209,7 +209,7 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST_2_X_0
 ]
 --- response_body_like eval
 [ "oauth token is valid.\n" ,
-'.*{"oauth_token_scope":"openid email profile","oauth_token_client_id":"client_id_test_2","oauth_token_user_id":"21961FF44F97F8A10A490D36","oauth_token_expires_at":\\d{13}}.*',
+'.*\{"oauth_token_scope":"openid email profile","oauth_token_client_id":"client_id_test_2","oauth_token_user_id":"21961FF44F97F8A10A490D36","oauth_token_expires_at":\\d{13}\}.*',
 '.*"expires_at":\d+,.*',
 '[1-4]', # the cached token expiry time is in seconds, and it can only be between 1s to 4s, but not less. -1 response indicated the key is not cached or it has expired
 'OK\n',
@@ -378,9 +378,9 @@ Authorization: Bearer SOME_OAUTH_TOKEN_TEST4
 ]
 --- response_body_like eval
 ["oauth token is valid.\n",
-'.*{"oauth_token_scope":"openid,AdobeID","oauth_token_client_id":"test_Client_ID","oauth_token_user_id":"21961FF44F97F8A10A490D36","oauth_token_expires_at":\\d{13}}.*',
+'.*\{"oauth_token_scope":"openid,AdobeID","oauth_token_client_id":"test_Client_ID","oauth_token_user_id":"21961FF44F97F8A10A490D36","oauth_token_expires_at":\\d{13}\}.*',
 "oauth token is also valid.\n",
-'Local cache:{"oauth_token_scope":"openid,AdobeID","oauth_token_client_id":"test_Client_ID","oauth_token_user_id":"21961FF44F97F8A10A490D36","oauth_token_expires_at":\\d{13}}\n'
+'Local cache:\{"oauth_token_scope":"openid,AdobeID","oauth_token_client_id":"test_Client_ID","oauth_token_user_id":"21961FF44F97F8A10A490D36","oauth_token_expires_at":\\d{13}\}\n'
 ]
 --- no_error_log
 [error]
@@ -480,8 +480,8 @@ env REDIS_PASS;
 ]
 --- response_body_like eval
 [
-'^{"error_code":"401110","message":"User token is missing"}+',
-'^{"error_code":"403113","message":"User token is not valid"}+'
+'^\{"error_code":"401110","message":"User token is missing"\}+',
+'^\{"error_code":"403113","message":"User token is not valid"\}+'
 ]
 --- error_code_like eval
 [401,403]
