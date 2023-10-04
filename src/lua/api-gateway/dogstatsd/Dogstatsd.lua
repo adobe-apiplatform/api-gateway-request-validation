@@ -41,7 +41,7 @@ local function getDogstatsd()
 
     local isDogstatsEnabled = ngx.var.isDogstatsEnabled
     if isDogstatsEnabled == nil or isDogstatsEnabled == "false" then
-        ngx.log(ngx.INFO, "dogstats module is disabled")
+        ngx.log(ngx.DEBUG, "dogstats module is disabled")
         return nil
     end
 
