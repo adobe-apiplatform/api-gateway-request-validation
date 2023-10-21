@@ -116,6 +116,9 @@ end
 
 function _M:storeTokenInCache(cacheLookupKey, cachingObj, expire_at_ms_utc)
     local expires_in_s = self:getExpiresIn(expire_at_ms_utc)
+    if ngx.var.max_auth_local_cache_ttl ~= nil and ngx.var.max_auth_local_cache_ttl ~= '' then
+        expires_in_s = math.min(expires_in_s, ngx.var.max_auth_local_cache_ttl)
+    end
     if (expires_in_s <= 0) then
         ngx.log(ngx.DEBUG, "OAuth Token was not persisted in the cache as it has expired at:" .. tostring(expire_at_ms_utc) .. ", while now is:" .. tostring(ngx.time() * 1000) .. " ms.")
         return nil
