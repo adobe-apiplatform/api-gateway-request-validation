@@ -116,9 +116,6 @@ end
 
 function _M:storeTokenInCache(cacheLookupKey, cachingObj, expire_at_ms_utc)
     local expires_in_s = self:getExpiresIn(expire_at_ms_utc)
-    if ngx.var.max_auth_local_cache_ttl ~= nil and ngx.var.max_auth_local_cache_ttl ~= '' then
-        expires_in_s = math.min(expires_in_s, ngx.var.max_auth_local_cache_ttl)
-    end
     if (expires_in_s <= 0) then
         ngx.log(ngx.DEBUG, "OAuth Token was not persisted in the cache as it has expired at:" .. tostring(expire_at_ms_utc) .. ", while now is:" .. tostring(ngx.time() * 1000) .. " ms.")
         return nil
@@ -146,7 +143,11 @@ function _M:extractContextVars(tokenInfo)
     cachingObj.oauth_token_scope = tokenInfo.token.scope
     cachingObj.oauth_token_client_id = tokenInfo.token.client_id
     cachingObj.oauth_token_user_id = tokenInfo.token.user_id
-    cachingObj.oauth_token_expires_at = tokenInfo.expires_at -- NOTE: Assumption: value in ms
+    local oauth_token_expires_at = tokenInfo.expires_at
+    if ngx.var.max_auth_local_cache_ttl ~= nil and ngx.var.max_auth_local_cache_ttl ~= '' then
+        oauth_token_expires_at = math.min(oauth_token_expires_at, ngx.var.max_auth_local_cache_ttl * 1000)
+    end
+    cachingObj.oauth_token_expires_at = oauth_token_expires_at
     return cachingObj
 end
 
