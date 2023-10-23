@@ -143,7 +143,7 @@ function _M:extractContextVars(tokenInfo)
     cachingObj.oauth_token_scope = tokenInfo.token.scope
     cachingObj.oauth_token_client_id = tokenInfo.token.client_id
     cachingObj.oauth_token_user_id = tokenInfo.token.user_id
-    cachingObj.oauth_token_expires_at = tokenInfo.expires_at -- NOTE: Assumption: value in ms
+    cachingObj.oauth_token_expires_at = self:getMaxLocalCacheTTL(tokenInfo.expires_at) -- NOTE: Assumption: value in ms
     return cachingObj
 end
 
@@ -161,7 +161,7 @@ function _M:checkResponseFromAuth(res, cacheLookupKey)
             local cachingObj = self:extractContextVars(json)
 
             self:setContextProperties(cachingObj)
-            self:storeTokenInCache(cacheLookupKey, cachingObj, json.expires_at)
+            self:storeTokenInCache(cacheLookupKey, cachingObj, cachingObj.oauth_token_expires_at)
             return true
         end
     end
@@ -210,14 +210,17 @@ function _M:validateOAuthToken()
             self:setKeyInLocalCache(cacheLookupKey, cachedToken, local_expire_in, "cachedOauthTokens")
             self:setContextProperties(obj)
             return ngx.HTTP_OK
+        elseif (tokenValidity == 0) then
+            ngx.log(ngx.DEBUG, "Token still valid but about to expire in less than 1s")
+        else
+            -- at this point the cached token is not valid
+            ngx.log(ngx.INFO, "Invalid OAuth Token found in cache. OAuth host=" .. tostring(oauth_host))
+            if (error == nil) then
+                error = self.RESPONSES.INVALID_TOKEN
+            end
+            error.error_code = error.error_code or self.RESPONSES.INVALID_TOKEN.error_code
+            return error.error_code, cjson.encode(error)
         end
-        -- at this point the cached token is not valid
-        ngx.log(ngx.INFO, "Invalid OAuth Token found in cache. OAuth host=" .. tostring(oauth_host))
-        if (error == nil) then
-            error = self.RESPONSES.INVALID_TOKEN
-        end
-        error.error_code = error.error_code or self.RESPONSES.INVALID_TOKEN.error_code
-        return error.error_code, cjson.encode(error)
     end
 
     ngx.log(ngx.INFO, "Failed to get oauth token from cache falling back to oauth provider")
@@ -247,6 +250,12 @@ function _M:validateRequest()
     return self:exitFn(self:validateOAuthToken())
 end
 
+function _M:getMaxLocalCacheTTL(expires_at)
+    if ngx.var.max_oauth_local_cache_ttl ~= nil and ngx.var.max_oauth_local_cache_ttl ~= '' then
+       expires_at = math.min(expires_at, (ngx.var.max_oauth_local_cache_ttl + ngx.time()) * 1000)
+    end
+    return expires_at
+end
 
 return _M
 
