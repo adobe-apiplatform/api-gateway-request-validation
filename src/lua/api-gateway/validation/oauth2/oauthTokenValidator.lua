@@ -143,11 +143,7 @@ function _M:extractContextVars(tokenInfo)
     cachingObj.oauth_token_scope = tokenInfo.token.scope
     cachingObj.oauth_token_client_id = tokenInfo.token.client_id
     cachingObj.oauth_token_user_id = tokenInfo.token.user_id
-    local oauth_token_expires_at = tokenInfo.expires_at
-    if ngx.var.max_auth_local_cache_ttl ~= nil and ngx.var.max_auth_local_cache_ttl ~= '' then
-        oauth_token_expires_at = math.min(oauth_token_expires_at, ngx.var.max_auth_local_cache_ttl * 1000)
-    end
-    cachingObj.oauth_token_expires_at = oauth_token_expires_at
+    cachingObj.oauth_token_expires_at = tokenInfo.expires_at -- NOTE: Assumption: value in ms
     return cachingObj
 end
 
