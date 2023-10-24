@@ -211,7 +211,7 @@ function _M:validateOAuthToken()
             self:setContextProperties(obj)
             return ngx.HTTP_OK
         elseif (tokenValidity == 0) then
-            ngx.log(ngx.DEBUG, "Token still valid but about to expire in less than 1s")
+            ngx.log(ngx.DEBUG, "Token is still in the cache and it will expire in less than 1s")
         else
             -- at this point the cached token is not valid
             ngx.log(ngx.INFO, "Invalid OAuth Token found in cache. OAuth host=" .. tostring(oauth_host))
