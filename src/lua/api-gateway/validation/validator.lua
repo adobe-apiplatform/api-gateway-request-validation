@@ -255,6 +255,25 @@ function BaseValidator:executeTtl(key)
     end
 end
 
+-- converts a response status to a valid HTTP status code
+function BaseValidator:convertToValidHttpStatusCode(response_status)
+    response_status = tonumber(response_status)
+    if response_status == nil then
+        return 500
+    end
+    if (response_status >= 100 and response_status <= 599) then
+        return response_status
+    end
+
+    local http_code_str = string.sub(tostring(response_status), 1, 3)
+    local http_code_number = tonumber(http_code_str)
+    if http_code_number ~= nil and http_code_number >= 100 and http_code_number <= 599 then
+        return http_code_number
+    end
+
+    ngx.log(ngx.DEBUG, "Status code: ", tostring(response_status), " is not in a valid HTTP Status Code format")
+    return 500
+end
 
 -- generic exit function for a validator --
 function BaseValidator:exitFn(status, resp_body)
@@ -269,7 +288,7 @@ function BaseValidator:exitFn(status, resp_body)
         end
     end
 
-    ngx.status = status
+    ngx.status = self:convertToValidHttpStatusCode(status)
 
     if (ngx.null ~= resp_body) then
         ngx.say(resp_body)
