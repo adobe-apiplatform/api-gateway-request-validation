@@ -291,6 +291,7 @@ function BaseValidator:exitFn(status, resp_body)
     ngx.status = self:convertToValidHttpStatusCode(status)
 
     if (ngx.null ~= resp_body) then
+        ngx.header["Content-Type"] = "application/json"
         ngx.say(resp_body)
     end
 
