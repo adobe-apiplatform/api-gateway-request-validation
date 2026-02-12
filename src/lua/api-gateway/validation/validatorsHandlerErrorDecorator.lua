@@ -109,6 +109,15 @@ function ValidatorHandlerErrorDecorator:decorateResponse(response_status, respon
     response_status = tonumber(response_status)
 
     local o = getResponsesTemplate()[response_status]
+    -- If no match by status code (e.g. status was converted from an extended error_code like 401013 to 401),
+    -- try to extract the error_code from the response body and look up by that instead.
+    if (o == nil and response_body ~= nil and #response_body > 0 and response_body ~= "nil\n") then
+        local ok, json_body = pcall(cjson.decode, response_body)
+        if ok and json_body and json_body.error_code then
+            o = getResponsesTemplate()[tonumber(json_body.error_code)]
+        end
+    end
+
     if (o ~= nil) then
         ngx.status = self:convertToValidHttpStatusCode(o.http_status)
         -- NOTE: assumption: for the moment if it's custom, then it's application/json
